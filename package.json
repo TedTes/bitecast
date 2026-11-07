@@ -1,0 +1,10 @@
+{
+  "name": "bitecast",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "mobile": "npm --prefix apps/mobile run start",
+    "typecheck": "npm --prefix apps/mobile run typecheck",
+    "test": "npm --workspace @bitecast/engine test"
+  }
+}
