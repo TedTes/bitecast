@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ForecastHour, ForecastWindow } from '@bitecast/engine';
 import { StyleSheet, View, type AccessibilityActionEvent, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 import Svg, { Defs, Line, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { colors, scoreBand, scoreBands } from '@/constants/theme';
 import { formatTime, shortClock } from '@/lib/format';
+import { Icon } from './icon';
 import { T } from './ui';
 import { LakeSchool, type Mood } from './lake-school';
 
@@ -75,10 +76,18 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
   useEffect(() => {
     if (!point) return;
     const ease = { duration: reduced ? 0 : 140, easing: Easing.out(Easing.quad) };
+    // First appearance this session: a small nudge right and back hints that it can be dragged.
+    if (!nudged && !reduced && index === 0 && step) {
+      nudged = true;
+      mx.set(point.x);
+      my.set(point.y);
+      mx.set(withDelay(700, withSequence(withTiming(point.x + step * 1.5, { duration: 380, easing: Easing.out(Easing.quad) }), withTiming(point.x, { duration: 420, easing: Easing.inOut(Easing.quad) }))));
+      return;
+    }
     mx.set(withTiming(point.x, ease));
     my.set(withTiming(point.y, ease));
-  }, [point, mx, my, reduced]);
-  const markerStyle = useAnimatedStyle(() => ({ transform: [{ translateX: mx.get() - 11 }, { translateY: my.get() - 11 }] }));
+  }, [point, mx, my, reduced, index, step]);
+  const markerStyle = useAnimatedStyle(() => ({ transform: [{ translateX: mx.get() - MARKER_W / 2 }, { translateY: my.get() - GLYPH_CENTER_Y }] }));
   const guideStyle = useAnimatedStyle(() => ({ transform: [{ translateX: mx.get() }] }));
 
   const pick = (x: number) => {
@@ -154,7 +163,14 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
       {width ? (
         <>
           <Animated.View pointerEvents="none" style={[styles.guide, guideStyle]} />
-          <Animated.View pointerEvents="none" style={[styles.marker, daylight ? styles.sun : styles.moon, markerStyle]} />
+          <Animated.View pointerEvents="none" style={[styles.marker, markerStyle]}>
+            <View style={styles.tag}>
+              <T variant="caption" weight="700" color={colors.onDark} style={{ fontSize: 10.5, lineHeight: 13 }} maxFontSizeMultiplier={1.1}>
+                {index === 0 ? 'Now' : shortClock(hour.ts)}
+              </T>
+            </View>
+            {daylight ? <SunGlyph /> : <MoonGlyph />}
+          </Animated.View>
         </>
       ) : null}
 
@@ -185,11 +201,42 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
   );
 }
 
+const MARKER_W = 56;
+const TAG_H = 17;
+const GLYPH = 28;
+const GLYPH_CENTER_Y = TAG_H + 4 + GLYPH / 2;
+/** Nudge only once per app session. */
+let nudged = false;
+
+function SunGlyph() {
+  return (
+    <View style={styles.glyph}>
+      {Array.from({ length: 8 }, (_, i) => (
+        <View key={i} style={[styles.ray, { transform: [{ rotate: `${i * 45}deg` }, { translateY: -11 }] }]} />
+      ))}
+      <View style={styles.sunCore} />
+    </View>
+  );
+}
+
+function MoonGlyph() {
+  return (
+    <View style={styles.glyph}>
+      <View style={styles.moonCore}>
+        <Icon name="moon" size={12} color={colors.inkSoft} />
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   guide: { position: 'absolute', top: SKY_TOP - 6, height: HORIZON + NIGHT_DIP - SKY_TOP + 10, width: 1, backgroundColor: colors.lineStrong },
-  marker: { position: 'absolute', top: 0, left: 0, width: 22, height: 22, borderRadius: 11, borderWidth: 3 },
-  sun: { backgroundColor: colors.sunrise, borderColor: colors.white },
-  moon: { backgroundColor: colors.paper, borderColor: colors.inkSoft },
+  marker: { position: 'absolute', top: 0, left: 0, width: MARKER_W, alignItems: 'center', gap: 4 },
+  tag: { height: TAG_H, paddingHorizontal: 7, borderRadius: TAG_H / 2, backgroundColor: colors.deep, justifyContent: 'center' },
+  glyph: { width: GLYPH, height: GLYPH, alignItems: 'center', justifyContent: 'center' },
+  ray: { position: 'absolute', width: 2.5, height: 5, borderRadius: 1.5, backgroundColor: colors.sunrise },
+  sunCore: { width: 15, height: 15, borderRadius: 8, backgroundColor: colors.sunrise, borderWidth: 2, borderColor: colors.white },
+  moonCore: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.paper, borderWidth: 1.5, borderColor: colors.inkSoft, alignItems: 'center', justifyContent: 'center' },
   horizonLabel: { position: 'absolute', top: HORIZON - 18, fontSize: 10.5 },
   axis: { position: 'absolute', left: PAD - 4, right: PAD - 8, bottom: 0, flexDirection: 'row', justifyContent: 'space-between' },
 });
