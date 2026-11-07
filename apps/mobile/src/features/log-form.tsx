@@ -10,6 +10,7 @@ import { lakes, lakeById } from '@/data/lakes';
 import { getForecast } from '@/data/forecasts';
 import { depthUnit, formatDay, formatTime, formatWind, fromDisplayDepth, fromDisplayLength, lengthUnit, toDisplayDepth, toDisplayLength } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
+import { resolveLakeCondition } from '@/features/lake-season';
 import { useAppStore } from '@/store/use-app-store';
 import type { CatchLog } from '@/types/app';
 
@@ -49,15 +50,18 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
   const params = useLocalSearchParams<{ lakeId?: string; score?: string }>();
   const logs = useAppStore((state) => state.catchLogs);
   const followed = useAppStore((state) => state.followedLakeIds);
-  const season = useAppStore((state) => state.settings.season);
+  const iceFishing = useAppStore((state) => state.settings.iceFishing);
+  const lakeSeasons = useAppStore((state) => state.lakeSeasons);
   const units = useAppStore((state) => state.settings.units);
   const add = useAppStore((state) => state.addCatchLog);
   const last = logs[0];
+  const seasonOf = (id: string) => resolveLakeCondition(id, { iceFishing }, lakeSeasons).season;
 
   // Defaults: the last trip's setup, so a typical entry is lake ✓ → result → save.
   const [lakeId, setLakeId] = useState(previous?.lakeId ?? params.lakeId ?? last?.lakeId ?? followed[0] ?? lakes[0].id);
   const [caught, setCaught] = useState(previous?.caught ?? true);
   const [count, setCount] = useState(previous?.count || 1);
+  const season = seasonOf(lakeId);
   const recentBaits = useMemo(() => Array.from(new Set(logs.map((log) => log.bait.trim()).filter(Boolean))).slice(0, 4), [logs]);
   const baitOptions = useMemo(() => Array.from(new Set([...recentBaits, ...presets[season]])).slice(0, 6), [recentBaits, season]);
   const initialBait = previous?.bait ?? last?.bait ?? presets[season][0];

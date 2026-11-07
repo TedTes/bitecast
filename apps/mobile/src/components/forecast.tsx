@@ -258,7 +258,7 @@ export function HourlyChart({ hours, windows }: { hours: ForecastHour[]; windows
 /* ───────────── 24-hour strip (compact comparison) ───────────── */
 
 /** One row of 24 cells shaded by band; window hours carry a sunrise underline. */
-export function DayStrip({ hours, windows }: { hours: ForecastHour[]; windows: ForecastWindow[] }) {
+export function DayStrip({ hours, windows, axis = true }: { hours: ForecastHour[]; windows: ForecastWindow[]; axis?: boolean }) {
   const data = hours.slice(0, 24);
   const inWindow = new Set(windows.flatMap((w) => w.hours.map((h) => h.ts)));
   const label = (index: number) => (index === 0 ? 'Now' : formatHour(data[index].ts));
@@ -275,9 +275,11 @@ export function DayStrip({ hours, windows }: { hours: ForecastHour[]; windows: F
           );
         })}
       </View>
-      <Row justify="space-between">
-        {[0, 6, 12, 18, 23].map((index) => data[index] ? <T key={index} variant="caption" color={colors.inkMuted} style={{ fontSize: 10.5 }} maxFontSizeMultiplier={1.3}>{label(index)}</T> : null)}
-      </Row>
+      {axis ? (
+        <Row justify="space-between">
+          {[0, 6, 12, 18, 23].map((index) => data[index] ? <T key={index} variant="caption" color={colors.inkMuted} style={{ fontSize: 10.5 }} maxFontSizeMultiplier={1.3}>{label(index)}</T> : null)}
+        </Row>
+      ) : null}
     </View>
   );
 }

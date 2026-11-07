@@ -58,6 +58,7 @@ export async function syncPreferences(input: {
   followedLakeIds: string[];
   alerts: AlertPreference[];
   region: string;
+  lakeSeasons: Record<string, 'open_water' | 'ice'>;
 }): Promise<void> {
   const supabase = getSupabase();
   if (!supabase) return;
@@ -66,7 +67,8 @@ export async function syncPreferences(input: {
   const { error: profileError } = await supabase.from('profiles').upsert({
     user_id: session.user.id,
     units: input.settings.units,
-    season_mode: input.settings.season,
+    // Account default: whether this angler uses ice mode at all. Per-lake choices live on follows.
+    season_mode: input.settings.iceFishing ? 'ice' : 'open_water',
     region: input.region,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Toronto',
     updated_at: new Date().toISOString(),
@@ -88,6 +90,7 @@ export async function syncPreferences(input: {
         lead_minutes: alert?.leadMinutes ?? 120,
         quiet_start: input.settings.quietStart,
         quiet_end: input.settings.quietEnd,
+        season_mode: input.lakeSeasons[lake.slug as string] ?? null,
       };
     });
     const { error } = await supabase.from('follows').upsert(rows, { onConflict: 'user_id,lake_id' });
@@ -237,5 +240,5 @@ export const integrationStatus = [
   { name: 'RevenueCat purchases', ready: purchasesConfigured },
   { name: 'PostHog analytics', ready: Boolean(externalConfig.posthogKey) },
   { name: 'Sentry crash reporting', ready: Boolean(externalConfig.sentryDsn) },
-  { name: 'Map tiles', ready: Boolean(externalConfig.mapStyleUrl) },
+  { name: 'Map tiles', ready: externalConfig.mapProvider !== 'cached' },
 ];

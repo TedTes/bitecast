@@ -8,6 +8,7 @@ Product rules:
 - Say “bite score” and “conditions,” never “guaranteed” or “fish here.”
 - Light is the primary factor; pressure and moon are minor modifiers.
 - Catch logging works offline and stays free.
+- Each lake has its own condition, open water or ice. It defaults to the lake’s typical season for its latitude and date when the angler ice fishes (open water otherwise) and can be set by hand per lake. “Typical” describes when lakes usually freeze; it is never an ice-safety assessment.
 - Ice mode always displays: “BiteCast does not assess ice safety. Check ice yourself and follow local guidance.”
 - Regulations are summaries; the linked official source governs.
 - Onboarding preview offers “Unlock the full forecast” (paywall) or “Continue with free logging”, which finishes onboarding on the free plan without showing the paywall.

@@ -52,3 +52,31 @@ export function reasonIcon(reason: string): IconName {
 export const reasonIsNegative = (reason: string) => /bright|slow|high/i.test(reason);
 
 export const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+
+/** Compact clock label for field use: “7 am”, “7:30 am”, “noon”. */
+export function shortClock(value: string | Date) {
+  const date = new Date(value);
+  const h = date.getHours();
+  const m = date.getMinutes();
+  if (h === 12 && m === 0) return 'noon';
+  if (h === 0 && m === 0) return 'midnight';
+  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, '0')}` : ''} ${h < 12 ? 'am' : 'pm'}`;
+}
+
+/** Compact range: “7–10 am”, “11 am–2 pm”, “6:30–8 pm”. */
+export function shortRange(start: string | Date, end: string | Date) {
+  const a = shortClock(start);
+  const b = shortClock(end);
+  const suffix = (label: string) => label.split(' ')[1];
+  if (suffix(a) && suffix(a) === suffix(b)) return `${a.split(' ')[0]}–${b}`;
+  return `${a}–${b}`;
+}
+
+/** “3 h 12 min”, “45 min”, “2 h”. */
+export function formatDuration(ms: number) {
+  const total = Math.max(0, Math.round(ms / 60_000));
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (!h) return `${m} min`;
+  return m ? `${h} h ${m} min` : `${h} h`;
+}

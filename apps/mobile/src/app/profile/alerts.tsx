@@ -11,6 +11,7 @@ import { lakeById } from '@/data/lakes';
 import { formatDay, formatTime } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { useNow } from '@/lib/use-now';
+import { useLakeCondition } from '@/features/lake-season';
 import { useAppStore } from '@/store/use-app-store';
 import type { AlertPreference } from '@/types/app';
 
@@ -112,8 +113,8 @@ export default function AlertsScreen() {
 }
 
 function LakeAlertCard({ preference, disabled, onChange, quiet }: { preference: AlertPreference; disabled: boolean; onChange: (patch: Partial<AlertPreference>) => void; quiet: [string, string] }) {
-  const season = useAppStore((state) => state.settings.season);
   const lake = lakeById(preference.lakeId);
+  const season = useLakeCondition(lake.id).season;
   const now = useNow();
   const active = preference.enabled && !disabled;
   const next = upcomingWindows(getForecast(lake.id, season).windows, now).find((window) => window.peakScore >= preference.threshold);

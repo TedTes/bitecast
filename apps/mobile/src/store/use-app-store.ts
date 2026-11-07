@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { Account, AlertPreference, AppSettings, CatchLog, LakeRequest } from '@/types/app';
+import type { Season } from '@bitecast/engine';
+import type { Account, AlertPreference, AppSettings, CatchLog, LakeRequest, LakeSeasons } from '@/types/app';
 import { loadAppState, loadCatchLogs, loadLakeRequests, removeAllLocalData, saveAppState, saveCatchLog, saveLakeRequest, type LocalAppState } from '@/db/database';
 import { getCloudAccount, submitLakeRequest, syncCatchLogs, syncPreferences, type Connectivity } from '@/api/adapters';
 
@@ -8,7 +9,10 @@ type AppState = {
   catchLogs: CatchLog[]; alerts: AlertPreference[]; lakeRequests: LakeRequest[]; account: Account; connectivity: Connectivity;
   /** Id + time of the most recent successful local save, used for “Saved” confirmation. */
   lastSaved: { id: string; at: number } | null;
-  hydrate: () => Promise<void>; setSeason: (season: AppSettings['season']) => void;
+  lakeSeasons: LakeSeasons;
+  hydrate: () => Promise<void>; setIceFishing: (iceFishing: boolean) => void;
+  /** Manual per-lake condition; `null` returns the lake to automatic. */
+  setLakeSeason: (lakeId: string, season: Season | null) => void; resetLakeSeasons: () => void;
   setRegion: (region: string) => void; toggleLake: (lakeId: string) => void; completeOnboarding: (isPro?: boolean) => void;
   setPro: (isPro: boolean) => void;
   /** SQLite first: resolves only after the local write succeeds; throws if it fails. */
@@ -23,14 +27,21 @@ type AppState = {
 };
 export const useAppStore = create<AppState>((set, get) => ({
   hydrated: false, onboardingComplete: false, region: 'All Ontario', followedLakeIds: ['lake-erie', 'bay-of-quinte'],
-  settings: { season: 'open_water', units: 'metric', quietStart: '22:00', quietEnd: '06:00', alertsEnabled: true },
-  isPro: false, catchLogs: [], alerts: [], lakeRequests: [], account: { status: 'anonymous' }, connectivity: 'unknown', lastSaved: null,
+  settings: { iceFishing: false, units: 'metric', quietStart: '22:00', quietEnd: '06:00', alertsEnabled: true },
+  isPro: false, catchLogs: [], alerts: [], lakeRequests: [], account: { status: 'anonymous' }, connectivity: 'unknown', lastSaved: null, lakeSeasons: {},
   hydrate: async () => {
     const [catchLogs, lakeRequests, localState] = await Promise.all([loadCatchLogs(), loadLakeRequests(), loadAppState()]);
-    set({ ...localState, catchLogs, lakeRequests, hydrated: true });
+    set({ ...migrateLocalState(localState), catchLogs, lakeRequests, hydrated: true });
     getCloudAccount().then((account) => set({ account })).catch(() => undefined);
   },
-  setSeason: (season) => set((state) => ({ settings: { ...state.settings, season } })), setRegion: (region) => set({ region }),
+  setIceFishing: (iceFishing) => set((state) => ({ settings: { ...state.settings, iceFishing } })),
+  setLakeSeason: (lakeId, season) => set((state) => {
+    const lakeSeasons = { ...state.lakeSeasons };
+    if (season) lakeSeasons[lakeId] = season; else delete lakeSeasons[lakeId];
+    return { lakeSeasons };
+  }),
+  resetLakeSeasons: () => set({ lakeSeasons: {} }),
+  setRegion: (region) => set({ region }),
   toggleLake: (lakeId) => set((state) => ({ followedLakeIds: state.followedLakeIds.includes(lakeId) ? state.followedLakeIds.filter((id) => id !== lakeId) : state.followedLakeIds.length < 5 ? [...state.followedLakeIds, lakeId] : state.followedLakeIds })),
   completeOnboarding: (isPro = false) => set({ onboardingComplete: true, isPro }), setPro: (isPro) => set({ isPro }),
   addCatchLog: async (log) => {
@@ -40,7 +51,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   syncPending: async () => {
     const state = get();
-    await syncPreferences({ settings: state.settings, followedLakeIds: state.followedLakeIds, alerts: state.alerts, region: state.region });
+    await syncPreferences({ settings: state.settings, followedLakeIds: state.followedLakeIds, alerts: state.alerts, region: state.region, lakeSeasons: state.lakeSeasons });
     const pending = get().catchLogs.filter((log) => log.syncState !== 'synced');
     if (pending.length) {
       const { syncedIds } = await syncCatchLogs(pending);
@@ -82,6 +93,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 }));
 
+/** Saved states from before per-lake conditions stored a single global `season`. */
+function migrateLocalState(local: Awaited<ReturnType<typeof loadAppState>>) {
+  if (!local) return {};
+  const legacy = local.settings as AppSettings & { season?: Season };
+  const { season, ...rest } = legacy;
+  const settings: AppSettings = { ...rest, iceFishing: typeof legacy.iceFishing === 'boolean' ? legacy.iceFishing : season === 'ice' };
+  return { ...local, settings, lakeSeasons: local.lakeSeasons ?? {} };
+}
+
 let lastPersistedState = '';
 useAppStore.subscribe((state) => {
   if (!state.hydrated) return;
@@ -92,6 +112,7 @@ useAppStore.subscribe((state) => {
     settings: state.settings,
     isPro: state.isPro,
     alerts: state.alerts,
+    lakeSeasons: state.lakeSeasons,
   };
   const serialized = JSON.stringify(snapshot);
   if (serialized === lastPersistedState) return;

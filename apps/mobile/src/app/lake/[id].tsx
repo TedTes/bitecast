@@ -3,13 +3,14 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { ConfidenceMeter, ForecastFootnote, HourlyChart, ReasonChips, ScoreReadout, SevenDayOutlook, WindowCard, conditionLabel, upcomingWindows } from '@/components/forecast';
 import { Icon } from '@/components/icon';
-import { Banner, Button, Card, EmptyState, IceSafetyNotice, ListRow, OfflineBanner, Reveal, Row, Screen, SectionHeader, T } from '@/components/ui';
+import { Banner, Button, Card, EmptyState, IceSafetyNotice, LinkButton, ListRow, OfflineBanner, Reveal, Row, Screen, SectionHeader, Segmented, T } from '@/components/ui';
 import { colors, hitSlop, radius, spacing, touch } from '@/constants/theme';
 import { DATA_SOURCE_LABEL, freshness, useForecast } from '@/data/forecasts';
 import { lakes } from '@/data/lakes';
 import { capitalize } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { useNow } from '@/lib/use-now';
+import { seasonLabel, sourceLabel, useLakeCondition } from '@/features/lake-season';
 import { useAppStore } from '@/store/use-app-store';
 
 const INITIAL_WINDOWS = 3;
@@ -17,7 +18,9 @@ const INITIAL_WINDOWS = 3;
 export default function LakeForecastScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
   const lake = lakes.find((item) => item.id === id);
-  const season = useAppStore((state) => state.settings.season);
+  const condition = useLakeCondition(lake?.id ?? '');
+  const season = condition.season;
+  const setLakeSeason = useAppStore((state) => state.setLakeSeason);
   const followed = useAppStore((state) => state.followedLakeIds);
   const toggle = useAppStore((state) => state.toggleLake);
   const isPro = useAppStore((state) => state.isPro);
@@ -71,6 +74,26 @@ export default function LakeForecastScreen() {
         </Pressable>
       </Row>
 
+      <Card style={{ gap: spacing.sm, paddingVertical: spacing.md }}>
+        <Row justify="space-between" align="center">
+          <T variant="callout" weight="700">Fishing this lake on</T>
+          {condition.source === 'manual' ? (
+            <LinkButton onPress={() => setLakeSeason(lake.id, null)}>Use typical</LinkButton>
+          ) : null}
+        </Row>
+        <Segmented
+          label={`Fishing ${lake.name} on`}
+          value={season}
+          onChange={(next) => setLakeSeason(lake.id, next)}
+          options={[
+            { label: 'Open water', value: 'open_water', icon: 'open-water' },
+            { label: 'Ice', value: 'ice', icon: 'ice' },
+          ]}
+        />
+        <T variant="caption" color={colors.inkMuted} accessibilityLiveRegion="polite">
+          {sourceLabel(condition)} · scores and tactics use {seasonLabel(season).toLowerCase()} conditions.
+        </T>
+      </Card>
       {season === 'ice' ? <IceSafetyNotice /> : null}
       <OfflineBanner />
       {query.isRefetchError ? <Banner tone="warning" title="Couldn’t refresh" body="Showing the forecast saved on this device." action={{ label: 'Try again', onPress: () => query.refetch() }} live /> : null}

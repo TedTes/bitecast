@@ -8,15 +8,16 @@ import { colors, radius, spacing } from '@/constants/theme';
 import { useForecast } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { capitalize, durationLabel, formatDay, formatHour, formatWind } from '@/lib/format';
+import { useLakeCondition } from '@/features/lake-season';
 import { useAppStore } from '@/store/use-app-store';
 
 type Contributor = { icon: IconName; name: string; role: 'Primary' | 'Supporting' | 'Minor'; weight: number; observed: string };
 
 export default function WindowDetailScreen() {
   const { id = '', start = '' } = useLocalSearchParams<{ id: string; start: string }>();
-  const season = useAppStore((state) => state.settings.season);
   const units = useAppStore((state) => state.settings.units);
   const lake = lakeById(id);
+  const season = useLakeCondition(lake.id).season;
   const { data: forecast } = useForecast(lake.id, season);
   const window = forecast.windows.find((item) => item.start === start);
 

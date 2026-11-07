@@ -9,18 +9,19 @@ import { Banner, Button, Card, Chip, IceSafetyNotice, Row, Screen, Segmented, T 
 import { colors, elevation, radius, spacing } from '@/constants/theme';
 import { forecastQuery } from '@/data/forecasts';
 import { lakes } from '@/data/lakes';
-import { capitalize, formatDay } from '@/lib/format';
+import { formatDay } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
+import { seasonLabel, useConditionResolver } from '@/features/lake-season';
 import { useAppStore } from '@/store/use-app-store';
 
 export default function MapScreen() {
   const followed = useAppStore((state) => state.followedLakeIds);
-  const season = useAppStore((state) => state.settings.season);
+  const resolve = useConditionResolver();
   const toggle = useAppStore((state) => state.toggleLake);
-  const [view, setView] = useState<'chart' | 'list'>('chart');
+  const [view, setView] = useState<'map' | 'list'>('map');
   const [selectedId, setSelectedId] = useState<string>(followed[0] ?? lakes[0].id);
   const mode = useMapMode();
-  const queries = useQueries({ queries: lakes.map((lake) => forecastQuery(lake.id, season)) });
+  const queries = useQueries({ queries: lakes.map((lake) => forecastQuery(lake.id, resolve(lake.id).season)) });
 
   const summaries = lakes.map((lake, index) => {
     const forecast = queries[index].data;
@@ -57,12 +58,13 @@ export default function MapScreen() {
             accessibilityLabel={mode === 'cached' ? 'Offline chart. Lake positions are stored on this device.' : 'Live map'}
           />
         </Row>
-        <Segmented label="View" value={view} onChange={setView} options={[{ label: 'Chart', value: 'chart', icon: 'map' }, { label: 'List', value: 'list', icon: 'filter' }]} />
-        {view === 'chart' ? <T variant="caption" color={colors.inkMuted}>Schematic chart · not to scale · not for navigation</T> : null}
-        {season === 'ice' ? <IceSafetyNotice compact /> : null}
+        <Segmented label="View" value={view} onChange={setView} options={[{ label: 'Map', value: 'map', icon: 'map' }, { label: 'List', value: 'list', icon: 'filter' }]} />
+        {view === 'map' ? <T variant="caption" color={colors.inkMuted}>{mode === 'cached' ? 'Offline chart · not to scale · not for navigation' : 'Not for navigation'}</T> : null}
+        {view === 'map' && resolve(selected.lake.id).season === 'ice' ? <IceSafetyNotice compact /> : null}
+        {view === 'list' && lakes.some((lake) => resolve(lake.id).season === 'ice') ? <IceSafetyNotice compact /> : null}
       </View>
 
-      {view === 'chart' ? (
+      {view === 'map' ? (
         <>
           <View style={{ flex: 1, minHeight: 160 }}>
             <LakeMap pins={pins} selectedId={selectedId} onSelect={setSelectedId} />
@@ -71,7 +73,7 @@ export default function MapScreen() {
             <Row gap={spacing.md} align="flex-start">
               <View style={{ flex: 1, gap: 2 }}>
                 <T variant="headline">{selected.lake.name}</T>
-                <T variant="caption" color={colors.inkMuted}>{selected.lake.region} · {capitalize(selected.lake.clarity)} water</T>
+                <T variant="caption" color={colors.inkMuted}>{selected.lake.region} · {seasonLabel(resolve(selected.lake.id).season)}</T>
                 <Row gap={6} style={{ marginTop: spacing.xs }}>
                   <Icon name={selected.window ? 'clock' : 'info'} size={14} color={selected.window ? colors.sunriseInk : colors.inkMuted} />
                   <T variant="callout" weight="700" color={selected.window ? colors.ink : colors.inkSoft}>

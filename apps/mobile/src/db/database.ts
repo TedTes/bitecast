@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import type { AlertPreference, AppSettings, CatchLog, LakeRequest } from '@/types/app';
+import type { LakeSeasons, AlertPreference, AppSettings, CatchLog, LakeRequest } from '@/types/app';
 
 export type LocalAppState = {
   onboardingComplete: boolean;
@@ -8,6 +8,7 @@ export type LocalAppState = {
   settings: AppSettings;
   isPro: boolean;
   alerts: AlertPreference[];
+  lakeSeasons?: LakeSeasons;
 };
 
 let database: SQLite.SQLiteDatabase | null = null;
