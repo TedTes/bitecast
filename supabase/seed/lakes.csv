@@ -1,0 +1,9 @@
+slug,name,region,province_state,country,lat,lon,clarity_class,species,is_active
+lake-erie,Lake Erie,Great Lakes,ON,CA,42.2,-81.2,stained,{walleye},true
+lake-ontario,Lake Ontario,Great Lakes,ON,CA,43.6,-77.9,clear,{walleye},true
+bay-of-quinte,Bay of Quinte,Eastern Ontario,ON,CA,44.16,-77.18,stained,{walleye},true
+lake-simcoe,Lake Simcoe,Central Ontario,ON,CA,44.43,-79.37,clear,{walleye},true
+rainy-lake,Rainy Lake,Northwestern Ontario,ON,CA,48.62,-93.16,stained,{walleye},true
+lake-nipissing,Lake Nipissing,Northeastern Ontario,ON,CA,46.25,-79.78,stained,{walleye},true
+lake-of-the-woods,Lake of the Woods,Northwestern Ontario,ON,CA,49.1,-94.1,stained,{walleye},true
+french-river,French River,Northeastern Ontario,ON,CA,46.03,-80.52,murky,{walleye},true
