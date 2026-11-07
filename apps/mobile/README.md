@@ -1,56 +1,49 @@
-# Welcome to your Expo app 👋
+# BiteCast mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Expo (SDK 58) + Expo Router app for BiteCast walleye forecasts. Product rules live in
+[`docs/product-spec.md`](../../docs/product-spec.md); coding rules in [`AGENTS.md`](../../AGENTS.md).
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Run
 
 ```bash
-npm run reset-project
+npm install                 # from the repo root (npm workspaces)
+cd apps/mobile
+npx expo run:ios            # build + install the dev client (needed after adding native modules)
+npx expo start --dev-client # day-to-day JS development
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+Rebuild the dev client (`npx expo run:ios` / `run:android`) whenever a native dependency
+changes — for example `react-native-maps`. Until then the app falls back safely (the Map tab
+shows the offline chart).
 
-### Other setup steps
+## Configuration
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+All external services are optional in development; the app runs on local demo data.
 
-## Learn more
+| Variable | Used for |
+| --- | --- |
+| `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Sync, accounts, lake requests |
+| `EXPO_PUBLIC_REVENUECAT_IOS_KEY`, `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` | Purchases (prices are dev placeholders until set) |
+| `EXPO_PUBLIC_POSTHOG_KEY`, `EXPO_PUBLIC_SENTRY_DSN` | Analytics, crash reporting |
+| `EXPO_PUBLIC_MAP_PROVIDER` | `react-native-maps` (default) or `cached` (offline chart only) |
+| `GOOGLE_MAPS_ANDROID_API_KEY` | Build-time Google Maps key for Android (see `app.config.js`); iOS uses Apple Maps, no key |
+| `EXPO_PUBLIC_TERMS_URL`, `EXPO_PUBLIC_PRIVACY_URL` | Paywall legal links |
 
-To learn more about developing your project with Expo, look at the following resources:
+Never put service-role keys in the app.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Check
 
-## Join the community
+```bash
+npm run typecheck           # from the repo root
+npm test                    # engine + app unit tests
+npm --prefix apps/mobile run lint
+cd apps/mobile && npx expo-doctor
+```
 
-Join our community of developers creating universal apps.
+## Where things live
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `src/app` — routes (onboarding, tabs, lake forecast, window detail, logs, profile)
+- `src/components` — design system (`ui.tsx`, `forecast.tsx`), sky arc + lake school, map boundary (`map/`)
+- `src/constants/theme.ts` — colour, type, spacing and score-band tokens
+- `src/api` — the only place external services are called
+- `src/db` — SQLite-first local storage (catch logs are written here before any sync)
