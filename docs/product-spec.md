@@ -15,5 +15,5 @@ Product rules:
 
 Routes: onboarding welcome/season/lakes/preview, paywall, Today, Map, Log, Profile, lake forecast, window detail, regulations, new/edit log, stats, alert settings, account linking, and lake request.
 
-External services are adapter boundaries in v1 development: Supabase, weather ingestion, RevenueCat, PostHog, Sentry, Expo push, and production map tiles. Local demo data and SQLite make the client usable until credentials are supplied.
+Supabase anonymous auth, identity linking, catch-log sync, lake requests, Expo notification permission/token registration, connectivity monitoring, account deletion, RevenueCat entitlement webhooks, and alert delivery are implemented behind credential-safe adapter boundaries. Weather ingestion, forecast persistence, RevenueCat store products, PostHog, Sentry, and production map tiles remain adapter boundaries until provider credentials and licensing decisions are supplied. Local demo data and SQLite keep the client usable without any external configuration.
 

@@ -1,0 +1,14 @@
+project_id = "bitecast"
+
+[api]
+schemas = ["public", "graphql_public", "bitecast"]
+extra_search_path = ["public", "extensions", "bitecast"]
+
+[functions.bitecast-delete-account]
+verify_jwt = false
+
+[functions.bitecast-revenuecat-webhook]
+verify_jwt = false
+
+[functions.bitecast-send-alerts]
+verify_jwt = false

@@ -9,7 +9,7 @@ npm install
 npm run mobile
 ```
 
-Then press `i`, `a`, or `w` in the Expo terminal. The current build uses local demo forecasts and persists catch logs to SQLite. Copy `.env.example` values into EAS environment variables when the external services are ready.
+Then press `i`, `a`, or `w` in the Expo terminal. The current build uses local demo forecasts and persists catch logs to SQLite first. With the two public Supabase values configured, anonymous auth, catch sync, lake requests, identity linking, push-token registration and account recovery become active automatically.
 
 ## Verify
 
@@ -22,6 +22,6 @@ cd apps/mobile && npx expo-doctor
 
 ## What is live vs placeholder
 
-Live locally: all routes, onboarding, paywall states, rules-based engine, explained forecasts, lake comparison/map fallback, offline-first catch-log storage, history, stats, settings, alerts UI, auth/request flows and schema/RLS migrations.
+Live locally: all routes, onboarding, paywall states, rules-based engine, explained forecasts, lake comparison/map fallback, offline-first catch-log storage, history, stats, settings, alerts UI, real connectivity/notification permission handling, Supabase auth/sync/request adapters, schema/RLS migrations, and Edge Functions for account deletion, RevenueCat entitlements, and alert delivery.
 
-Adapters awaiting credentials/product decisions: licensed weather ingestion, Supabase auth/sync/functions, RevenueCat products, Expo push delivery, PostHog, Sentry, native production map tiles, verified launch regulations and the complete 30–50 lake catalog.
+Adapters awaiting credentials/product decisions: licensed weather ingestion and persisted forecasts, RevenueCat store products, PostHog, Sentry, native production map tiles, verified launch regulations and the complete 30–50 lake catalog.
