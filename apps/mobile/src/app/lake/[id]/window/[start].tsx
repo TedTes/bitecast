@@ -58,7 +58,7 @@ export default function WindowDetailScreen() {
         <T variant="label" color={colors.teal}>{lake.name} · {formatDay(window.start)}</T>
         <Row gap={spacing.md} align="flex-start">
           <View style={{ flex: 1, gap: spacing.xs }}>
-            <T variant="display" accessibilityRole="header">{formatWindow(window)}</T>
+            <T variant="title" accessibilityRole="header">{formatWindow(window)}</T>
             <T variant="callout" color={colors.inkMuted}>{durationLabel(window.start, windowEnd(window))} · peaks near {formatHour(windowPeak(window).ts)}</T>
           </View>
           <ScoreReadout score={window.peakScore} size="lg" caption="Peak" />

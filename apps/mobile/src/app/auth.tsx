@@ -75,7 +75,7 @@ export default function AuthScreen() {
     >
       <View style={{ gap: spacing.sm }}>
         <T variant="label" color={colors.teal}>Optional</T>
-        <T variant="display" accessibilityRole="header">Keep your logs across devices.</T>
+        <T variant="title" accessibilityRole="header">Keep your logs across devices.</T>
         <T variant="body" color={colors.inkMuted}>You’re using BiteCast anonymously. Linking adds a sign-in to the account you already have — nothing moves or resets.</T>
       </View>
 

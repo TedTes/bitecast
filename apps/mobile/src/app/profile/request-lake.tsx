@@ -83,7 +83,7 @@ export default function RequestLakeScreen() {
   return (
     <Screen header footer={<Button icon="request" loading={sending} loadingLabel="Saving…" onPress={send}>Send request</Button>}>
       <View style={{ gap: spacing.sm }}>
-        <T variant="display" accessibilityRole="header">Where should BiteCast go next?</T>
+        <T variant="title" accessibilityRole="header">Where should BiteCast go next?</T>
         <T variant="body" color={colors.inkMuted}>Tell us about a walleye lake you fish. Requests help us decide which lakes to research next.</T>
       </View>
       <OfflineBanner what="Requests are queued on this device." />

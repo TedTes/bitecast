@@ -119,6 +119,21 @@ export function ReasonChips({ reasons, limit = 3, tone = 'light' }: { reasons: s
   );
 }
 
+/** Light inline reasons (icon + text), for dense cards where pills would stack. */
+export function ReasonLine({ reasons, limit = 2 }: { reasons: string[]; limit?: number }) {
+  const shown = reasons.length ? reasons.slice(0, limit) : ['Mixed conditions'];
+  return (
+    <View style={styles.reasonLine} accessible accessibilityLabel={`Reasons: ${shown.join(', ')}`}>
+      {shown.map((reason) => (
+        <Row key={reason} gap={5}>
+          <Icon name={reasonIcon(reason)} size={13} color={reasonIsNegative(reason) ? colors.sunriseInk : colors.teal} />
+          <T variant="caption" color={colors.inkSoft}>{reason}</T>
+        </Row>
+      ))}
+    </View>
+  );
+}
+
 /** Numbered reason list for detail screens. */
 export function ReasonList({ reasons }: { reasons: string[] }) {
   return (
@@ -160,7 +175,7 @@ export function WindowCard({ window, onPress, label }: { window: ForecastWindow;
           <T variant="caption" color={colors.inkMuted}>Peaks near {formatHour(peak.ts)} · {window.hours.length} h above 60</T>
         </View>
       </Row>
-      <ReasonChips reasons={window.reasons} />
+      <ReasonLine reasons={window.reasons} limit={3} />
       <ConfidenceMeter value={window.confidence} />
       <Divider />
       <Row gap={spacing.md} align="flex-start">
@@ -208,7 +223,7 @@ export function HourlyChart({ hours, windows }: { hours: ForecastHour[]; windows
           </View>
           <ConfidenceMeter value={hour.confidence} />
         </Row>
-        <ReasonChips reasons={hour.reasons} limit={2} />
+        <ReasonLine reasons={hour.reasons} />
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chart} accessibilityLabel="Hourly bite scores for the next 24 hours">
         {data.map((item, index) => {
@@ -422,6 +437,7 @@ const styles = StyleSheet.create({
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   bar: { width: 4, borderRadius: 1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  reasonLine: { flexDirection: 'row', flexWrap: 'wrap', columnGap: spacing.lg, rowGap: 4 },
   darkChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: colors.deepRaised, borderWidth: 1, borderColor: colors.deepLine },
   reasonIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
   chart: { paddingHorizontal: spacing.md, gap: 2 },

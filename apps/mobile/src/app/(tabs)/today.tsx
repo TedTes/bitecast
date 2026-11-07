@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import type { ForecastWindow, LakeForecast, Season } from '@bitecast/engine';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { ConfidenceMeter, DayStrip, ForecastFootnote, ScoreReadout, conditionLabel, upcomingWindows, windowEnd } from '@/components/forecast';
+import { ConfidenceMeter, DayStrip, ForecastFootnote, ReasonLine, ScoreReadout, conditionLabel, upcomingWindows, windowEnd } from '@/components/forecast';
 import { Icon } from '@/components/icon';
 import { SkyArc } from '@/components/sky-arc';
 import { Banner, Button, Card, Divider, EmptyState, ErrorState, IceSafetyNotice, LinkButton, OfflineBanner, Reveal, Row, Screen, SkeletonCard, T } from '@/components/ui';
@@ -12,7 +12,7 @@ import { colors, radius, scoreBand, scoreBands, spacing, touch } from '@/constan
 import { DATA_SOURCE_LABEL, forecastQuery, freshness } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { seasonLabel, useConditionResolver } from '@/features/lake-season';
-import { formatDay, formatDuration, reasonIcon, shortClock, shortRange } from '@/lib/format';
+import { formatDay, formatDuration, shortClock, shortRange } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { useNow } from '@/lib/use-now';
 import { useAppStore } from '@/store/use-app-store';
@@ -146,14 +146,7 @@ function SkyCard({ entry, isTop, index, onIndexChange, now }: { entry: LakeData;
           </View>
           <View style={{ marginBottom: 7 }}><ConfidenceMeter value={hour.confidence} /></View>
         </Row>
-        <View style={styles.reasons} accessibilityLabel={`Reasons: ${hour.reasons.slice(0, 2).join(', ') || 'no standout conditions'}`}>
-          {(hour.reasons.length ? hour.reasons.slice(0, 2) : ['Mixed conditions']).map((reason) => (
-            <Row key={reason} gap={5}>
-              <Icon name={reasonIcon(reason)} size={13} color={colors.teal} />
-              <T variant="caption" color={colors.inkSoft}>{reason}</T>
-            </Row>
-          ))}
-        </View>
+        <ReasonLine reasons={hour.reasons} />
         {containing ? (
           <Row gap={spacing.sm} style={[styles.status, styles.statusLive]}>
             <View style={styles.windowSwatch} />
@@ -249,7 +242,6 @@ function LakeList({ entries, focusId, onFocus, now, canAdd, count }: { entries: 
 
 const styles = StyleSheet.create({
   skyHeader: { paddingBottom: spacing.sm, marginBottom: -spacing.xs, borderBottomWidth: StyleSheet.hairlineWidth * 2, borderBottomColor: colors.line, marginHorizontal: -spacing.lg, paddingHorizontal: spacing.lg },
-  reasons: { flexDirection: 'row', flexWrap: 'wrap', columnGap: spacing.lg, rowGap: 4 },
   status: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radius.sm, backgroundColor: colors.fog },
   statusLive: { backgroundColor: colors.sunriseTint },
   sky: { gap: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.white },

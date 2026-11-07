@@ -29,7 +29,7 @@ export default function StatsScreen() {
       <Screen header tab footer={<Button icon="plus" onPress={() => router.push('/log/new')}>Log a trip</Button>}>
         <View style={{ gap: spacing.xs }}>
           <T variant="label" color={colors.teal}>Personal insights</T>
-          <T variant="display" accessibilityRole="header">Your patterns</T>
+          <T variant="title" accessibilityRole="header">Your patterns</T>
         </View>
         <View style={{ alignItems: 'center' }} importantForAccessibility="no-hide-descendants">
           <WalleyeArt width={220} tone="light" />
@@ -74,7 +74,7 @@ export default function StatsScreen() {
     <Screen header tab>
       <View style={{ gap: spacing.xs }}>
         <T variant="label" color={colors.teal}>Personal insights · {logs.length} trips</T>
-        <T variant="display" accessibilityRole="header">Your patterns</T>
+        <T variant="title" accessibilityRole="header">Your patterns</T>
       </View>
 
       <Row gap={spacing.md} align="stretch">

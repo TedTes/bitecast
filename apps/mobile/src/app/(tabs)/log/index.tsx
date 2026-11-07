@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/icon';
-import { Banner, Button, Card, ChoiceChips, EmptyState, IconButton, ProgressBar, Reveal, Row, Screen, SectionHeader, SkeletonCard, T } from '@/components/ui';
+import { Banner, Button, Card, ChoiceChips, EmptyState, ProgressBar, Reveal, Row, Screen, SectionHeader, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
 import { colors, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
 import { integrationsReady } from '@/api/config';
@@ -49,9 +49,8 @@ export default function LogListScreen() {
       <Row gap={spacing.md} align="flex-end">
         <View style={{ flex: 1, gap: spacing.xs }}>
           <T variant="label" color={colors.teal}>Your field notes</T>
-          <T variant="display" accessibilityRole="header">Catch log</T>
+          <T variant="title" accessibilityRole="header">Catch log</T>
         </View>
-        <IconButton icon="plus" label="Log a trip" tone="ink" size={48} onPress={() => router.push('/log/new')} />
       </Row>
 
       <Card variant="tint" style={{ gap: spacing.md }}>

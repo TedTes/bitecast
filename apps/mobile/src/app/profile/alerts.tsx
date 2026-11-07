@@ -60,7 +60,7 @@ export default function AlertsScreen() {
   return (
     <Screen header>
       <View style={{ gap: spacing.sm }}>
-        <T variant="display" accessibilityRole="header">Window alerts</T>
+        <T variant="title" accessibilityRole="header">Window alerts</T>
         <T variant="body" color={colors.inkMuted}>At most one alert per lake per day, before a window that meets your bar.</T>
       </View>
 

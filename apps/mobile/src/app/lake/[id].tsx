@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { ConfidenceMeter, ForecastFootnote, HourlyChart, ReasonChips, ScoreReadout, SevenDayOutlook, WindowCard, conditionLabel, upcomingWindows } from '@/components/forecast';
+import { ConfidenceMeter, ForecastFootnote, HourlyChart, ReasonLine, ScoreReadout, SevenDayOutlook, WindowCard, conditionLabel, upcomingWindows } from '@/components/forecast';
 import { Icon } from '@/components/icon';
 import { Banner, Button, Card, EmptyState, IceSafetyNotice, LinkButton, ListRow, OfflineBanner, Reveal, Row, Screen, SectionHeader, Segmented, T } from '@/components/ui';
 import { colors, hitSlop, radius, spacing, touch } from '@/constants/theme';
@@ -50,7 +50,7 @@ export default function LakeForecastScreen() {
       <Row gap={spacing.md} align="flex-end">
         <View style={{ flex: 1, gap: 2 }}>
           <T variant="label" color={colors.teal}>{lake.region} · {capitalize(lake.clarity)} water</T>
-          <T variant="display" accessibilityRole="header">{lake.name}</T>
+          <T variant="title" accessibilityRole="header">{lake.name}</T>
           <Row gap={6}>
             <Icon name={fresh.state === 'stale' ? 'warning' : 'clock'} size={13} color={fresh.state === 'stale' ? colors.warning : colors.inkMuted} />
             <T variant="caption" color={fresh.state === 'stale' ? colors.warning : colors.inkMuted}>{fresh.label} · {DATA_SOURCE_LABEL}</T>
@@ -100,7 +100,7 @@ export default function LakeForecastScreen() {
       {!query.isRefetchError && fresh.state === 'stale' ? <Banner tone="warning" icon="clock" title={fresh.label} body="Conditions may have changed since this forecast was saved." action={{ label: 'Refresh', onPress: () => query.refetch() }} /> : null}
 
       <Reveal index={0}>
-        <Card variant="tint" style={{ gap: spacing.md }}>
+        <Card style={{ gap: spacing.md, backgroundColor: colors.white }}>
           <Row gap={spacing.lg} align="center">
             <ScoreReadout score={current.score} size="lg" caption="Now" />
             <View style={{ flex: 1, gap: spacing.xs }}>
@@ -109,7 +109,7 @@ export default function LakeForecastScreen() {
               <ConfidenceMeter value={current.confidence} />
             </View>
           </Row>
-          <ReasonChips reasons={current.reasons} />
+          <ReasonLine reasons={current.reasons} limit={3} />
         </Card>
       </Reveal>
 
