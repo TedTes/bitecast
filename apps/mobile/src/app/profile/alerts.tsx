@@ -8,7 +8,7 @@ import { colors, scoreBand, scoreBands, spacing } from '@/constants/theme';
 import { getNotificationPermission, requestNotificationPermission, type NotificationPermission } from '@/api/adapters';
 import { getForecast } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
-import { formatDay, formatTime } from '@/lib/format';
+import { formatDay, shortClock } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { useNow } from '@/lib/use-now';
 import { useLakeCondition } from '@/features/lake-season';
@@ -145,8 +145,8 @@ function LakeAlertCard({ preference, disabled, onChange, quiet }: { preference: 
             <T variant="caption" color={colors.inkSoft} style={{ flex: 1 }}>
               {next && alertAt
                 ? suppressed
-                  ? `Next match: ${formatDay(next.start)} ${formatTime(next.start)} (peak ${next.peakScore}). The alert would land in quiet hours, so it would be skipped.`
-                  : `Next match: ${formatDay(next.start)} ${formatTime(next.start)} (peak ${next.peakScore}). You’d be alerted around ${formatTime(alertAt)}.`
+                  ? `Next match: ${formatDay(next.start)} ${shortClock(next.start)} (peak ${next.peakScore}). The alert would land in quiet hours, so it would be skipped.`
+                  : `Next match: ${formatDay(next.start)} ${shortClock(next.start)} (peak ${next.peakScore}). You’d be alerted around ${shortClock(alertAt)}.`
                 : `No window reaches ${preference.threshold} in this week’s forecast.`}
             </T>
           </View>

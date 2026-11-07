@@ -12,7 +12,7 @@ import { colors, radius, scoreBand, scoreBands, spacing, touch } from '@/constan
 import { DATA_SOURCE_LABEL, forecastQuery, freshness } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { seasonLabel, useConditionResolver } from '@/features/lake-season';
-import { formatDay, formatDuration, formatTime, reasonIcon, shortRange } from '@/lib/format';
+import { formatDay, formatDuration, reasonIcon, shortClock, shortRange } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { useNow } from '@/lib/use-now';
 import { useAppStore } from '@/store/use-app-store';
@@ -121,7 +121,7 @@ function SkyCard({ entry, isTop, index, onIndexChange, now }: { entry: LakeData;
   const hourMs = new Date(hour.ts).getTime();
   const containing = forecast.windows.find((w) => w.hours.some((h) => h.ts === hour.ts));
   const next = containing ? undefined : upcomingWindows(forecast.windows, Math.max(now, hourMs)).find((w) => new Date(w.start).getTime() > hourMs);
-  const timeLabel = index === 0 ? 'Now' : `${formatDay(hour.ts)} · ${formatTime(hour.ts)}`;
+  const timeLabel = index === 0 ? 'Now' : `${formatDay(hour.ts)} · ${shortClock(hour.ts)}`;
 
   return (
     <Card style={styles.sky}>

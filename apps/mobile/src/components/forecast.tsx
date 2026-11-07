@@ -3,7 +3,7 @@ import type { Confidence as ConfidenceLevel, ForecastHour, ForecastWindow } from
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, Keyframe } from 'react-native-reanimated';
 import { colors, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
-import { capitalize, formatDay, formatHour, formatTime, reasonIcon, reasonIsNegative } from '@/lib/format';
+import { capitalize, formatDay, formatHour, formatTime, reasonIcon, reasonIsNegative, shortClock, shortRange } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { Icon } from './icon';
 import { Card, Chip, Divider, Row, T } from './ui';
@@ -14,7 +14,8 @@ type Tone = 'light' | 'dark';
 
 /** Engine `end` is the start of the last hour; the window runs until the end of that hour. */
 export const windowEnd = (window: ForecastWindow) => new Date(new Date(window.end).getTime() + 3_600_000).toISOString();
-export const formatWindow = (window: ForecastWindow) => `${formatTime(window.start)} – ${formatTime(windowEnd(window))}`;
+/** Compact field format: “7–10 am”, “11 am–2 pm”. */
+export const formatWindow = (window: ForecastWindow) => shortRange(window.start, windowEnd(window));
 export const windowPeak = (window: ForecastWindow) => [...window.hours].sort((a, b) => b.score - a.score)[0];
 export const conditionLabel = (score: number) => `${scoreBands[scoreBand(score)].label} conditions`;
 export const scoreColor = (score: number) => scoreBands[scoreBand(score)].color;
@@ -199,7 +200,7 @@ export function HourlyChart({ hours, windows }: { hours: ForecastHour[]; windows
       <View style={{ paddingHorizontal: spacing.lg, gap: spacing.sm }} accessibilityLiveRegion="polite">
         <Row justify="space-between" align="flex-end">
           <View>
-            <T variant="label" color={colors.inkMuted}>{selected === 0 ? 'Now' : `${formatDay(hour.ts)} · ${formatTime(hour.ts)}`}</T>
+            <T variant="label" color={colors.inkMuted}>{selected === 0 ? 'Now' : `${formatDay(hour.ts)} · ${shortClock(hour.ts)}`}</T>
             <Row gap={spacing.sm} align="flex-end">
               <T variant="numeralL">{hour.score}</T>
               <T variant="subhead" color={band.color} style={{ marginBottom: 5 }}>{band.label}</T>
