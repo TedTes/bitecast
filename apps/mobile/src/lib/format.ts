@@ -80,3 +80,7 @@ export function formatDuration(ms: number) {
   if (!h) return `${m} min`;
   return m ? `${h} h ${m} min` : `${h} h`;
 }
+
+/** Short label for tight spaces like map pins: “Lake of the Woods” → “Woods”, “Bay of Quinte” → “Quinte”. */
+export const shortLakeName = (name: string) =>
+  name.replace(/^(Lake of the |Lake |Bay of )/i, '').replace(/ (Lake|River|Bay)$/i, '') || name;

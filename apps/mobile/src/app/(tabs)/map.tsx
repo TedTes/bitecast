@@ -70,20 +70,21 @@ export default function MapScreen() {
             <LakeMap pins={pins} selectedId={selectedId} onSelect={setSelectedId} />
           </View>
           <View style={styles.sheet} accessibilityLiveRegion="polite">
-            <Row gap={spacing.md} align="flex-start">
-              <View style={{ flex: 1, gap: 2 }}>
-                <T variant="headline">{selected.lake.name}</T>
-                <T variant="caption" color={colors.inkMuted}>{selected.lake.region} · {seasonLabel(resolve(selected.lake.id).season)}</T>
-                <Row gap={6} style={{ marginTop: spacing.xs }}>
-                  <Icon name={selected.window ? 'clock' : 'info'} size={14} color={selected.window ? colors.sunriseInk : colors.inkMuted} />
-                  <T variant="callout" weight="700" color={selected.window ? colors.ink : colors.inkSoft}>
+            <Row gap={spacing.md} align="center">
+              <View style={{ flex: 1, gap: 3 }}>
+                <T variant="headline" numberOfLines={1}>{selected.lake.name}</T>
+                <Row gap={6}>
+                  <Icon name={selected.window ? 'clock' : 'info'} size={13} color={selected.window ? colors.sunriseInk : colors.inkMuted} />
+                  <T variant="callout" weight="700" color={selected.window ? colors.ink : colors.inkSoft} numberOfLines={1} style={{ flexShrink: 1 }}>
                     {selected.window ? `${formatDay(selected.window.start)} · ${formatWindow(selected.window)}` : 'No window above 60 in 24 h'}
                   </T>
                 </Row>
+                <T variant="caption" color={colors.inkMuted} numberOfLines={1}>
+                  {seasonLabel(resolve(selected.lake.id).season)} · {(selected.window?.reasons ?? selected.now?.reasons ?? [])[0] ?? 'Mixed conditions'}
+                </T>
               </View>
-              <ScoreReadout score={selected.score} caption={selected.window ? 'Peak' : 'Now'} />
+              <ScoreReadout score={selected.score} size="sm" caption={selected.window ? 'Peak' : 'Now'} />
             </Row>
-            <ReasonChips reasons={selected.window?.reasons ?? selected.now?.reasons ?? []} limit={2} />
             <ConfidenceMeter value={selected.window?.confidence ?? selected.now?.confidence ?? 'Low'} />
             {atLimit ? <T variant="caption" color={colors.inkMuted}>You follow 5 lakes — remove one to follow another.</T> : null}
             <Row gap={spacing.sm}>
@@ -128,6 +129,6 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   screen: { paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0, gap: 0, maxWidth: undefined },
   header: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.md, gap: spacing.md },
-  sheet: { backgroundColor: colors.paper, paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.lg, gap: spacing.md, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, marginTop: -spacing.lg, ...elevation.raised },
+  sheet: { backgroundColor: colors.paper, paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.md, gap: spacing.sm + 2, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, marginTop: -spacing.lg, ...elevation.raised },
   list: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xxl, gap: spacing.md },
 });

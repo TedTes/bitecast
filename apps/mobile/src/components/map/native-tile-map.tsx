@@ -4,6 +4,7 @@ import Constants from 'expo-constants';
 import type MapViewType from 'react-native-maps';
 import type { Region } from 'react-native-maps';
 import { colors, radius, scoreBand, scoreBands } from '@/constants/theme';
+import { shortLakeName } from '@/lib/format';
 import { T } from '../ui';
 import type { LakeMapProps, MapLakePin } from './types';
 
@@ -89,7 +90,7 @@ function createNativeMap(maps: MapsModule): ComponentType<LakeMapProps> {
                   <View style={[styles.stripe, { backgroundColor: active ? band.onDark : band.color }]} />
                   <View style={{ alignItems: 'center', paddingHorizontal: 6 }}>
                     <T variant="numeralS" color={active ? colors.onDark : colors.ink} maxFontSizeMultiplier={1.1}>{pin.score}</T>
-                    <T variant="caption" weight="700" color={active ? band.onDark : band.color} style={styles.band} maxFontSizeMultiplier={1.1}>{band.label.toUpperCase()}</T>
+                    <T variant="caption" weight="700" color={active ? colors.onDarkMuted : colors.inkSoft} style={{ fontSize: 10, lineHeight: 12 }} numberOfLines={1} maxFontSizeMultiplier={1.1}>{shortLakeName(pin.name)}</T>
                   </View>
                   {pin.followed ? <View style={styles.followDot} /> : null}
                 </View>
@@ -105,10 +106,9 @@ function createNativeMap(maps: MapsModule): ComponentType<LakeMapProps> {
 
 const styles = StyleSheet.create({
   pinWrap: { alignItems: 'center' },
-  pin: { flexDirection: 'row', alignItems: 'center', minHeight: 40, minWidth: 50, borderRadius: radius.sm, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.lineStrong, overflow: 'hidden' },
+  pin: { flexDirection: 'row', alignItems: 'center', minHeight: 40, minWidth: 58, borderRadius: radius.sm, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.lineStrong, overflow: 'hidden' },
   pinActive: { backgroundColor: colors.deep, borderColor: colors.deep },
   stripe: { width: 5, alignSelf: 'stretch' },
-  band: { fontSize: 9, lineHeight: 11 },
   followDot: { position: 'absolute', top: 4, right: 4, width: 6, height: 6, borderRadius: 3, backgroundColor: colors.sunrise },
   pointer: { width: 0, height: 0, borderLeftWidth: 6, borderRightWidth: 6, borderTopWidth: 7, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: colors.lineStrong },
 });
