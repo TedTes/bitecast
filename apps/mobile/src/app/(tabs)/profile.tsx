@@ -6,7 +6,7 @@ import { walleyeProfile } from '@bitecast/engine';
 import { Icon } from '@/components/icon';
 import { Banner, Button, Card, Chip, Divider, ICE_SAFETY_TEXT, ListRow, Row, Screen, SectionHeader, Segmented, T, ToggleRow } from '@/components/ui';
 import { colors, radius, spacing } from '@/constants/theme';
-import { integrationStatus, restorePurchases } from '@/api/adapters';
+import { deleteCloudAccount, integrationStatus, restorePurchases } from '@/api/adapters';
 import { DATA_SOURCE_LABEL } from '@/data/forecasts';
 import { catchLogsToCsv } from '@/features/export';
 import { haptic } from '@/lib/haptics';
@@ -21,6 +21,7 @@ export default function ProfileScreen() {
   const isPro = useAppStore((state) => state.isPro);
   const setPro = useAppStore((state) => state.setPro);
   const account = useAppStore((state) => state.account);
+  const setAccount = useAppStore((state) => state.setAccount);
   const logs = useAppStore((state) => state.catchLogs);
   const followed = useAppStore((state) => state.followedLakeIds);
   const alerts = useAppStore((state) => state.alerts);
@@ -30,6 +31,7 @@ export default function ProfileScreen() {
   const [notice, setNotice] = useState<Notice>(null);
   const [restoring, setRestoring] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const linked = account.status === 'linked';
   const activeAlerts = followed.filter((id) => alerts.find((item) => item.lakeId === id)?.enabled ?? true).length;
@@ -84,6 +86,34 @@ export default function ProfileScreen() {
     );
   };
 
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      'Delete BiteCast account?',
+      'This permanently deletes synced logs, follows, alert settings, and your BiteCast account. Local logs on this device will also be removed. Export first if you want a copy.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete account',
+          style: 'destructive',
+          onPress: async () => {
+            setDeletingAccount(true);
+            try {
+              await deleteCloudAccount();
+              await clearLocalData();
+              setAccount({ status: 'anonymous' });
+              haptic.success();
+              setNotice({ tone: 'success', title: 'Account deleted', body: 'Cloud and local BiteCast data were removed.' });
+            } catch (error) {
+              setNotice({ tone: 'danger', title: 'Couldn’t delete the account', body: error instanceof Error ? error.message : 'Nothing was removed. Try again.' });
+            } finally {
+              setDeletingAccount(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <Screen tab>
       <View style={{ gap: spacing.xs }}>
@@ -98,7 +128,7 @@ export default function ProfileScreen() {
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <T variant="headline">{linked ? `Linked with ${account.provider === 'apple' ? 'Apple' : 'Google'}` : 'Anonymous angler'}</T>
-            <T variant="caption" color={colors.inkMuted}>{linked ? 'Your logs can follow you to a new device.' : 'Logs are saved on this device only.'}</T>
+            <T variant="caption" color={colors.inkMuted}>{linked ? 'Your logs can follow you to a new device.' : 'Offline-first. Link an account for recovery on another device.'}</T>
           </View>
           <Chip label={isPro ? 'Pro' : 'Free'} tone={isPro ? 'good' : 'neutral'} icon={isPro ? 'pro' : undefined} />
         </Row>
@@ -137,8 +167,8 @@ export default function ProfileScreen() {
         <ListRow icon="restore" title={restoring ? 'Restoring…' : 'Restore purchases'} subtitle="Re-activate Pro from your store account" onPress={restore} chevron={false} />
         <Divider inset={48} />
         <ListRow icon="trash" title="Delete data on this device" subtitle={pending ? `${pending} unsynced log${pending === 1 ? '' : 's'} would be lost` : 'Removes local catch logs'} onPress={confirmDelete} destructive chevron={false} />
+        {integrationStatus[0].ready ? <><Divider inset={48} /><ListRow icon="trash" title={deletingAccount ? 'Deleting account…' : 'Delete BiteCast account'} subtitle="Permanently removes cloud and local data" onPress={deletingAccount ? undefined : confirmDeleteAccount} destructive chevron={false} /></> : null}
       </Card>
-      <T variant="caption" color={colors.inkMuted}>Deleting your cloud account will be available here once account sync is connected.</T>
 
       <SectionHeader title="About" />
       <Card style={{ gap: spacing.sm }}>

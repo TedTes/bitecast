@@ -1,5 +1,14 @@
 import * as SQLite from 'expo-sqlite';
-import type { CatchLog, LakeRequest } from '@/types/app';
+import type { AlertPreference, AppSettings, CatchLog, LakeRequest } from '@/types/app';
+
+export type LocalAppState = {
+  onboardingComplete: boolean;
+  region: string;
+  followedLakeIds: string[];
+  settings: AppSettings;
+  isPro: boolean;
+  alerts: AlertPreference[];
+};
 
 let database: SQLite.SQLiteDatabase | null = null;
 async function getDatabase() {
@@ -24,7 +33,22 @@ export async function saveCatchLog(log: CatchLog) {
 }
 export async function removeAllLocalData() {
   const db = await getDatabase();
-  await db.execAsync('DELETE FROM catch_logs_local; DELETE FROM settings_local; DELETE FROM lake_requests_local;');
+  await db.execAsync('DELETE FROM catch_logs_local; DELETE FROM lake_requests_local;');
+}
+
+export async function loadAppState(): Promise<LocalAppState | null> {
+  try {
+    const db = await getDatabase();
+    const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings_local WHERE key = ?', 'app_state');
+    return row ? JSON.parse(row.value) as LocalAppState : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveAppState(state: LocalAppState) {
+  const db = await getDatabase();
+  await db.runAsync('INSERT OR REPLACE INTO settings_local (key, value) VALUES (?, ?)', 'app_state', JSON.stringify(state));
 }
 export async function saveLakeRequest(request: LakeRequest) {
   const db = await getDatabase();

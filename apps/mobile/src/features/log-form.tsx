@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { randomUUID } from 'expo-crypto';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/icon';
@@ -104,7 +105,7 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
     setSaveError(null);
     const now = new Date().toISOString();
     const log: CatchLog = {
-      id: previous?.id ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      id: previous?.id ?? randomUUID(),
       lakeId,
       caughtAt: previous?.caughtAt ?? now,
       caught,

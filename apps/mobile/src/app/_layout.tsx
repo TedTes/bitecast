@@ -10,8 +10,12 @@ export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: 1, networkMode: 'offlineFirst' } } }));
   const hydrate = useAppStore((state) => state.hydrate);
   const setConnectivity = useAppStore((state) => state.setConnectivity);
+  const syncPending = useAppStore((state) => state.syncPending);
   useEffect(() => { hydrate(); }, [hydrate]);
-  useEffect(() => subscribeConnectivity(setConnectivity), [setConnectivity]);
+  useEffect(() => subscribeConnectivity((connectivity) => {
+    setConnectivity(connectivity);
+    if (connectivity === 'online') syncPending().catch(() => undefined);
+  }), [setConnectivity, syncPending]);
   return (
     <QueryClientProvider client={queryClient}>
       <StatusBar style="dark" />
