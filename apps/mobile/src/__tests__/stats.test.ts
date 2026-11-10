@@ -4,7 +4,9 @@ import type { CatchLog } from '@/types/app';
 
 const log = (hour: number, caught: boolean, bait: string, light: CatchLog['lightCondition'], count = 1): CatchLog => ({
   id: `${hour}-${bait}-${Math.random()}`, lakeId: 'lake-erie', caughtAt: new Date(2026, 5, 1, hour).toISOString(), caught, count: caught ? count : 0,
-  bait, method: 'jig', clarity: 'stained', notes: '', scoreAtTime: 70, lightCondition: light,
+  tripStartedAt: new Date(2026, 5, 1, hour - 2).toISOString(), tripEndedAt: new Date(2026, 5, 1, hour).toISOString(), effortMinutes: 120,
+  species: 'walleye', seasonMode: 'open_water', bait, baitCategory: bait.toLowerCase(), method: 'jig', clarity: 'stained', notes: '', scoreAtTime: 70, lightCondition: light,
+  trainingConsent: false, modelVersionShown: 'test-model',
   conditions: { temperatureC: 11, windKmh: 10, summary: '' }, syncState: 'pending', clientUpdatedAt: new Date().toISOString(),
 });
 

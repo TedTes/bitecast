@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { freshness } from '@/data/forecasts';
 import { catchLogsToCsv } from '@/features/export';
+import { freshness } from '@/features/forecast-metadata';
 import { resolveLakeCondition } from '@/features/lake-condition';
 import type { CatchLog } from '@/types/app';
 
 const base: CatchLog = {
   id: '1', lakeId: 'lake-erie', caughtAt: '2026-06-01T10:00:00.000Z', caught: true, count: 2, bait: 'Jig, "purple"', method: 'jig',
+  tripStartedAt: '2026-06-01T08:00:00.000Z', tripEndedAt: '2026-06-01T10:00:00.000Z', effortMinutes: 120,
+  species: 'walleye', seasonMode: 'open_water', baitCategory: 'jig', trainingConsent: true, modelVersionShown: 'test-model',
   clarity: 'stained', notes: 'Line one\nline two', scoreAtTime: 80, lightCondition: 'Low light',
   conditions: { temperatureC: 11, windKmh: 10, summary: 'Overcast' }, syncState: 'pending', clientUpdatedAt: '2026-06-01T10:00:00.000Z',
 };
@@ -13,7 +15,7 @@ const base: CatchLog = {
 describe('CSV export', () => {
   it('writes a header and escapes commas, quotes and newlines', () => {
     const [header, row] = catchLogsToCsv([base]).split(/\n(?=2026)/);
-    expect(header.startsWith('logged_at,lake,caught,count')).toBe(true);
+    expect(header.startsWith('trip_started_at,trip_ended_at,effort_minutes,caught_at,lake')).toBe(true);
     expect(row).toContain('Lake Erie');
     expect(row).toContain('"Jig, ""purple"""');
     expect(row).toContain('"Line one\nline two"');

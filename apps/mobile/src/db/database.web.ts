@@ -1,11 +1,12 @@
 import type { CatchLog, LakeRequest } from '@/types/app';
+import { normalizeCatchLog } from '@/features/catch-log';
 
 const storageKey = 'bitecast.catchLogs';
 const requestKey = 'bitecast.lakeRequests';
 
 export async function loadCatchLogs(): Promise<CatchLog[]> {
   if (typeof localStorage === 'undefined') return [];
-  try { return JSON.parse(localStorage.getItem(storageKey) ?? '[]') as CatchLog[]; } catch { return []; }
+  try { return (JSON.parse(localStorage.getItem(storageKey) ?? '[]') as CatchLog[]).map(normalizeCatchLog); } catch { return []; }
 }
 
 export async function saveCatchLog(log: CatchLog) {

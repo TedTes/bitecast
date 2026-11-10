@@ -3,7 +3,7 @@ import { randomUUID } from 'expo-crypto';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/icon';
-import { Banner, Button, Card, ChoiceChips, EmptyState, Field, IceSafetyNotice, Reveal, Row, Screen, Segmented, SkeletonCard, Stepper, T } from '@/components/ui';
+import { Banner, Button, Card, ChoiceChips, EmptyState, Field, IceSafetyNotice, Reveal, Row, Screen, Segmented, SkeletonCard, Stepper, T, ToggleRow } from '@/components/ui';
 import { ConfidenceMeter, ScoreReadout } from '@/components/forecast';
 import { colors, elevation, radius, spacing, touch } from '@/constants/theme';
 import { lakes, lakeById } from '@/data/lakes';
@@ -70,9 +70,12 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
   const [method, setMethod] = useState<CatchLog['method']>(previous?.method ?? last?.method ?? (season === 'ice' ? 'tip-up' : 'jig'));
   const [length, setLength] = useState(previous?.lengthCm ? String(toDisplayLength(previous.lengthCm, units)) : '');
   const [depth, setDepth] = useState(previous?.depthM !== undefined ? String(toDisplayDepth(previous.depthM, units)) : '');
+  const [waterDepth, setWaterDepth] = useState(previous?.waterDepthM !== undefined ? String(toDisplayDepth(previous.waterDepthM, units)) : '');
+  const [effortMinutes, setEffortMinutes] = useState(previous?.effortMinutes ?? 120);
+  const [trainingConsent, setTrainingConsent] = useState(previous?.trainingConsent ?? false);
   const [clarity, setClarity] = useState<CatchLog['clarity']>(previous?.clarity ?? lakeById(lakeId).clarity);
   const [notes, setNotes] = useState(previous?.notes ?? '');
-  const [showDetails, setShowDetails] = useState(Boolean(previous?.lengthCm || previous?.depthM !== undefined || previous?.notes));
+  const [showDetails, setShowDetails] = useState(Boolean(previous?.lengthCm || previous?.depthM !== undefined || previous?.waterDepthM !== undefined || previous?.notes || previous?.trainingConsent));
   const [attempted, setAttempted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -88,11 +91,13 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
   const parse = (value: string) => (value.trim() === '' ? undefined : Number(value.replace(',', '.')));
   const lengthValue = parse(length);
   const depthValue = parse(depth);
+  const waterDepthValue = parse(waterDepth);
   const range = limits[units];
   const errors = {
     bait: baitChoice === OTHER && !customBait.trim() ? 'Enter a bait or lure, or pick one above.' : customBait.length > 60 ? 'Keep it under 60 characters.' : null,
     length: lengthValue !== undefined && (Number.isNaN(lengthValue) || lengthValue < range.length[0] || lengthValue > range.length[1]) ? `Enter a length between ${range.length[0]} and ${range.length[1]} ${lengthUnit(units)}.` : null,
     depth: depthValue !== undefined && (Number.isNaN(depthValue) || depthValue < range.depth[0] || depthValue > range.depth[1]) ? `Enter a depth between ${range.depth[0]} and ${range.depth[1]} ${depthUnit(units)}.` : null,
+    waterDepth: waterDepthValue !== undefined && (Number.isNaN(waterDepthValue) || waterDepthValue < range.depth[0] || waterDepthValue > range.depth[1]) ? `Enter a water depth between ${range.depth[0]} and ${range.depth[1]} ${depthUnit(units)}.` : null,
     notes: notes.length > NOTES_MAX ? `Notes are limited to ${NOTES_MAX} characters.` : null,
   };
   const errorCount = Object.values(errors).filter(Boolean).length;
@@ -102,25 +107,36 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
     setAttempted(true);
     if (errorCount) {
       haptic.error();
-      if (errors.length || errors.depth || errors.notes) setShowDetails(true);
+      if (errors.length || errors.depth || errors.waterDepth || errors.notes) setShowDetails(true);
       return;
     }
     setSaving(true);
     setSaveError(null);
+    const end = previous?.tripEndedAt ? new Date(previous.tripEndedAt) : new Date();
+    const start = new Date(end.getTime() - effortMinutes * 60_000);
     const now = new Date().toISOString();
     const log: CatchLog = {
       id: previous?.id ?? randomUUID(),
       lakeId,
-      caughtAt: previous?.caughtAt ?? now,
+      caughtAt: previous?.caughtAt ?? new Date(end.getTime() - (caught ? 60_000 : 0)).toISOString(),
+      tripStartedAt: start.toISOString(),
+      tripEndedAt: end.toISOString(),
+      effortMinutes,
+      species: 'walleye',
+      seasonMode: season,
       caught,
       count: caught ? Math.max(1, count) : 0,
       lengthCm: caught && lengthValue !== undefined ? fromDisplayLength(lengthValue, units) : undefined,
       depthM: depthValue !== undefined ? fromDisplayDepth(depthValue, units) : undefined,
+      waterDepthM: waterDepthValue !== undefined ? fromDisplayDepth(waterDepthValue, units) : undefined,
       bait,
+      baitCategory: bait.toLowerCase(),
       method,
       clarity,
       notes: notes.trim(),
       scoreAtTime: score,
+      trainingConsent,
+      modelVersionShown: forecast.engineVersion,
       lightCondition,
       conditions: keepPrevious ? previous.conditions : { temperatureC: 11, windKmh: hour.windKmh, summary: hour.reasons[0] ?? 'Cached forecast' },
       syncState: 'pending',
@@ -193,6 +209,11 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
       ) : null}
 
       {/* 3 · Bait */}
+      <Card style={{ paddingVertical: spacing.md }}>
+        <Stepper label="Trip duration" value={effortMinutes} onChange={setEffortMinutes} min={15} max={720} step={15} unit="minutes" />
+      </Card>
+
+      {/* 3 · Bait */}
       <View style={{ gap: spacing.sm }}>
         <T variant="label" color={colors.inkMuted}>Bait or lure</T>
         <ChoiceChips
@@ -240,6 +261,7 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
               <Field label="Depth" value={depth} onChangeText={setDepth} keyboardType="decimal-pad" placeholder="—" suffix={depthUnit(units)} error={shown('depth')} returnKeyType="done" />
             </View>
           </Row>
+          <Field label="Water depth" value={waterDepth} onChangeText={setWaterDepth} keyboardType="decimal-pad" placeholder="—" suffix={depthUnit(units)} error={shown('waterDepth')} returnKeyType="done" />
           <View style={{ gap: spacing.sm }}>
             <T variant="callout" weight="700">Water clarity</T>
             <Segmented label="Water clarity" value={clarity} onChange={setClarity} options={[{ label: 'Clear', value: 'clear' }, { label: 'Stained', value: 'stained' }, { label: 'Murky', value: 'murky' }]} />
@@ -253,6 +275,15 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
             helper={`${notes.length}/${NOTES_MAX} · Describe patterns, not exact spots`}
             error={shown('notes')}
           />
+          <Card variant="sunken" style={{ padding: 0 }}>
+            <ToggleRow
+              icon="chart"
+              title="Help improve BiteCast"
+              subtitle="Allow this pseudonymized trip to train future walleye models. You can leave this off and still use logging."
+              value={trainingConsent}
+              onValueChange={setTrainingConsent}
+            />
+          </Card>
         </Reveal>
       ) : null}
 

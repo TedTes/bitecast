@@ -5,8 +5,10 @@ export type Lake = {
   regulation: { seasonOpen: string; seasonClose: string; limits: string; sourceUrl: string; lastVerified: string };
 };
 export type CatchLog = {
-  id: string; lakeId: string; caughtAt: string; caught: boolean; count: number; lengthCm?: number; depthM?: number;
+  id: string; lakeId: string; caughtAt: string; tripStartedAt: string; tripEndedAt: string; effortMinutes: number;
+  species: 'walleye'; seasonMode: Season; caught: boolean; count: number; lengthCm?: number; depthM?: number; waterDepthM?: number;
   bait: string; method: 'jig' | 'troll' | 'tip-up' | 'cast'; clarity: Clarity; notes: string; scoreAtTime: number;
+  baitCategory: string; trainingConsent: boolean; modelVersionShown: string;
   lightCondition: 'Low light' | 'Mid light' | 'Bright'; conditions: { temperatureC: number; windKmh: number; summary: string };
   syncState: 'pending' | 'synced' | 'error'; clientUpdatedAt: string;
 };

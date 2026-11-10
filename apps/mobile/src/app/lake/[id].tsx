@@ -5,7 +5,7 @@ import { ConfidenceMeter, ForecastFootnote, HourlyChart, ReasonLine, ScoreReadou
 import { Icon } from '@/components/icon';
 import { Banner, Button, Card, EmptyState, IceSafetyNotice, LinkButton, ListRow, OfflineBanner, Reveal, Row, Screen, SectionHeader, Segmented, T } from '@/components/ui';
 import { colors, hitSlop, radius, spacing, touch } from '@/constants/theme';
-import { DATA_SOURCE_LABEL, freshness, useForecast } from '@/data/forecasts';
+import { forecastSource, freshness, useForecast } from '@/data/forecasts';
 import { lakes } from '@/data/lakes';
 import { capitalize } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
@@ -53,7 +53,7 @@ export default function LakeForecastScreen() {
           <T variant="title" accessibilityRole="header">{lake.name}</T>
           <Row gap={6}>
             <Icon name={fresh.state === 'stale' ? 'warning' : 'clock'} size={13} color={fresh.state === 'stale' ? colors.warning : colors.inkMuted} />
-            <T variant="caption" color={fresh.state === 'stale' ? colors.warning : colors.inkMuted}>{fresh.label} · {DATA_SOURCE_LABEL}</T>
+            <T variant="caption" color={fresh.state === 'stale' ? colors.warning : colors.inkMuted}>{fresh.label} · {forecastSource(query.data)}</T>
           </Row>
         </View>
         <Pressable

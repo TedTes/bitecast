@@ -9,7 +9,7 @@ import { SkyArc } from '@/components/sky-arc';
 import { Banner, Button, Card, Divider, EmptyState, ErrorState, IceSafetyNotice, LinkButton, OfflineBanner, Reveal, Row, Screen, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
 import { colors, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
-import { DATA_SOURCE_LABEL, forecastQuery, freshness } from '@/data/forecasts';
+import { forecastQuery, forecastSource, freshness } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { seasonLabel, useConditionResolver } from '@/features/lake-season';
 import { formatDay, formatDuration, shortClock, shortRange } from '@/lib/format';
@@ -70,7 +70,7 @@ export default function TodayScreen() {
         <T variant="title" accessibilityRole="header">Today</T>
         <Row gap={5}>
           <Icon name={fresh.state === 'stale' ? 'warning' : 'clock'} size={12} color={fresh.state === 'stale' ? colors.warning : colors.inkMuted} />
-          <T variant="caption" color={fresh.state === 'stale' ? colors.warning : colors.inkMuted}>{fresh.label} · {DATA_SOURCE_LABEL}</T>
+          <T variant="caption" color={fresh.state === 'stale' ? colors.warning : colors.inkMuted}>{fresh.label} · {data[0] ? forecastSource(data[0].forecast) : 'No forecast'}</T>
         </Row>
       </View>
 

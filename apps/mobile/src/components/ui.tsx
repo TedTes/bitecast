@@ -409,7 +409,7 @@ export function Field({ label, helper, error, suffix, optional, style, ...props 
 }
 
 /** Large thumb-friendly −/+ stepper, adjustable for screen readers. */
-export function Stepper({ label, value, onChange, min = 0, max = 99, unit }: { label: string; value: number; onChange: (value: number) => void; min?: number; max?: number; unit?: string }) {
+export function Stepper({ label, value, onChange, min = 0, max = 99, step = 1, unit }: { label: string; value: number; onChange: (value: number) => void; min?: number; max?: number; step?: number; unit?: string }) {
   const set = (next: number) => {
     const clamped = Math.min(max, Math.max(min, next));
     if (clamped !== value) haptic.select();
@@ -422,17 +422,17 @@ export function Stepper({ label, value, onChange, min = 0, max = 99, unit }: { l
       accessibilityLabel={label}
       accessibilityValue={{ min, max, now: value, text: `${value}${unit ? ` ${unit}` : ''}` }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-      onAccessibilityAction={(event: AccessibilityActionEvent) => set(value + (event.nativeEvent.actionName === 'increment' ? 1 : -1))}
+      onAccessibilityAction={(event: AccessibilityActionEvent) => set(value + (event.nativeEvent.actionName === 'increment' ? step : -step))}
       style={styles.stepper}
     >
-      <Pressable onPress={() => set(value - 1)} disabled={value <= min} style={({ pressed }) => [styles.stepButton, pressed && styles.pressed, value <= min && styles.disabled]} importantForAccessibility="no">
+      <Pressable onPress={() => set(value - step)} disabled={value <= min} style={({ pressed }) => [styles.stepButton, pressed && styles.pressed, value <= min && styles.disabled]} importantForAccessibility="no">
         <Icon name="minus" size={22} color={colors.ink} />
       </Pressable>
       <View style={{ alignItems: 'center', minWidth: 64 }}>
         <T variant="numeralL">{value}</T>
         {unit ? <T variant="caption" color={colors.inkMuted}>{unit}</T> : null}
       </View>
-      <Pressable onPress={() => set(value + 1)} disabled={value >= max} style={({ pressed }) => [styles.stepButton, styles.stepButtonPlus, pressed && styles.pressed, value >= max && styles.disabled]} importantForAccessibility="no">
+      <Pressable onPress={() => set(value + step)} disabled={value >= max} style={({ pressed }) => [styles.stepButton, styles.stepButtonPlus, pressed && styles.pressed, value >= max && styles.disabled]} importantForAccessibility="no">
         <Icon name="plus" size={22} color={colors.onDark} />
       </Pressable>
     </View>

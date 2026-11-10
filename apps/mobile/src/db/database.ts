@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import type { LakeSeasons, AlertPreference, AppSettings, CatchLog, LakeRequest } from '@/types/app';
+import { normalizeCatchLog } from '@/features/catch-log';
 
 export type LocalAppState = {
   onboardingComplete: boolean;
@@ -25,7 +26,7 @@ export async function loadCatchLogs(): Promise<CatchLog[]> {
   try {
     const db = await getDatabase();
     const rows = await db.getAllAsync<{ payload: string }>('SELECT payload FROM catch_logs_local ORDER BY client_updated_at DESC');
-    return rows.map((row) => JSON.parse(row.payload) as CatchLog);
+    return rows.map((row) => normalizeCatchLog(JSON.parse(row.payload) as CatchLog));
   } catch { return []; }
 }
 export async function saveCatchLog(log: CatchLog) {
