@@ -37,10 +37,10 @@ async function fetchForecast(lakeId: string, season: Season): Promise<LakeForeca
   const now = new Date();
   now.setHours(now.getHours() - 1);
   const [{ data: rawHours, error: hourError }, { data: rawWindows, error: windowError }] = await Promise.all([
-    supabase.from('forecast_hourly').select('ts,score,light,components,reasons,confidence,engine_version,computed_at')
+    supabase.from('forecast_hourly').select('ts,score,light,components,reasons,confidence,engine_version,computed_at,model_family,prediction_granularity,time_precision')
       .eq('lake_id', lake.id).eq('species', 'walleye').eq('season_mode', season)
       .gte('ts', now.toISOString()).order('ts').limit(24 * 7),
-    supabase.from('forecast_windows').select('id,start_ts,end_ts,peak_score,reasons,confidence,tactics_text,engine_version,computed_at')
+    supabase.from('forecast_windows').select('id,start_ts,end_ts,peak_score,reasons,confidence,tactics_text,engine_version,computed_at,model_family,prediction_granularity,time_precision')
       .eq('lake_id', lake.id).eq('species', 'walleye').eq('season_mode', season)
       .gte('end_ts', now.toISOString()).order('start_ts'),
   ]);
@@ -56,6 +56,8 @@ async function fetchForecast(lakeId: string, season: Season): Promise<LakeForeca
       transition: 0,
       reasons: row.reasons as string[],
       confidence: row.confidence as 'High' | 'Medium' | 'Low',
+      predictionGranularity: row.prediction_granularity as 'hour' | 'time_block',
+      timePrecision: row.time_precision as 'exact' | 'time_block' | 'day' | 'unknown',
       sunElevation: components.solar_elevation_deg ?? 0,
       cloudPct: components.cloud_pct ?? 0,
       windKmh: components.wind_kmh ?? 0,
@@ -72,6 +74,8 @@ async function fetchForecast(lakeId: string, season: Season): Promise<LakeForeca
     peakScore: row.peak_score as number,
     reasons: row.reasons as string[],
     confidence: row.confidence as 'High' | 'Medium' | 'Low',
+    predictionGranularity: row.prediction_granularity as 'hour' | 'time_block',
+    timePrecision: row.time_precision as 'exact' | 'time_block' | 'day' | 'unknown',
     depth: 'mid' as const,
     tactics: row.tactics_text as string,
     hours: hours.filter((hour) => hour.ts >= (row.start_ts as string) && hour.ts < (row.end_ts as string)),
@@ -80,6 +84,8 @@ async function fetchForecast(lakeId: string, season: Season): Promise<LakeForeca
     lakeId,
     engineVersion: rawHours[0].engine_version as string,
     computedAt: rawHours[0].computed_at as string,
+    modelFamily: rawHours[0].model_family as 'hourly' | 'trip_broad',
+    predictionGranularity: rawHours[0].prediction_granularity as 'hour' | 'time_block',
     hours,
     windows,
   };

@@ -27,13 +27,14 @@ export default function MapScreen() {
     const forecast = queries[index].data;
     const window = forecast ? bestWindowWithin(forecast.windows, 24) : undefined;
     const now = forecast?.hours[0];
-    return { lake, window, now, score: window?.peakScore ?? now?.score ?? 0 };
+    return { lake, forecast, window, now, score: window?.peakScore ?? now?.score ?? 0 };
   });
   const pins: MapLakePin[] = summaries.map(({ lake, score }) => ({
     id: lake.id, name: lake.name, latitude: lake.latitude, longitude: lake.longitude, score,
     followed: followed.includes(lake.id), scale: lake.region === 'Great Lakes' ? 'large' : 'small',
   }));
   const selected = summaries.find((item) => item.lake.id === selectedId) ?? summaries[0];
+  const selectedBroad = selected.forecast?.predictionGranularity === 'time_block';
   const isFollowing = followed.includes(selected.lake.id);
   const atLimit = !isFollowing && followed.length >= 5;
 
@@ -83,7 +84,7 @@ export default function MapScreen() {
                   {seasonLabel(resolve(selected.lake.id).season)} · {(selected.window?.reasons ?? selected.now?.reasons ?? [])[0] ?? 'Mixed conditions'}
                 </T>
               </View>
-              <ScoreReadout score={selected.score} size="sm" caption={selected.window ? 'Peak' : 'Now'} />
+              <ScoreReadout score={selected.score} size="sm" caption={selectedBroad ? 'Block' : selected.window ? 'Peak' : 'Now'} />
             </Row>
             <ConfidenceMeter value={selected.window?.confidence ?? selected.now?.confidence ?? 'Low'} />
             {atLimit ? <T variant="caption" color={colors.inkMuted}>You follow 5 lakes — remove one to follow another.</T> : null}
@@ -100,11 +101,13 @@ export default function MapScreen() {
       ) : (
         <ScrollView contentContainerStyle={styles.list}>
           {mode === 'cached' ? <Banner tone="neutral" icon="device" body="Showing every covered lake from data stored on this device." /> : null}
-          {[...summaries].sort((a, b) => b.score - a.score).map(({ lake, window, now, score }) => (
+          {[...summaries].sort((a, b) => b.score - a.score).map(({ lake, forecast, window, now, score }) => {
+            const broad = forecast?.predictionGranularity === 'time_block';
+            return (
             <Card
               key={lake.id}
               onPress={() => router.push({ pathname: '/lake/[id]', params: { id: lake.id } })}
-              accessibilityLabel={`${lake.name}${followed.includes(lake.id) ? ', followed' : ''}. ${window ? `${formatDay(window.start)} ${formatWindow(window)}, peak ${score}` : `Now ${score}, no window in 24 hours`}. ${(window?.reasons ?? now?.reasons ?? []).slice(0, 2).join(', ')}. ${window?.confidence ?? now?.confidence} confidence.`}
+              accessibilityLabel={`${lake.name}${followed.includes(lake.id) ? ', followed' : ''}. ${window ? `${formatDay(window.start)} ${formatWindow(window)}, ${broad ? 'broad block' : 'peak'} ${score}` : `Now ${score}, no window in 24 hours`}. ${(window?.reasons ?? now?.reasons ?? []).slice(0, 2).join(', ')}. ${window?.confidence ?? now?.confidence} confidence.`}
             >
               <Row gap={spacing.md} align="flex-start">
                 <View style={{ flex: 1, gap: 2 }}>
@@ -114,12 +117,13 @@ export default function MapScreen() {
                   </Row>
                   <T variant="caption" color={colors.inkMuted}>{window ? `${formatDay(window.start)} · ${formatWindow(window)}` : 'No window above 60 in 24 h'}</T>
                 </View>
-                <ScoreReadout score={score} size="sm" />
+                <ScoreReadout score={score} size="sm" caption={broad ? 'Block' : window ? 'Peak' : 'Now'} />
               </Row>
               <ReasonChips reasons={window?.reasons ?? now?.reasons ?? []} limit={2} />
               <ConfidenceMeter value={window?.confidence ?? now?.confidence ?? 'Low'} />
             </Card>
-          ))}
+            );
+          })}
         </ScrollView>
       )}
     </Screen>

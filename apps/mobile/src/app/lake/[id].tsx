@@ -148,7 +148,10 @@ export default function LakeForecastScreen() {
         </Card>
       ) : null}
 
-      <SectionHeader title="7-day outlook" caption="Best hour each day" />
+      <SectionHeader
+        title="7-day outlook"
+        caption={forecast.predictionGranularity === 'time_block' ? 'Best broad block each day' : 'Best hour each day'}
+      />
       <SevenDayOutlook hours={forecast.hours} />
 
       <Card style={{ gap: 0, paddingVertical: spacing.xs }}>
@@ -156,7 +159,10 @@ export default function LakeForecastScreen() {
       </Card>
       <Button icon="plus" variant="secondary" onPress={() => router.push({ pathname: '/log/new', params: { lakeId: lake.id } })}>{`Log a trip on ${lake.name}`}</Button>
 
-      <ForecastFootnote engineVersion={forecast.engineVersion} />
+      <ForecastFootnote
+        engineVersion={forecast.engineVersion}
+        predictionGranularity={forecast.predictionGranularity}
+      />
     </Screen>
   );
 }

@@ -54,11 +54,21 @@ export const useAppStore = create<AppState>((set, get) => ({
     await syncPreferences({ settings: state.settings, followedLakeIds: state.followedLakeIds, alerts: state.alerts, region: state.region, lakeSeasons: state.lakeSeasons });
     const pending = get().catchLogs.filter((log) => log.syncState !== 'synced');
     if (pending.length) {
-      const { syncedIds } = await syncCatchLogs(pending);
-      if (syncedIds.length) {
-        const updated = get().catchLogs.map((log) => (syncedIds.includes(log.id) ? { ...log, syncState: 'synced' as const } : log));
-        await Promise.all(updated.filter((log) => syncedIds.includes(log.id)).map(saveCatchLog));
+      try {
+        const { syncedIds, rejectedIds } = await syncCatchLogs(pending);
+        if (syncedIds.length || rejectedIds.length) {
+          const updated = get().catchLogs.map((log) => syncedIds.includes(log.id)
+            ? { ...log, syncState: 'synced' as const }
+            : rejectedIds.includes(log.id) ? { ...log, syncState: 'error' as const } : log);
+          await Promise.all(updated.filter((log) => syncedIds.includes(log.id) || rejectedIds.includes(log.id)).map(saveCatchLog));
+          set({ catchLogs: updated });
+        }
+      } catch (error) {
+        const failedIds = new Set(pending.map((log) => log.id));
+        const updated = get().catchLogs.map((log) => failedIds.has(log.id) ? { ...log, syncState: 'error' as const } : log);
+        await Promise.all(updated.filter((log) => failedIds.has(log.id)).map(saveCatchLog));
         set({ catchLogs: updated });
+        throw error;
       }
     }
     const queuedRequests = get().lakeRequests.filter((request) => request.status === 'queued');

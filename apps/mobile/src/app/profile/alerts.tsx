@@ -117,7 +117,9 @@ function LakeAlertCard({ preference, disabled, onChange, quiet }: { preference: 
   const season = useLakeCondition(lake.id).season;
   const now = useNow();
   const active = preference.enabled && !disabled;
-  const next = upcomingWindows(getForecast(lake.id, season).windows, now).find((window) => window.peakScore >= preference.threshold);
+  const forecast = getForecast(lake.id, season);
+  const broad = forecast.predictionGranularity === 'time_block';
+  const next = upcomingWindows(forecast.windows, now).find((window) => window.peakScore >= preference.threshold);
   const alertAt = next ? new Date(Math.max(now, new Date(next.start).getTime() - preference.leadMinutes * 60_000)) : null;
   const suppressed = alertAt ? inQuietHours(alertAt, quiet[0], quiet[1]) : false;
 
@@ -128,9 +130,9 @@ function LakeAlertCard({ preference, disabled, onChange, quiet }: { preference: 
         <>
           <Divider />
           <View style={{ gap: spacing.sm }}>
-            <T variant="callout" weight="700">Minimum peak score</T>
+            <T variant="callout" weight="700">Minimum {broad ? 'block' : 'peak'} score</T>
             <ChoiceChips
-              label={`Minimum peak score for ${lake.name}`}
+              label={`Minimum ${broad ? 'block' : 'peak'} score for ${lake.name}`}
               value={String(preference.threshold)}
               onChange={(value) => onChange({ threshold: Number(value) })}
               options={[60, 70, 80].map((value) => ({ label: `${value}+ ${scoreBands[scoreBand(value)].label}`, value: String(value), accessibilityLabel: `${value} or higher, ${scoreBands[scoreBand(value)].label}` }))}
@@ -145,8 +147,8 @@ function LakeAlertCard({ preference, disabled, onChange, quiet }: { preference: 
             <T variant="caption" color={colors.inkSoft} style={{ flex: 1 }}>
               {next && alertAt
                 ? suppressed
-                  ? `Next match: ${formatDay(next.start)} ${shortClock(next.start)} (peak ${next.peakScore}). The alert would land in quiet hours, so it would be skipped.`
-                  : `Next match: ${formatDay(next.start)} ${shortClock(next.start)} (peak ${next.peakScore}). You’d be alerted around ${shortClock(alertAt)}.`
+                  ? `Next match: ${formatDay(next.start)} ${shortClock(next.start)} (${broad ? 'broad block' : 'peak'} ${next.peakScore}). The alert would land in quiet hours, so it would be skipped.`
+                  : `Next match: ${formatDay(next.start)} ${shortClock(next.start)} (${broad ? 'broad block' : 'peak'} ${next.peakScore}). You’d be alerted around ${shortClock(alertAt)}.`
                 : `No window reaches ${preference.threshold} in this week’s forecast.`}
             </T>
           </View>

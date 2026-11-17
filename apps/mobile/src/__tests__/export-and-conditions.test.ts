@@ -7,7 +7,8 @@ import type { CatchLog } from '@/types/app';
 const base: CatchLog = {
   id: '1', lakeId: 'lake-erie', caughtAt: '2026-06-01T10:00:00.000Z', caught: true, count: 2, bait: 'Jig, "purple"', method: 'jig',
   tripStartedAt: '2026-06-01T08:00:00.000Z', tripEndedAt: '2026-06-01T10:00:00.000Z', effortMinutes: 120,
-  species: 'walleye', seasonMode: 'open_water', baitCategory: 'jig', trainingConsent: true, modelVersionShown: 'test-model',
+  species: 'walleye', seasonMode: 'open_water', baitCategory: 'jig', trainingConsent: true,
+  trainingConsentVersion: 'test-v1', trainingConsentUpdatedAt: '2026-06-01T10:00:00.000Z', modelVersionShown: 'test-model',
   clarity: 'stained', notes: 'Line one\nline two', scoreAtTime: 80, lightCondition: 'Low light',
   conditions: { temperatureC: 11, windKmh: 10, summary: 'Overcast' }, syncState: 'pending', clientUpdatedAt: '2026-06-01T10:00:00.000Z',
 };

@@ -11,6 +11,7 @@ import { getForecast } from '@/data/forecasts';
 import { depthUnit, formatDay, formatTime, formatWind, fromDisplayDepth, fromDisplayLength, lengthUnit, toDisplayDepth, toDisplayLength } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { resolveLakeCondition } from '@/features/lake-season';
+import { TRAINING_CONSENT_VERSION } from '@/features/catch-log';
 import { useAppStore } from '@/store/use-app-store';
 import type { CatchLog } from '@/types/app';
 
@@ -115,6 +116,7 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
     const end = previous?.tripEndedAt ? new Date(previous.tripEndedAt) : new Date();
     const start = new Date(end.getTime() - effortMinutes * 60_000);
     const now = new Date().toISOString();
+    const consentChanged = previous?.trainingConsent !== trainingConsent;
     const log: CatchLog = {
       id: previous?.id ?? randomUUID(),
       lakeId,
@@ -136,6 +138,10 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
       notes: notes.trim(),
       scoreAtTime: score,
       trainingConsent,
+      trainingConsentVersion: consentChanged
+        ? TRAINING_CONSENT_VERSION
+        : previous?.trainingConsentVersion ?? TRAINING_CONSENT_VERSION,
+      trainingConsentUpdatedAt: consentChanged ? now : previous?.trainingConsentUpdatedAt ?? now,
       modelVersionShown: forecast.engineVersion,
       lightCondition,
       conditions: keepPrevious ? previous.conditions : { temperatureC: 11, windKmh: hour.windKmh, summary: hour.reasons[0] ?? 'Cached forecast' },

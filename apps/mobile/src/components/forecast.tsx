@@ -161,18 +161,21 @@ export function ReasonList({ reasons }: { reasons: string[] }) {
 export function WindowCard({ window, onPress, label }: { window: ForecastWindow; onPress?: () => void; label?: string }) {
   const peak = windowPeak(window);
   const heading = label ?? formatDay(window.start);
+  const broad = window.predictionGranularity === 'time_block';
   return (
     <Card
       onPress={onPress}
-      accessibilityLabel={`${heading}, ${formatWindow(window)}. Peak bite score ${window.peakScore}, ${scoreBands[scoreBand(window.peakScore)].label}. ${window.reasons.slice(0, 3).join(', ')}. ${window.confidence} confidence.`}
+      accessibilityLabel={`${heading}, ${formatWindow(window)}. ${broad ? 'Broad time-block' : 'Peak'} bite score ${window.peakScore}, ${scoreBands[scoreBand(window.peakScore)].label}. ${window.reasons.slice(0, 3).join(', ')}. ${window.confidence} confidence.`}
       accessibilityHint={onPress ? 'Opens light curve, contributors and tactics' : undefined}
     >
       <Row gap={spacing.lg} align="center">
-        <ScoreReadout score={window.peakScore} caption="Peak" />
+        <ScoreReadout score={window.peakScore} caption={broad ? 'Block' : 'Peak'} />
         <View style={{ flex: 1, gap: 2 }}>
           <T variant="label" color={colors.sunriseInk}>{heading}</T>
           <T variant="headline">{formatWindow(window)}</T>
-          <T variant="caption" color={colors.inkMuted}>Peaks near {formatHour(peak.ts)} · {window.hours.length} h above 60</T>
+          <T variant="caption" color={colors.inkMuted}>
+            {broad ? `Broad outlook · ${window.hours.length} h block` : `Peaks near ${formatHour(peak.ts)} · ${window.hours.length} h above 60`}
+          </T>
         </View>
       </Row>
       <ReasonLine reasons={window.reasons} limit={3} />
@@ -204,6 +207,7 @@ const THRESHOLD = 60;
 
 export function HourlyChart({ hours, windows }: { hours: ForecastHour[]; windows: ForecastWindow[] }) {
   const data = hours.slice(0, 24);
+  const broad = data.some((item) => item.predictionGranularity === 'time_block');
   const [selected, setSelected] = useState(0);
   const windowHours = useMemo(() => new Set(windows.flatMap((w) => w.hours.map((h) => h.ts))), [windows]);
   const hour = data[selected] ?? data[0];
@@ -215,7 +219,9 @@ export function HourlyChart({ hours, windows }: { hours: ForecastHour[]; windows
       <View style={{ paddingHorizontal: spacing.lg, gap: spacing.sm }} accessibilityLiveRegion="polite">
         <Row justify="space-between" align="flex-end">
           <View>
-            <T variant="label" color={colors.inkMuted}>{selected === 0 ? 'Now' : `${formatDay(hour.ts)} · ${shortClock(hour.ts)}`}</T>
+            <T variant="label" color={colors.inkMuted}>
+              {broad ? `Broad block · ${shortClock(hour.ts)}` : selected === 0 ? 'Now' : `${formatDay(hour.ts)} · ${shortClock(hour.ts)}`}
+            </T>
             <Row gap={spacing.sm} align="flex-end">
               <T variant="numeralL">{hour.score}</T>
               <T variant="subhead" color={band.color} style={{ marginBottom: 5 }}>{band.label}</T>
@@ -225,7 +231,7 @@ export function HourlyChart({ hours, windows }: { hours: ForecastHour[]; windows
         </Row>
         <ReasonLine reasons={hour.reasons} />
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chart} accessibilityLabel="Hourly bite scores for the next 24 hours">
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chart} accessibilityLabel={broad ? 'Broad time-block bite outlook for the next 24 hours' : 'Hourly bite scores for the next 24 hours'}>
         {data.map((item, index) => {
           const b = scoreBands[scoreBand(item.score)];
           const active = index === selected;
@@ -317,17 +323,18 @@ export function SevenDayOutlook({ hours }: { hours: ForecastHour[] }) {
       {days.map((best, index) => {
         const band = scoreBands[scoreBand(best.score)];
         const day = formatDay(best.ts);
+        const broad = best.predictionGranularity === 'time_block';
         return (
           <View key={best.ts}>
             {index > 0 ? <Divider /> : null}
             <View
               style={styles.dayRow}
               accessible
-              accessibilityLabel={`${day}. Best near ${formatTime(best.ts)}, bite score ${best.score}, ${band.label}. ${best.reasons[0] ?? ''}. ${best.confidence} confidence.`}
+              accessibilityLabel={`${day}. ${broad ? 'Broad time block starting' : 'Best near'} ${formatTime(best.ts)}, bite score ${best.score}, ${band.label}. ${best.reasons[0] ?? ''}. ${best.confidence} confidence.`}
             >
               <View style={{ width: 92 }}>
                 <T variant="subhead">{day.split(',')[0]}</T>
-                <T variant="caption" color={colors.inkMuted}>Best {formatHour(best.ts)}</T>
+                <T variant="caption" color={colors.inkMuted}>{broad ? 'Block' : 'Best'} {formatHour(best.ts)}</T>
               </View>
               <View style={{ flex: 1, gap: 3 }}>
                 <Row gap={6}>
@@ -418,10 +425,19 @@ export function ScoreScale() {
 
 /* ───────────── Footnotes ───────────── */
 
-export function ForecastFootnote({ engineVersion }: { engineVersion?: string }) {
+export function ForecastFootnote({
+  engineVersion,
+  predictionGranularity,
+}: {
+  engineVersion?: string;
+  predictionGranularity?: 'hour' | 'time_block';
+}) {
+  const broad = predictionGranularity === 'time_block'
+    ? ' Broad time-block outlook; it does not identify an exact peak hour.'
+    : '';
   return (
     <T variant="caption" color={colors.inkMuted} align="center" style={{ paddingHorizontal: spacing.lg }}>
-      Bite scores describe conditions, not a guarantee of fish.{engineVersion ? ` Engine ${engineVersion}.` : ''}
+      Bite scores describe conditions, not a guarantee of fish.{broad}{engineVersion ? ` Engine ${engineVersion}.` : ''}
     </T>
   );
 }

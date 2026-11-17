@@ -107,7 +107,7 @@ export default function TodayScreen() {
         </>
       ) : null}
 
-      <ForecastFootnote />
+      <ForecastFootnote predictionGranularity={focus?.forecast.predictionGranularity} />
     </Screen>
   );
 }
@@ -117,11 +117,14 @@ export default function TodayScreen() {
 function SkyCard({ entry, isTop, index, onIndexChange, now }: { entry: LakeData; isTop: boolean; index: number; onIndexChange: (i: number) => void; now: number }) {
   const { lake, forecast, season } = entry;
   const hour = forecast.hours[Math.min(index, forecast.hours.length - 1)];
+  const broad = forecast.predictionGranularity === 'time_block';
   const band = scoreBands[scoreBand(hour.score)];
   const hourMs = new Date(hour.ts).getTime();
   const containing = forecast.windows.find((w) => w.hours.some((h) => h.ts === hour.ts));
   const next = containing ? undefined : upcomingWindows(forecast.windows, Math.max(now, hourMs)).find((w) => new Date(w.start).getTime() > hourMs);
-  const timeLabel = index === 0 ? 'Now' : `${formatDay(hour.ts)} · ${shortClock(hour.ts)}`;
+  const timeLabel = broad
+    ? `Broad block · ${formatDay(hour.ts)} ${shortClock(hour.ts)}`
+    : index === 0 ? 'Now' : `${formatDay(hour.ts)} · ${shortClock(hour.ts)}`;
 
   return (
     <Card style={styles.sky}>
@@ -151,7 +154,7 @@ function SkyCard({ entry, isTop, index, onIndexChange, now }: { entry: LakeData;
           <Row gap={spacing.sm} style={[styles.status, styles.statusLive]}>
             <View style={styles.windowSwatch} />
             <T variant="callout" weight="700" color={colors.sunriseInk} style={{ flex: 1 }}>
-              In a window · {shortRange(containing.start, windowEnd(containing))}
+              {broad ? 'In a broad block' : 'In a window'} · {shortRange(containing.start, windowEnd(containing))}
               {index === 0 ? ` · ${formatDuration(new Date(windowEnd(containing)).getTime() - now)} left` : ''}
             </T>
           </Row>
@@ -159,7 +162,7 @@ function SkyCard({ entry, isTop, index, onIndexChange, now }: { entry: LakeData;
           <Row gap={spacing.sm} style={styles.status}>
             <Icon name="clock" size={14} color={colors.inkMuted} />
             <T variant="callout" color={colors.inkSoft} style={{ flex: 1 }}>
-              Next window <T variant="callout" weight="700">{formatDay(next.start).toLowerCase()} {shortRange(next.start, windowEnd(next))}</T> · peak {next.peakScore}
+              Next {broad ? 'broad block' : 'window'} <T variant="callout" weight="700">{formatDay(next.start).toLowerCase()} {shortRange(next.start, windowEnd(next))}</T>{broad ? '' : ` · peak ${next.peakScore}`}
             </T>
           </Row>
         ) : (
@@ -170,7 +173,9 @@ function SkyCard({ entry, isTop, index, onIndexChange, now }: { entry: LakeData;
       <SkyArc hours={forecast.hours} windows={forecast.windows} ice={season === 'ice'} index={index} onIndexChange={onIndexChange} />
 
       {index === 0 ? (
-        <T variant="caption" color={colors.inkMuted} align="center">Drag across the sky to explore the next 24 hours</T>
+        <T variant="caption" color={colors.inkMuted} align="center">
+          {broad ? 'Drag to explore repeated time-block outlooks; these are not exact hourly predictions' : 'Drag across the sky to explore the next 24 hours'}
+        </T>
       ) : (
         <Row justify="center"><LinkButton icon="restore" onPress={() => onIndexChange(0)}>Back to now</LinkButton></Row>
       )}
@@ -185,6 +190,7 @@ function LakeList({ entries, focusId, onFocus, now, canAdd, count }: { entries: 
     <Card style={{ gap: 0, paddingVertical: spacing.xs }}>
       {entries.map((entry, index) => {
         const { lake, next, live, forecast, season } = entry;
+        const broad = forecast.predictionGranularity === 'time_block';
         const current = forecast.hours[0];
         const score = next?.peakScore ?? current.score;
         const when = next
@@ -201,7 +207,7 @@ function LakeList({ entries, focusId, onFocus, now, canAdd, count }: { entries: 
               onPress={() => onFocus(lake.id)}
               accessibilityRole="button"
               accessibilityState={{ selected: lake.id === focusId }}
-              accessibilityLabel={`${lake.name}, ${seasonLabel(season).toLowerCase()}. ${when}. ${next ? 'Peak' : 'Now'} bite score ${score}, ${conditionLabel(score)}. ${reason}. ${confidence} confidence.`}
+              accessibilityLabel={`${lake.name}, ${seasonLabel(season).toLowerCase()}. ${when}. ${broad ? 'Broad block' : next ? 'Peak' : 'Now'} bite score ${score}, ${conditionLabel(score)}. ${reason}. ${confidence} confidence.`}
               accessibilityHint="Shows this lake in the sky chart above"
               style={({ pressed }) => [styles.lakeRow, lake.id === focusId && styles.lakeRowFocus, pressed && { opacity: 0.7 }]}
             >
@@ -214,7 +220,7 @@ function LakeList({ entries, focusId, onFocus, now, canAdd, count }: { entries: 
                   <T variant="caption" weight="700" color={live ? colors.sunriseInk : colors.inkSoft}>{when}</T>
                   <T variant="caption" color={colors.inkMuted} numberOfLines={1}>{reason} · {confidence} confidence</T>
                 </View>
-                <ScoreReadout score={score} size="sm" caption={next ? 'Peak' : 'Now'} />
+                <ScoreReadout score={score} size="sm" caption={broad ? 'Block' : next ? 'Peak' : 'Now'} />
               </Row>
               <DayStrip hours={forecast.hours} windows={forecast.windows} axis={false} />
             </Pressable>

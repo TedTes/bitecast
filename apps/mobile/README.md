@@ -47,3 +47,5 @@ cd apps/mobile && npx expo-doctor
 - `src/constants/theme.ts` — colour, type, spacing and score-band tokens
 - `src/api` — the only place external services are called
 - `src/db` — SQLite-first local storage (catch logs are written here before any sync)
+- Catch/no-catch logging is free with consent off by default. Training consent is per trip, versioned, and
+  timestamped; unversioned legacy logs are excluded from training.
