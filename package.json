@@ -1,12 +1,27 @@
 {
   "name": "bitecast",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "overrides": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native-gesture-handler": "3.3.0",
+    "react-native-worklets": "0.13.0"
+  },
   "scripts": {
     "postinstall": "npm run patches",
     "patches": "patch-package --patch-dir apps/mobile/patches",
     "mobile": "npm --prefix apps/mobile run start",
     "typecheck": "npm --prefix apps/mobile run typecheck",
     "test": "npm --workspace @bitecast/engine test && npm --prefix apps/mobile test"
+  },
+  "devDependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native-gesture-handler": "3.3.0",
+    "react-native-worklets": "0.13.0"
   }
 }

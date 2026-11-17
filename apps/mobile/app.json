@@ -9,7 +9,11 @@
     "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.tedros.bitecast"
+      "bundleIdentifier": "com.tedros.bitecast",
+      "supportsTablet": false,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -35,11 +39,25 @@
         }
       ],
       "expo-sqlite",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": false,
       "reactCompiler": false
-    }
+    },
+    "extra": {
+      "mapsAndroidConfigured": false,
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "53d0f1b6-47f2-4ede-9f83-2e3c871387f7"
+      }
+    },
+    "owner": "tedros"
   }
 }
