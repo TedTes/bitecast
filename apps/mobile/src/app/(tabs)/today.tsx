@@ -6,9 +6,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ConfidenceMeter, DayStrip, ForecastFootnote, ReasonLine, ScoreReadout, conditionLabel, upcomingWindows, windowEnd } from '@/components/forecast';
 import { Icon } from '@/components/icon';
 import { SkyArc } from '@/components/sky-arc';
-import { Banner, Button, Card, Divider, EmptyState, ErrorState, IceSafetyNotice, LinkButton, OfflineBanner, Reveal, Row, Screen, SkeletonCard, T } from '@/components/ui';
+import { Toast } from '@/components/toast';
+import { Button, Card, Divider, EmptyState, ErrorState, IceSafetyNotice, LinkButton, OfflineBanner, Reveal, Row, Screen, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
-import { colors, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
+import { colors, hitSlop, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
 import { forecastQuery, forecastSource, freshness } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { seasonLabel, useConditionResolver } from '@/features/lake-season';
@@ -52,7 +53,8 @@ export default function TodayScreen() {
     .sort((a, b) => Number(b.live) - Number(a.live) || (b.next?.peakScore ?? 0) - (a.next?.peakScore ?? 0));
   const loading = queries.some((query) => query.isPending);
   const failed = queries.length > 0 && queries.every((query) => query.isError && !query.data);
-  const refreshFailed = queries.some((query) => query.isRefetchError);
+  // Latest refresh failure; drives a transient toast instead of a sticky banner.
+  const refreshErrorAt = Math.max(0, ...queries.filter((query) => query.isRefetchError).map((query) => query.errorUpdatedAt));
   const fresh = freshness(data.length ? Math.min(...data.map((entry) => entry.updatedAt)) : now, now);
   const focus = data.find((entry) => entry.lake.id === focusId) ?? data[0];
 
@@ -64,22 +66,24 @@ export default function TodayScreen() {
   };
 
   return (
+    <View style={{ flex: 1 }}>
     <Screen tab refreshing={refreshing} onRefresh={refresh}>
-      <View style={{ gap: 4 }}>
-        <T variant="label" color={colors.teal}>{new Date(now).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}</T>
+      <Row justify="space-between" align="flex-end" gap={spacing.md}>
         <T variant="title" accessibilityRole="header">Today</T>
-        <Row gap={5}>
-          <Icon name={fresh.state === 'stale' ? 'warning' : 'clock'} size={12} color={fresh.state === 'stale' ? colors.warning : colors.inkMuted} />
-          <T variant="caption" color={fresh.state === 'stale' ? colors.warning : colors.inkMuted}>{fresh.label} · {data[0] ? forecastSource(data[0].forecast) : 'No forecast'}</T>
-        </Row>
-      </View>
+        <View style={{ alignItems: 'flex-end', gap: 2, flexShrink: 1, marginBottom: 3 }}>
+          <T variant="caption" weight="700" color={colors.teal}>{new Date(now).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}</T>
+          <Row gap={5}>
+            <Icon name={fresh.state === 'stale' ? 'warning' : 'clock'} size={11} color={fresh.state === 'stale' ? colors.warning : colors.inkMuted} />
+            <T variant="caption" color={fresh.state === 'stale' ? colors.warning : colors.inkMuted} numberOfLines={1} style={{ flexShrink: 1 }}>
+              {fresh.label} · {data[0] ? forecastSource(data[0].forecast) : 'No forecast'}
+            </T>
+          </Row>
+          {fresh.state === 'stale' && data.length ? <LinkButton icon="refresh" onPress={refresh}>{refreshing ? 'Refreshing…' : 'Refresh'}</LinkButton> : null}
+        </View>
+      </Row>
 
       {seasons.includes('ice') ? <IceSafetyNotice compact /> : null}
       <OfflineBanner />
-      {refreshFailed ? <Banner tone="warning" title="Couldn’t refresh" body="Showing the last forecast saved on this device." action={{ label: 'Try again', onPress: refresh, loading: refreshing }} live /> : null}
-      {!refreshFailed && fresh.state === 'stale' && data.length ? (
-        <Banner tone="warning" icon="clock" title={fresh.label} body="Conditions may have changed. Pull down to refresh when you have signal." action={{ label: 'Refresh now', onPress: refresh, loading: refreshing }} />
-      ) : null}
 
       {ids.length === 0 ? (
         <EmptyState
@@ -109,6 +113,8 @@ export default function TodayScreen() {
 
       <ForecastFootnote predictionGranularity={focus?.forecast.predictionGranularity} />
     </Screen>
+    <Toast trigger={refreshErrorAt} icon="sync-error" message="Couldn’t refresh. Showing the forecast saved on this device." actionLabel="Retry" onAction={refresh} />
+    </View>
   );
 }
 
@@ -139,17 +145,25 @@ function SkyCard({ entry, isTop, index, onIndexChange, now }: { entry: LakeData;
 
       {/* Readout for the scrubbed hour: score → reasons → confidence → window status */}
       <View style={{ gap: spacing.md }} accessibilityLiveRegion="polite">
-        <Row justify="space-between" align="flex-end">
-          <View style={{ gap: 2 }}>
-            <T variant="label" color={colors.inkMuted}>{timeLabel}</T>
-            <Row gap={spacing.sm} align="flex-end">
-              <T variant="numeralL">{hour.score}</T>
-              <T variant="subhead" color={band.color} style={{ marginBottom: 5 }}>{band.label}</T>
-            </Row>
-          </View>
-          <View style={{ marginBottom: 7 }}><ConfidenceMeter value={hour.confidence} /></View>
+        <Row justify="space-between" align="center" style={{ minHeight: 20 }}>
+          <T variant="label" color={colors.inkMuted} style={{ flexShrink: 1 }} numberOfLines={1}>{timeLabel}</T>
+          {index !== 0 ? (
+            <Pressable onPress={() => onIndexChange(0)} hitSlop={hitSlop} accessibilityRole="button" accessibilityLabel="Back to now" style={({ pressed }) => [styles.nowPill, pressed && { opacity: 0.6 }]}>
+              <Icon name="restore" size={12} color={colors.teal} />
+              <T variant="caption" weight="700" color={colors.teal}>Now</T>
+            </Pressable>
+          ) : null}
         </Row>
-        <ReasonLine reasons={hour.reasons} />
+        <Row gap={spacing.lg} align="center" style={{ marginTop: -spacing.sm }}>
+          <View>
+            <T variant="numeralL">{hour.score}</T>
+            <T variant="caption" weight="700" color={band.color}>{band.label}</T>
+          </View>
+          <View style={{ flex: 1, gap: spacing.sm }}>
+            <ReasonLine reasons={hour.reasons} />
+            <ConfidenceMeter value={hour.confidence} />
+          </View>
+        </Row>
         {containing ? (
           <Row gap={spacing.sm} style={[styles.status, styles.statusLive]}>
             <View style={styles.windowSwatch} />
@@ -172,13 +186,11 @@ function SkyCard({ entry, isTop, index, onIndexChange, now }: { entry: LakeData;
 
       <SkyArc hours={forecast.hours} windows={forecast.windows} ice={season === 'ice'} index={index} onIndexChange={onIndexChange} />
 
-      {index === 0 ? (
+      {broad ? (
         <T variant="caption" color={colors.inkMuted} align="center">
-          {broad ? 'Drag to explore repeated time-block outlooks; these are not exact hourly predictions' : 'Drag across the sky to explore the next 24 hours'}
+          Broad time-block outlooks repeat across the day; they are not exact hourly predictions.
         </T>
-      ) : (
-        <Row justify="center"><LinkButton icon="restore" onPress={() => onIndexChange(0)}>Back to now</LinkButton></Row>
-      )}
+      ) : null}
     </Card>
   );
 }
@@ -250,7 +262,8 @@ const styles = StyleSheet.create({
   skyHeader: { paddingBottom: spacing.sm, marginBottom: -spacing.xs, borderBottomWidth: StyleSheet.hairlineWidth * 2, borderBottomColor: colors.line, marginHorizontal: -spacing.lg, paddingHorizontal: spacing.lg },
   status: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radius.sm, backgroundColor: colors.fog },
   statusLive: { backgroundColor: colors.sunriseTint },
-  sky: { gap: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.white },
+  sky: { gap: spacing.md + 2, borderRadius: radius.xl, backgroundColor: colors.white },
+  nowPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.sm + 2, paddingVertical: 4, borderRadius: radius.pill, backgroundColor: colors.tealMist },
   topTag: { backgroundColor: colors.sunriseTint, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.xs },
   lakeRowFocus: { borderLeftWidth: 3, borderLeftColor: colors.teal, paddingLeft: spacing.md, marginLeft: -spacing.lg + 3, paddingRight: 0 },
   windowSwatch: { width: 14, height: 5, borderRadius: 3, backgroundColor: colors.sunrise },

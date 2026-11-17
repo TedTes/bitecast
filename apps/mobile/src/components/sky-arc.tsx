@@ -10,12 +10,14 @@ import { T } from './ui';
 import { LakeSchool, type Mood } from './lake-school';
 
 /* Geometry (points). The SVG is purely visual; a transparent overlay handles touch. */
-const H = 244;
-const HORIZON = 112;
-const SKY_TOP = 14;
+// SKY_TOP leaves room for the time tag riding above the sun, inside the arc's own box.
+const H = 198;
+const HORIZON = 108;
+const SKY_TOP = 36;
 const NIGHT_DIP = 20;
 const AXIS_Y = H - 16;
 const PAD = 14;
+const HORIZON_LABEL_W = 98;
 const MAX_ELEVATION = 45;
 const MIN_ELEVATION = -12;
 
@@ -176,11 +178,17 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
 
       {/* Horizon labels and hour axis */}
       {width
-        ? crossings.map((c) => (
-            <T key={c.label} variant="caption" color={colors.inkMuted} style={[styles.horizonLabel, { left: Math.min(width - 70, Math.max(4, PAD + c.i * step - 34)) }]} maxFontSizeMultiplier={1.2}>
-              {c.label === 'rise' ? 'Sunrise' : 'Sunset'} {clockAt(c.i)}
-            </T>
-          ))
+        ? crossings.map((c) => {
+              const centre = PAD + c.i * step;
+              const left = Math.min(width - HORIZON_LABEL_W - 2, Math.max(2, centre - HORIZON_LABEL_W / 2));
+              // Step aside for the time tag so the two never overlap.
+              const nearMarker = Math.abs(PAD + index * step - (left + HORIZON_LABEL_W / 2)) < HORIZON_LABEL_W * 0.7;
+              return (
+                <T key={c.label} variant="caption" color={colors.inkMuted} align="center" numberOfLines={1} style={[styles.horizonLabel, { left, width: HORIZON_LABEL_W, opacity: nearMarker ? 0 : 1 }]} maxFontSizeMultiplier={1.1}>
+                  {c.label === 'rise' ? 'Sunrise' : 'Sunset'} {clockAt(c.i)}
+                </T>
+              );
+            })
         : null}
       <View style={styles.axis} pointerEvents="none">
         {[0, 6, 12, 18, 23].map((i) => (
