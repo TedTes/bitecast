@@ -1,0 +1,44 @@
+{
+  "rows": 3,
+  "catch_rows": 3,
+  "no_catch_rows": 0,
+  "lakes": {
+    "lake-erie": 3
+  },
+  "sources": {
+    "longpoint-forum-trip-report": 3
+  },
+  "seasons": {
+    "open_water": 3
+  },
+  "months": {
+    "10": 2,
+    "11": 1
+  },
+  "positive_rate": 1.0,
+  "missing_fraction": {
+    "anonymous_angler_id": 1.0,
+    "effort_minutes": 1.0,
+    "catch_count": 0.6666666666666666,
+    "fishing_depth_m": 1.0,
+    "secchi_depth_m": 1.0,
+    "air_temp_c": 1.0,
+    "air_temp_range_c": 1.0,
+    "water_temp_c": 1.0,
+    "wind_kmh": 1.0,
+    "wind_range_kmh": 1.0,
+    "gust_kmh": 1.0,
+    "wind_direction_deg": 1.0,
+    "cloud_pct": 1.0,
+    "precip_mm": 1.0,
+    "pressure_hpa": 1.0,
+    "pressure_range_hpa": 1.0,
+    "pressure_change_3h_hpa": 1.0,
+    "solar_elevation_deg": 1.0,
+    "minutes_from_sunrise": 1.0,
+    "minutes_from_sunset": 1.0,
+    "moon_illumination": 1.0
+  },
+  "contributors": 0,
+  "largest_contributor_fraction": 0.0
+}

@@ -1,0 +1,7 @@
+lake_id,observed_on,secchi_depth_m,latitude,longitude,site_id,site_description,source_id,duplicate_record,invalid_date,invalid_location,invalid_secchi_depth,rejection_reason
+lake-ontario,1933-10-05,3.0,44.000277777777775,-77.55361111111111,5,Wellers Bay-deepspot,on-lake-partner-secchi-2025,False,True,False,False,date_before_1990_or_missing
+lake-ontario,2016-05-21,4.5,44.000277777777775,-77.55361111111111,5,Wellers Bay-deepspot,on-lake-partner-secchi-2025,True,False,False,False,duplicate_record
+lake-ontario,2016-06-20,2.6,44.000277777777775,-77.55361111111111,5,Wellers Bay-deepspot,on-lake-partner-secchi-2025,True,False,False,False,duplicate_record
+lake-ontario,2016-07-31,2.7,44.000277777777775,-77.55361111111111,5,Wellers Bay-deepspot,on-lake-partner-secchi-2025,True,False,False,False,duplicate_record
+lake-ontario,2016-08-20,3.0,44.000277777777775,-77.55361111111111,5,Wellers Bay-deepspot,on-lake-partner-secchi-2025,True,False,False,False,duplicate_record
+lake-ontario,2016-09-13,3.0,44.000277777777775,-77.55361111111111,5,Wellers Bay-deepspot,on-lake-partner-secchi-2025,True,False,False,False,duplicate_record

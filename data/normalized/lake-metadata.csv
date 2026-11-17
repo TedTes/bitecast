@@ -1,0 +1,4 @@
+lake_id,observation_count,first_observation,last_observation,median_secchi_depth_m
+bay-of-quinte,17,1999-07-03,2012-08-21,5.0
+lake-erie,59,1998-07-04,2012-09-28,6.5
+lake-ontario,153,2001-06-13,2025-10-17,2.6
