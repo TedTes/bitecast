@@ -23,6 +23,8 @@ class ModelRegistry:
         entry = {
             "version": metadata["version"],
             "season_mode": metadata["season_mode"],
+            "model_family": metadata.get("model_family", "hourly"),
+            "prediction_granularity": metadata.get("prediction_granularity", "hour"),
             "artifact_dir": str(artifact_dir.resolve()),
             "status": "challenger",
             "registered_at": datetime.now(UTC).isoformat(),
@@ -39,25 +41,50 @@ class ModelRegistry:
         if challenger is None:
             raise ValueError(f"Unknown model version: {version}")
         season = challenger["season_mode"]
-        champion_version = registry["champions"].get(season)
+        family = challenger.get("model_family", "hourly")
+        champion_key = self._champion_key(season, family)
+        champion_version = registry["champions"].get(champion_key)
+        if champion_version is None and family == "hourly":
+            champion_version = registry["champions"].get(season)
         champion = next((item for item in registry["models"] if item["version"] == champion_version), None)
         if require_improvement and champion and not _passes_gate(challenger, champion):
             raise ValueError("Challenger did not pass the champion promotion gate")
         for item in registry["models"]:
-            if item["season_mode"] == season and item["status"] == "champion":
+            if (
+                item["season_mode"] == season
+                and item.get("model_family", "hourly") == family
+                and item["status"] == "champion"
+            ):
                 item["status"] = "archived"
         challenger["status"] = "champion"
         challenger["promoted_at"] = datetime.now(UTC).isoformat()
-        registry["champions"][season] = version
+        if family == "hourly":
+            registry["champions"].pop(season, None)
+        registry["champions"][champion_key] = version
         self._write(registry)
 
-    def champion_path(self, season: str) -> Path:
+    def champion_path(self, season: str, model_family: str = "hourly") -> Path:
         registry = self.read()
-        version = registry["champions"].get(season)
+        version = registry["champions"].get(self._champion_key(season, model_family))
+        if version is None and model_family == "hourly":
+            version = registry["champions"].get(season)
         entry = next((item for item in registry["models"] if item["version"] == version), None)
         if entry is None:
-            raise ValueError(f"No champion registered for {season}")
+            raise ValueError(f"No {model_family} champion registered for {season}")
         return Path(entry["artifact_dir"])
+
+    def available_champion_path(self, season: str) -> tuple[Path, str]:
+        """Prefer the precise hourly family, then fall back to the broad family."""
+        for family in ("hourly", "trip_broad"):
+            try:
+                return self.champion_path(season, family), family
+            except ValueError:
+                continue
+        raise ValueError(f"No hourly or trip_broad champion registered for {season}")
+
+    @staticmethod
+    def _champion_key(season: str, model_family: str) -> str:
+        return f"{model_family}:{season}"
 
     def _write(self, registry: dict) -> None:
         self.index_path.write_text(json.dumps(registry, indent=2) + "\n")

@@ -7,7 +7,7 @@ from typing import Any
 import pandas as pd
 from pydantic import ValidationError
 
-from .contracts import TrainingRow
+from .contracts import BroadTrainingRow, TrainingRow
 
 
 @dataclass(frozen=True)
@@ -38,9 +38,12 @@ class ValidationReport:
         if self.valid.empty:
             return {"rows": 0}
         data = self.valid.copy()
-        times = pd.to_datetime(data["hour_start"], utc=True)
-        return {
+        time_column = "hour_start" if "hour_start" in data else "period_start"
+        times = pd.to_datetime(data[time_column], utc=True)
+        result = {
             "rows": len(data),
+            "catch_rows": int(data["caught"].astype(bool).sum()),
+            "no_catch_rows": int((~data["caught"].astype(bool)).sum()),
             "lakes": {str(key): int(value) for key, value in data["lake_id"].value_counts().items()},
             "sources": {str(key): int(value) for key, value in data["source"].value_counts().items()},
             "seasons": {str(key): int(value) for key, value in data["season_mode"].value_counts().items()},
@@ -54,9 +57,29 @@ class ValidationReport:
                 if data[column].isna().any()
             },
         }
+        if "anonymous_angler_id" in data:
+            contributors = data["anonymous_angler_id"].dropna().value_counts()
+            result["contributors"] = int(len(contributors))
+            result["largest_contributor_fraction"] = (
+                float(contributors.iloc[0] / len(data)) if len(contributors) else 0.0
+            )
+        return result
 
 
 def validate_training_frame(frame: pd.DataFrame) -> ValidationReport:
+    return _validate_frame(frame, TrainingRow, "training_consent")
+
+
+def validate_broad_training_frame(frame: pd.DataFrame) -> ValidationReport:
+    """Validate trip-level evidence separately from precise angler-hour observations."""
+    return _validate_frame(frame, BroadTrainingRow, "training_authorized")
+
+
+def _validate_frame(
+    frame: pd.DataFrame,
+    contract: type[TrainingRow] | type[BroadTrainingRow],
+    authorization_field: str,
+) -> ValidationReport:
     valid_rows: list[dict[str, Any]] = []
     rejected_rows: list[dict[str, Any]] = []
     issues: list[ValidationIssue] = []
@@ -71,9 +94,9 @@ def validate_training_frame(frame: pd.DataFrame) -> ValidationReport:
             )
             continue
         try:
-            parsed = TrainingRow.model_validate(_none_from_nan(raw))
-            if not parsed.training_consent:
-                raise ValueError("observation does not have training consent")
+            parsed = contract.model_validate(_none_from_nan(raw))
+            if not bool(getattr(parsed, authorization_field)):
+                raise ValueError("observation is not authorized for training")
             seen_observations.add(parsed.observation_id)
             valid_rows.append(parsed.model_dump(mode="json"))
         except (ValidationError, ValueError) as error:

@@ -9,29 +9,31 @@ from pathlib import Path
 import pandas as pd
 
 from .astronomy import astronomy_features
+from .broad import expand_block_predictions, forecast_time_blocks
 from .contracts import FEATURE_CONTRACT_VERSION
 from .model import ModelBundle
 from .registry import ModelRegistry
 from .scoring import forecast_windows
 from .supabase_rest import SupabaseRest
-from .weather import ContractHttpWeatherProvider
+from .weather import forecast_weather_provider_from_env
 
 
 def run_forecast_worker(horizon_days: int = 7) -> dict[str, int]:
     required = [
         "SUPABASE_URL",
         "SUPABASE_SERVICE_ROLE_KEY",
-        "WEATHER_API_BASE_URL",
-        "WEATHER_API_KEY",
         "MODEL_REGISTRY_PATH",
     ]
     missing = [name for name in required if not os.getenv(name)]
     if missing:
         raise ValueError(f"Missing worker environment values: {', '.join(missing)}")
     db = SupabaseRest(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
-    weather = ContractHttpWeatherProvider(os.environ["WEATHER_API_BASE_URL"], os.environ["WEATHER_API_KEY"])
+    weather = forecast_weather_provider_from_env()
     registry = ModelRegistry(Path(os.environ["MODEL_REGISTRY_PATH"]))
-    models = {season: ModelBundle(registry.champion_path(season)) for season in ("open_water", "ice")}
+    models = {
+        season: ModelBundle(registry.available_champion_path(season)[0])
+        for season in ("open_water", "ice")
+    }
     lakes = db.select(
         "lakes",
         {
@@ -45,16 +47,15 @@ def run_forecast_worker(horizon_days: int = 7) -> dict[str, int]:
     window_rows: list[dict] = []
     feature_rows: list[dict] = []
     audit_rows: list[dict] = []
-    db.delete("forecast_windows", {"start_ts": f"gte.{now.isoformat()}"})
+    run_started_at = datetime.now(UTC).isoformat()
 
     for lake in lakes:
         raw_weather = weather.hourly(float(lake["lat"]), float(lake["lon"]), now, end)
         if raw_weather.empty:
-            continue
+            raise RuntimeError(f"Weather provider returned no forecast rows for {lake['slug']}")
         raw_weather["hour_start"] = pd.to_datetime(raw_weather["hour_start"], utc=True)
         for season, bundle in models.items():
-            inputs = _forecast_inputs(lake, raw_weather, season)
-            predictions = bundle.predict(inputs)
+            inputs, predictions = _prediction_plan(lake, raw_weather, season, bundle)
             for index, prediction in predictions.iterrows():
                 raw = inputs.loc[index]
                 features = _json_ready(raw.to_dict())
@@ -64,9 +65,14 @@ def run_forecast_worker(horizon_days: int = 7) -> dict[str, int]:
                         "lake_id": lake["id"],
                         "ts": pd.Timestamp(prediction["hour_start"]).isoformat(),
                         "season_mode": season,
-                        "feature_contract_version": FEATURE_CONTRACT_VERSION,
+                        "model_family": bundle.model_family,
+                        "prediction_granularity": bundle.prediction_granularity,
+                        "time_precision": str(prediction.get("time_precision", "exact")),
+                        "feature_contract_version": bundle.metadata.get(
+                            "feature_contract_version", FEATURE_CONTRACT_VERSION
+                        ),
                         "features": features,
-                        "source": "licensed-weather-forecast",
+                        "source": weather.source_name,
                     }
                 )
                 audit_rows.append(
@@ -75,6 +81,9 @@ def run_forecast_worker(horizon_days: int = 7) -> dict[str, int]:
                         "ts": pd.Timestamp(prediction["hour_start"]).isoformat(),
                         "season_mode": season,
                         "model_version": bundle.version,
+                        "model_family": bundle.model_family,
+                        "prediction_granularity": bundle.prediction_granularity,
+                        "time_precision": str(prediction.get("time_precision", "exact")),
                         "raw_probability": float(prediction["raw_probability"]),
                         "bite_score": int(prediction["bite_score"]),
                         "confidence_score": float(prediction["confidence_score"]),
@@ -89,6 +98,9 @@ def run_forecast_worker(horizon_days: int = 7) -> dict[str, int]:
                         "species": "walleye",
                         "season_mode": season,
                         "ts": pd.Timestamp(prediction["hour_start"]).isoformat(),
+                        "model_family": bundle.model_family,
+                        "prediction_granularity": bundle.prediction_granularity,
+                        "time_precision": str(prediction.get("time_precision", "exact")),
                         "score": int(prediction["bite_score"]),
                         "light": float(max(0, min(1, ((raw.get("solar_elevation_deg", -6) or -6) + 6) / 56))),
                         "components": {
@@ -100,11 +112,12 @@ def run_forecast_worker(horizon_days: int = 7) -> dict[str, int]:
                             "pressure_hpa": _optional_float(raw.get("pressure_hpa")),
                             "moon_illumination": _optional_float(raw.get("moon_illumination")),
                             "solar_elevation_deg": _optional_float(raw.get("solar_elevation_deg")),
+                            "time_block": prediction.get("time_block"),
                         },
                         "reasons": prediction["reasons"],
                         "confidence": prediction["confidence"],
                         "engine_version": bundle.version,
-                        "computed_at": datetime.now(UTC).isoformat(),
+                        "computed_at": run_started_at,
                     }
                 )
             windows = forecast_windows(predictions[predictions["forecast_available"]])
@@ -121,17 +134,21 @@ def run_forecast_worker(horizon_days: int = 7) -> dict[str, int]:
                         "season_mode": season,
                         "start_ts": window.start.isoformat(),
                         "end_ts": window.end.isoformat(),
+                        "model_family": bundle.model_family,
+                        "prediction_granularity": bundle.prediction_granularity,
+                        "time_precision": str(peak.get("time_precision", "exact")),
                         "peak_score": window.peak_score,
                         "reasons": peak["reasons"],
                         "confidence": peak["confidence"],
-                        "tactics_text": (
-                            "Model-derived conditions forecast; choose legal tactics "
-                            "suited to the lake and season."
-                        ),
+                        "tactics_text": _tactics_text(bundle.model_family),
                         "engine_version": bundle.version,
-                        "computed_at": datetime.now(UTC).isoformat(),
+                        "computed_at": run_started_at,
                     }
                 )
+    if lakes and not hourly_rows:
+        raise RuntimeError(
+            "Forecast run produced no publishable hourly rows; previous forecasts were preserved"
+        )
     db.upsert("forecast_hourly", hourly_rows, "lake_id,species,season_mode,ts")
     db.upsert(
         "forecast_windows",
@@ -141,14 +158,48 @@ def run_forecast_worker(horizon_days: int = 7) -> dict[str, int]:
     db.upsert(
         "feature_snapshots",
         feature_rows,
-        "lake_id,ts,season_mode,feature_contract_version",
+        "lake_id,ts,season_mode,model_family,feature_contract_version",
     )
     db.upsert(
         "prediction_audits",
         audit_rows,
-        "lake_id,ts,season_mode,model_version",
+        "lake_id,ts,season_mode,model_version,prediction_granularity",
+    )
+    # Cleanup only after replacement rows are safely published. A provider or model failure
+    # therefore leaves the previous forecast available instead of creating an empty app.
+    db.delete(
+        "forecast_hourly",
+        {"ts": f"gte.{now.isoformat()}", "computed_at": f"lt.{run_started_at}"},
+    )
+    db.delete(
+        "forecast_windows",
+        {"start_ts": f"gte.{now.isoformat()}", "computed_at": f"lt.{run_started_at}"},
     )
     return {"lakes": len(lakes), "hourly_forecasts": len(hourly_rows), "windows": len(window_rows)}
+
+
+def _prediction_plan(
+    lake: dict,
+    weather: pd.DataFrame,
+    season: str,
+    bundle: ModelBundle,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    if bundle.model_family == "hourly":
+        inputs = _forecast_inputs(lake, weather, season).reset_index(drop=True)
+        return inputs, bundle.predict(inputs).reset_index(drop=True)
+    if bundle.model_family != "trip_broad":
+        raise ValueError(f"Unsupported model family: {bundle.model_family}")
+    blocks = forecast_time_blocks(lake, weather, season).reset_index(drop=True)
+    block_predictions = bundle.predict(blocks).reset_index(drop=True)
+    predictions = expand_block_predictions(block_predictions, weather).reset_index(drop=True)
+    input_rows: list[dict] = []
+    for prediction in predictions.to_dict(orient="records"):
+        start = pd.Timestamp(prediction["period_start"])
+        match = blocks[pd.to_datetime(blocks["period_start"], utc=True).eq(start)]
+        if match.empty:
+            raise ValueError(f"No broad input block found for {start.isoformat()}")
+        input_rows.append({**match.iloc[0].to_dict(), "hour_start": prediction["hour_start"]})
+    return pd.DataFrame(input_rows), predictions
 
 
 def _forecast_inputs(lake: dict, weather: pd.DataFrame, season: str) -> pd.DataFrame:
@@ -195,3 +246,12 @@ def _optional_float(value: object) -> float | None:
     if value is None or pd.isna(value):
         return None
     return float(value)
+
+
+def _tactics_text(model_family: str) -> str:
+    if model_family == "trip_broad":
+        return (
+            "Broad time-block outlook from trip-level evidence; confidence is Low and the model does not "
+            "identify an exact peak hour. Choose legal tactics suited to the lake and season."
+        )
+    return "Model-derived conditions forecast; choose legal tactics suited to the lake and season."

@@ -84,6 +84,8 @@ def train_model(frame: pd.DataFrame, output_root: Path, config: TrainingConfig) 
     metadata = {
         "version": version,
         "created_at": datetime.now(UTC).isoformat(),
+        "model_family": "hourly",
+        "prediction_granularity": "hour",
         "season_mode": config.season_mode,
         "feature_contract_version": FEATURE_CONTRACT_VERSION,
         "dataset_hash": _dataset_hash(data),

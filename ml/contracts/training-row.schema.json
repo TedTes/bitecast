@@ -147,6 +147,20 @@
       "$ref": "#/$defs/Clarity",
       "default": "unknown"
     },
+    "secchi_depth_m": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Secchi Depth M"
+    },
     "air_temp_c": {
       "anyOf": [
         {
@@ -371,6 +385,44 @@
       "default": true,
       "title": "Training Consent",
       "type": "boolean"
+    },
+    "consent_policy_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Consent Policy Version"
+    },
+    "consent_updated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Consent Updated At"
+    },
+    "source_log_updated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Log Updated At"
     }
   },
   "required": [

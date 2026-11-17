@@ -74,7 +74,11 @@ def expand_trip_to_angler_hours(trip: dict) -> list[dict]:
         positive = bool(caught_at is not None and segment_start <= caught_at < segment_end)
         rows.append(
             {
-                **trip,
+                **{
+                    key: value
+                    for key, value in trip.items()
+                    if key not in {"trip_started_at", "trip_ended_at", "caught_at"}
+                },
                 "observation_id": f"{trip['trip_id']}:{cursor.isoformat()}",
                 "hour_start": cursor.isoformat(),
                 "effort_minutes": effort,

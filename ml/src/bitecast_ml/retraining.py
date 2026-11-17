@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from .broad_training import BroadTrainingConfig, train_broad_model
 from .registry import ModelRegistry
 from .training import TrainingConfig, train_model
 
@@ -55,5 +56,44 @@ def scheduled_retrain(
     state_path.parent.mkdir(parents=True, exist_ok=True)
     state_path.write_text(
         json.dumps({"row_count": len(frame), "completed_at": datetime.now(UTC).isoformat()}, indent=2) + "\n"
+    )
+    return report
+
+
+def scheduled_broad_retrain(
+    frame: pd.DataFrame,
+    artifact_root: Path,
+    registry: ModelRegistry,
+    state_path: Path,
+    minimum_new_rows: int = 250,
+    auto_promote: bool = False,
+) -> dict:
+    """Create broad challengers without sharing state or promotion gates with hourly models."""
+    decision = should_retrain(frame, state_path, minimum_new_rows)
+    report: dict = {"model_family": "trip_broad", "decision": asdict(decision), "trained": []}
+    if not decision.should_train:
+        return report
+    for season in ("open_water", "ice"):
+        season_rows = frame[frame["season_mode"].astype(str) == season]
+        positives = int(season_rows["caught"].astype(bool).sum()) if not season_rows.empty else 0
+        if len(season_rows) < 100:
+            report["trained"].append({"season": season, "skipped": "fewer than 100 broad rows"})
+            continue
+        if positives < 20 or positives >= len(season_rows):
+            report["trained"].append(
+                {"season": season, "skipped": "needs at least 20 catches and one no-catch"}
+            )
+            continue
+        result = train_broad_model(frame, artifact_root, BroadTrainingConfig(season_mode=season))
+        registry.register(result.artifact_dir)
+        if auto_promote:
+            registry.promote(result.version)
+        report["trained"].append(
+            {"season": season, "version": result.version, "metrics": result.metrics}
+        )
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(
+        json.dumps({"row_count": len(frame), "completed_at": datetime.now(UTC).isoformat()}, indent=2)
+        + "\n"
     )
     return report

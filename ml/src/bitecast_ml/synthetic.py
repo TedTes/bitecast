@@ -84,3 +84,29 @@ def generate_synthetic_training_data(rows: int = 3000, seed: int = 4107) -> pd.D
             }
         )
     return pd.DataFrame(output)
+
+
+def generate_synthetic_broad_training_data(rows: int = 1200, seed: int = 5107) -> pd.DataFrame:
+    """Generate trip-level development evidence without treating it as real model support."""
+    data = generate_synthetic_training_data(rows, seed).copy()
+    starts = pd.to_datetime(data.pop("hour_start"), utc=True)
+    durations = pd.to_timedelta(3 + (data.index % 6), unit="h")
+    data["period_start"] = starts
+    data["period_end"] = starts + durations
+    data["time_precision"] = np.where(data.index % 4 == 0, "day", "time_block")
+    data["time_block"] = np.select(
+        [starts.dt.hour < 5, starts.dt.hour < 12, starts.dt.hour < 17, starts.dt.hour < 22],
+        ["overnight", "morning", "afternoon", "evening"],
+        default="night",
+    )
+    data["label_granularity"] = "trip"
+    data["effort_known"] = data.index % 3 != 0
+    data.loc[~data["effort_known"], "effort_minutes"] = np.nan
+    data["air_temp_range_c"] = 4.0
+    data["wind_range_kmh"] = 6.0
+    data["pressure_range_hpa"] = 3.0
+    data["source"] = "development-synthetic-broad"
+    data["source_url"] = None
+    data["training_authorized"] = True
+    data = data.drop(columns=["training_consent"])
+    return data

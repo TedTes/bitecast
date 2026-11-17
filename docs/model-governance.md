@@ -8,13 +8,18 @@ The custom model ranks walleye bite conditions. It does not predict whether fish
 
 - Every external source must have recorded ownership, licence, commercial-use permission, coverage, effort availability, and known bias before ingestion.
 - Raw inputs are copied unchanged and identified by SHA-256. Normalized outputs retain the source identifier and quality weight.
-- Primary labels require catch/no-catch outcomes and measured fishing effort. Catch-only posts and tournament records cannot represent the negative class.
+- Hourly labels require catch/no-catch outcomes and measured fishing effort. Trip reports with broader time precision may enter only the separate `trip_broad` family, retain missing effort, carry reduced quality/precision weights, and never become fabricated hourly labels.
+- Every training row records its label granularity. `trip` and `hour` evidence have separate contracts, feature versions, artifacts, champions, and promotion comparisons.
 - Mobile logs require explicit per-trip consent, which defaults off. Consent does not affect access to free logging.
+- Consent is admissible only with a recorded policy version and decision timestamp. Grants and revocations are append-only audit events, while eligibility always uses the current decision.
 - User identifiers are replaced with keyed HMAC pseudonyms before export. The pseudonym key is a backend secret.
+- Accepted outcomes join to weather by exact lake-hour, water temperature by lake-date, and clarity only from a bounded observation at or before the trip. Future observations are never joined backward into historical outcomes.
 
 ## Privacy and deletion
 
 Account deletion removes source catch logs through the existing deletion function. Training exports preserve the catch-log UUID as trip lineage so a future exclusion list can remove withdrawn observations before retraining. Production policy and legal review must define retention and model-rebuild timing before user data is admitted; the operating target is exclusion from the next training run within 30 days. No service-role key or pseudonym key may enter the mobile application.
+
+Every training dataset is content-addressed and immutable. Its separate lineage file records the source log update time, consent policy version, and consent decision time used for each exported user observation.
 
 ## Evaluation
 
@@ -27,6 +32,8 @@ Account deletion removes source catch logs through the existing deletion functio
 ## Confidence and explanations
 
 Confidence combines comparable lake observations, missing inputs, unfamiliar categorical values, and ensemble disagreement. Predictions below the minimum evidence score are stored for auditing but not published as forecasts. Reasons use CatBoost SHAP feature contributions mapped to reviewed phrases; no generative model invents explanations.
+
+Broad fallback forecasts are capped at Low confidence, labeled `time_block`, and must not present a repeated block score as independently inferred hourly peaks. An approved hourly champion always supersedes the broad champion for its season.
 
 ## Release process
 

@@ -13,11 +13,9 @@ def export_consented_logs(db: SupabaseRest, pseudonym_key: str) -> pd.DataFrame:
     lakes = db.select("lakes", {"select": "id,slug,region,lat,lon,clarity_class,area_km2,max_depth_m"})
     lake_by_id = {lake["id"]: lake for lake in lakes}
     logs = db.select(
-        "catch_logs",
+        "training_eligible_catch_logs",
         {
             "select": "*",
-            "training_consent": "eq.true",
-            "deleted_at": "is.null",
             "trip_started_at": "not.is.null",
             "trip_ended_at": "not.is.null",
         },
@@ -65,6 +63,9 @@ def export_consented_logs(db: SupabaseRest, pseudonym_key: str) -> pd.DataFrame:
             "source": "bitecast-user-log",
             "source_quality": 1.0,
             "training_consent": True,
+            "consent_policy_version": log["training_consent_version"],
+            "consent_updated_at": log["training_consent_updated_at"],
+            "source_log_updated_at": log["client_updated_at"],
         }
         observations.extend(expand_trip_to_angler_hours(trip))
     return pd.DataFrame(observations)

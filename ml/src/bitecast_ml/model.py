@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from catboost import CatBoostClassifier, Pool
 
+from .broad import broad_confidence_for_rows, make_broad_feature_frame
 from .confidence import confidence_for_rows
 from .explanations import reasons_from_shap
 from .features import CATEGORICAL_FEATURES, FEATURE_COLUMNS, make_feature_frame
@@ -31,25 +32,44 @@ class ModelBundle:
     def version(self) -> str:
         return str(self.metadata["version"])
 
+    @property
+    def model_family(self) -> str:
+        return str(self.metadata.get("model_family", "hourly"))
+
+    @property
+    def prediction_granularity(self) -> str:
+        return str(self.metadata.get("prediction_granularity", "hour"))
+
     def predict(self, raw_rows: pd.DataFrame, with_reasons: bool = True) -> pd.DataFrame:
         if raw_rows.empty:
             return raw_rows.copy()
-        features = make_feature_frame(raw_rows)
-        pool = Pool(features, cat_features=CATEGORICAL_FEATURES, feature_names=FEATURE_COLUMNS)
+        broad = self.model_family == "trip_broad"
+        features = make_broad_feature_frame(raw_rows) if broad else make_feature_frame(raw_rows)
+        feature_columns = list(self.metadata.get("feature_columns", FEATURE_COLUMNS))
+        categorical_features = list(self.metadata.get("categorical_features", CATEGORICAL_FEATURES))
+        pool = Pool(features, cat_features=categorical_features, feature_names=feature_columns)
         ensemble = np.asarray([model.predict_proba(pool)[:, 1] for model in self.models])
         probabilities = self._calibrate(ensemble.mean(axis=0))
-        confidence_scores, confidence_labels = confidence_for_rows(
+        confidence_function = broad_confidence_for_rows if broad else confidence_for_rows
+        confidence_scores, confidence_labels = confidence_function(
             raw_rows,
             ensemble,
             self.metadata["lake_counts"],
             self.metadata["known_categories"],
         )
-        outputs = raw_rows[["lake_id", "hour_start", "season_mode"]].copy()
+        identity_columns = ["lake_id", "season_mode"]
+        if broad:
+            identity_columns += ["period_start", "period_end", "time_block", "time_precision"]
+        else:
+            identity_columns += ["hour_start"]
+        outputs = raw_rows[identity_columns].copy()
         outputs["raw_probability"] = probabilities
         outputs["confidence_score"] = confidence_scores
         outputs["confidence"] = confidence_labels
         outputs["forecast_available"] = confidence_scores >= self.metadata.get("minimum_confidence", 0.25)
         outputs["model_version"] = self.version
+        outputs["model_family"] = self.model_family
+        outputs["prediction_granularity"] = self.prediction_granularity
         outputs["bite_score"] = [
             percentile_score(
                 probability,
@@ -59,7 +79,7 @@ class ModelBundle:
         ]
         if with_reasons:
             shap = self.models[0].get_feature_importance(pool, type="ShapValues")
-            outputs["reasons"] = [reasons_from_shap(FEATURE_COLUMNS, row) for row in shap]
+            outputs["reasons"] = [reasons_from_shap(feature_columns, row) for row in shap]
         else:
             outputs["reasons"] = [[] for _ in range(len(outputs))]
         return outputs

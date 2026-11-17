@@ -20,6 +20,7 @@ BASE_NUMERIC_FEATURES = [
     "effort_minutes",
     "fishing_depth_m",
     "water_depth_m",
+    "secchi_depth_m",
     "air_temp_c",
     "water_temp_c",
     "wind_kmh",

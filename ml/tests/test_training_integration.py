@@ -20,6 +20,8 @@ def test_train_save_load_and_predict(tmp_path) -> None:
         ),
     )
     bundle = ModelBundle(result.artifact_dir)
+    assert bundle.model_family == "hourly"
+    assert bundle.prediction_granularity == "hour"
     sample = data[data.season_mode == "open_water"].head(8)
     predictions = bundle.predict(sample)
     assert len(predictions) == 8
