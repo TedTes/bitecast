@@ -1,0 +1,645 @@
+{
+  "id" : "nbd2-vdmz",
+  "name" : "WDFW-Creel Water Bodies",
+  "assetType" : "dataset",
+  "averageRating" : 0,
+  "category" : "Natural Resources & Environment",
+  "createdAt" : 1665183981,
+  "description" : "Records in this dataset reflect water bodies and associated metatdata used in the WDFW creel database. Note this is a growing list as new and existing projects start using the centralized WDFW freshwater creel database.",
+  "diciBackend" : false,
+  "displayType" : "table",
+  "downloadCount" : 1254,
+  "hideFromCatalog" : false,
+  "hideFromDataJson" : false,
+  "locked" : false,
+  "newBackend" : true,
+  "numberOfComments" : 0,
+  "oid" : 38924079,
+  "provenance" : "official",
+  "publicationAppendEnabled" : false,
+  "publicationDate" : 1665184187,
+  "publicationGroup" : 18900578,
+  "publicationStage" : "published",
+  "rowsUpdatedAt" : 1794746528,
+  "rowsUpdatedBy" : "6tru-9twk",
+  "tableId" : 18900578,
+  "totalTimesRated" : 0,
+  "viewCount" : 1130,
+  "viewLastModified" : 1749572470,
+  "viewType" : "tabular",
+  "approvals" : [ {
+    "reviewedAt" : 1741306889,
+    "reviewedAutomatically" : true,
+    "state" : "approved",
+    "submissionId" : 6782445,
+    "submissionObject" : "public_audience_request",
+    "submissionOutcome" : "change_audience",
+    "submittedAt" : 1741306889,
+    "targetAudience" : "public",
+    "workflowId" : 2106,
+    "submissionDetails" : {
+      "permissionType" : "READ"
+    },
+    "submissionOutcomeApplication" : {
+      "endedAt" : 1741306889,
+      "failureCount" : 0,
+      "startedAt" : 1741306889,
+      "status" : "success"
+    },
+    "submitter" : {
+      "id" : "v4iv-qfyh",
+      "displayName" : "Washington State Open Data Program"
+    }
+  } ],
+  "clientContext" : {
+    "clientContextVariables" : [ ],
+    "inheritedVariables" : { }
+  },
+  "columns" : [ {
+    "id" : 566295181,
+    "name" : "water_body_id",
+    "dataTypeName" : "text",
+    "description" : "Primary key for water body record",
+    "fieldName" : "water_body_id",
+    "position" : 1,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143930689,
+    "cachedContents" : {
+      "non_null" : "199",
+      "largest" : "FDFAF5A2-774D-4F4F-B411-4AB355225E3B",
+      "null" : "0",
+      "top" : [ {
+        "item" : "843E8274-C302-49A6-A73E-8200E598C1E9",
+        "count" : "1"
+      }, {
+        "item" : "BFD36F35-7731-46F8-813D-0EBB25FC431B",
+        "count" : "1"
+      }, {
+        "item" : "D914480B-8A51-45B0-A3D6-3A28AFB38921",
+        "count" : "1"
+      }, {
+        "item" : "61960763-5FAE-4A30-B8C0-7C192FC3656D",
+        "count" : "1"
+      }, {
+        "item" : "6E61C5A2-AA5E-4933-B84B-1FD890825C00",
+        "count" : "1"
+      }, {
+        "item" : "678C6966-2F00-4436-A317-8A8690F1C668",
+        "count" : "1"
+      }, {
+        "item" : "46A5B44A-8769-4C15-815E-BE6215D89A55",
+        "count" : "1"
+      }, {
+        "item" : "A409467E-AF0E-420E-AAB4-F5ABECC3814B",
+        "count" : "1"
+      }, {
+        "item" : "54977979-0C03-4173-B50F-4E43B87D17C6",
+        "count" : "1"
+      }, {
+        "item" : "5E9FD028-210F-4C97-B0DB-2CF12A4A6D6A",
+        "count" : "1"
+      }, {
+        "item" : "6241C2EF-CFA0-4763-905B-A0B4A940343A",
+        "count" : "1"
+      }, {
+        "item" : "62CA93E5-0739-4504-8501-1F94AC6B40BF",
+        "count" : "1"
+      }, {
+        "item" : "7FD71B4C-E2EA-4E2F-AFF4-ADBC2A8A9686",
+        "count" : "1"
+      }, {
+        "item" : "0850F2E1-7F8B-4CD5-BB18-3CC4DD9356BE",
+        "count" : "1"
+      }, {
+        "item" : "468D8BF4-C138-4792-B300-281F24E442F5",
+        "count" : "1"
+      }, {
+        "item" : "C2EF7A2A-9E44-4529-8C69-EB1809743E35",
+        "count" : "1"
+      }, {
+        "item" : "E4EFF947-5F68-4623-A631-4D1BF6A4843D",
+        "count" : "1"
+      }, {
+        "item" : "4064185B-3CDA-4718-9F23-2C5B655837F0",
+        "count" : "1"
+      }, {
+        "item" : "5BD9A393-D70B-4C85-ADC8-E904FB9DAD8C",
+        "count" : "1"
+      }, {
+        "item" : "45F67572-16D1-450E-99A6-4561AC1A71D1",
+        "count" : "1"
+      } ],
+      "smallest" : "0263B8C2-5DB7-44DC-9409-9C12DEDF7CCE",
+      "count" : "199",
+      "cardinality" : "199"
+    },
+    "format" : { }
+  }, {
+    "id" : 566295180,
+    "name" : "water_body_desc",
+    "dataTypeName" : "text",
+    "description" : "Name or description of water body",
+    "fieldName" : "water_body_desc",
+    "position" : 2,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143930688,
+    "cachedContents" : {
+      "non_null" : "199",
+      "largest" : "Yellowjacket Pond",
+      "null" : "0",
+      "top" : [ {
+        "item" : "Tunnel Lake",
+        "count" : "2"
+      }, {
+        "item" : "Upper Columbia Mainstem",
+        "count" : "1"
+      }, {
+        "item" : "Swift Reservoir",
+        "count" : "1"
+      }, {
+        "item" : "Skykomish - SF",
+        "count" : "1"
+      }, {
+        "item" : "Nooksack River",
+        "count" : "1"
+      }, {
+        "item" : "Horsethief Lake",
+        "count" : "1"
+      }, {
+        "item" : "Rocky Reach Dam to Rock Island Dam",
+        "count" : "1"
+      }, {
+        "item" : "Upper North Fork Lewis River",
+        "count" : "1"
+      }, {
+        "item" : "Wynoochee River",
+        "count" : "1"
+      }, {
+        "item" : "Salmon River",
+        "count" : "1"
+      }, {
+        "item" : "Blue Creek (Cowlitz)",
+        "count" : "1"
+      }, {
+        "item" : "Ft. Borst Park Pond",
+        "count" : "1"
+      }, {
+        "item" : "Snohomish River",
+        "count" : "1"
+      }, {
+        "item" : "Carlisle Lake",
+        "count" : "1"
+      }, {
+        "item" : "Horseshoe Lake",
+        "count" : "1"
+      }, {
+        "item" : "Rock Island Dam to Wanapum Dam",
+        "count" : "1"
+      }, {
+        "item" : "Green River",
+        "count" : "1"
+      }, {
+        "item" : "Panther Lake (Snohomish County)",
+        "count" : "1"
+      }, {
+        "item" : "Willapa River - South Fork",
+        "count" : "1"
+      }, {
+        "item" : "Stillaguamish River",
+        "count" : "1"
+      } ],
+      "smallest" : "Abernathy Creek",
+      "count" : "199",
+      "cardinality" : "199"
+    },
+    "format" : { }
+  }, {
+    "id" : 566295179,
+    "name" : "psc_code",
+    "dataTypeName" : "text",
+    "description" : "Pacific Salmon Commsion (PSC) location code",
+    "fieldName" : "psc_code",
+    "position" : 3,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143930687,
+    "cachedContents" : {
+      "non_null" : "105",
+      "largest" : "3F556^30^HZ3170^R",
+      "null" : "94",
+      "top" : [ {
+        "item" : "3F42001^^360001^R04",
+        "count" : "6"
+      }, {
+        "item" : "3F42001^^270168^R",
+        "count" : "3"
+      }, {
+        "item" : "3F21802^^23L474^R",
+        "count" : "2"
+      }, {
+        "item" : "3F21703^^200422^R",
+        "count" : "1"
+      }, {
+        "item" : "3F42001^^^^^^^^^R89",
+        "count" : "1"
+      }, {
+        "item" : "3F42001^^260002^R06",
+        "count" : "1"
+      }, {
+        "item" : "3F10308^^070291^R",
+        "count" : "1"
+      }, {
+        "item" : "3F42001^^300001^R",
+        "count" : "1"
+      }, {
+        "item" : "3F10308^^050135^R",
+        "count" : "1"
+      }, {
+        "item" : "3F42001^^260415^R02",
+        "count" : "1"
+      }, {
+        "item" : "3F21703^^200175^R",
+        "count" : "1"
+      }, {
+        "item" : "3F21802^^220191^R",
+        "count" : "1"
+      }, {
+        "item" : "3F42001^^270173^R",
+        "count" : "1"
+      }, {
+        "item" : "3F554^28^NZW138^R",
+        "count" : "1"
+      }, {
+        "item" : "3F10107^^010120^R",
+        "count" : "1"
+      }, {
+        "item" : "3F21703^^200096^R",
+        "count" : "1"
+      }, {
+        "item" : "3F42001^^450030^R",
+        "count" : "1"
+      }, {
+        "item" : "3F532^30^GST1P8^R",
+        "count" : "1"
+      }, {
+        "item" : "3F10308^^050062^R",
+        "count" : "1"
+      }, {
+        "item" : "3F555^27^KWW77K^R",
+        "count" : "1"
+      } ],
+      "smallest" : "3F10107^^010120^R",
+      "count" : "199",
+      "cardinality" : "199"
+    },
+    "format" : { }
+  }, {
+    "id" : 566295178,
+    "name" : "llid",
+    "dataTypeName" : "text",
+    "description" : "Latitude longitude identification code",
+    "fieldName" : "llid",
+    "position" : 4,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143930686,
+    "cachedContents" : {
+      "non_null" : "56",
+      "largest" : "1239349464622",
+      "null" : "143",
+      "top" : [ {
+        "item" : "1227824458504",
+        "count" : "6"
+      }, {
+        "item" : "1225982487712",
+        "count" : "2"
+      }, {
+        "item" : "1221262482048",
+        "count" : "2"
+      }, {
+        "item" : "1212934456914",
+        "count" : "1"
+      }, {
+        "item" : "1227158463292",
+        "count" : "1"
+      }, {
+        "item" : "1207148478105",
+        "count" : "1"
+      }, {
+        "item" : "1222316471303",
+        "count" : "1"
+      }, {
+        "item" : "1236063469616",
+        "count" : "1"
+      }, {
+        "item" : "1217980457044",
+        "count" : "1"
+      }, {
+        "item" : "1220450478301",
+        "count" : "1"
+      }, {
+        "item" : "1223962455734",
+        "count" : "1"
+      }, {
+        "item" : "1219256476406",
+        "count" : "1"
+      }, {
+        "item" : "1221262482038",
+        "count" : "1"
+      }, {
+        "item" : "1222021488091",
+        "count" : "1"
+      }, {
+        "item" : "1216255487262",
+        "count" : "1"
+      }, {
+        "item" : "1214292485242",
+        "count" : "1"
+      }, {
+        "item" : "1228746460338",
+        "count" : "1"
+      }, {
+        "item" : "1231679461884",
+        "count" : "1"
+      }, {
+        "item" : "1223661483874",
+        "count" : "1"
+      }, {
+        "item" : "1227190458661",
+        "count" : "1"
+      } ],
+      "smallest" : "1202169476606",
+      "count" : "199",
+      "cardinality" : "199"
+    },
+    "format" : { }
+  }, {
+    "id" : 566295177,
+    "name" : "centroid_lat",
+    "dataTypeName" : "text",
+    "description" : "Approximate central latitude of water body",
+    "fieldName" : "centroid_lat",
+    "position" : 5,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143930685,
+    "cachedContents" : {
+      "non_null" : "199",
+      "largest" : "48.9292",
+      "null" : "0",
+      "top" : [ {
+        "item" : "45.9811",
+        "count" : "1"
+      }, {
+        "item" : "48.238908",
+        "count" : "1"
+      }, {
+        "item" : "45.708487",
+        "count" : "1"
+      }, {
+        "item" : "45.986973",
+        "count" : "1"
+      }, {
+        "item" : "48.0302",
+        "count" : "1"
+      }, {
+        "item" : "47.535909",
+        "count" : "1"
+      }, {
+        "item" : "45.717354",
+        "count" : "1"
+      }, {
+        "item" : "46.3699",
+        "count" : "1"
+      }, {
+        "item" : "46.723",
+        "count" : "1"
+      }, {
+        "item" : "48.0520",
+        "count" : "1"
+      }, {
+        "item" : "45.706192",
+        "count" : "1"
+      }, {
+        "item" : "46.996189",
+        "count" : "1"
+      }, {
+        "item" : "47.5980",
+        "count" : "1"
+      }, {
+        "item" : "46.1397",
+        "count" : "1"
+      }, {
+        "item" : "46.5535",
+        "count" : "1"
+      }, {
+        "item" : "46.705751",
+        "count" : "1"
+      }, {
+        "item" : "46.057838",
+        "count" : "1"
+      }, {
+        "item" : "45.680727",
+        "count" : "1"
+      }, {
+        "item" : "46.723318",
+        "count" : "1"
+      }, {
+        "item" : "45.707843",
+        "count" : "1"
+      } ],
+      "smallest" : "45.601837",
+      "count" : "199",
+      "cardinality" : "199"
+    },
+    "format" : { }
+  }, {
+    "id" : 566295176,
+    "name" : "centroid_lon",
+    "dataTypeName" : "text",
+    "description" : "Approximate central longitude of water body",
+    "fieldName" : "centroid_lon",
+    "position" : 6,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143930684,
+    "cachedContents" : {
+      "non_null" : "199",
+      "largest" : "-124.583583",
+      "null" : "0",
+      "top" : [ {
+        "item" : "-121.787427",
+        "count" : "1"
+      }, {
+        "item" : "-121.913378",
+        "count" : "1"
+      }, {
+        "item" : "-120.2956",
+        "count" : "1"
+      }, {
+        "item" : "-121.7946",
+        "count" : "1"
+      }, {
+        "item" : "-122.1482",
+        "count" : "1"
+      }, {
+        "item" : "-122.0952",
+        "count" : "1"
+      }, {
+        "item" : "-121.463168",
+        "count" : "1"
+      }, {
+        "item" : "-118.9034",
+        "count" : "1"
+      }, {
+        "item" : "-121.787337",
+        "count" : "1"
+      }, {
+        "item" : "-120.0175",
+        "count" : "1"
+      }, {
+        "item" : "-122.240156",
+        "count" : "1"
+      }, {
+        "item" : "-122.056081",
+        "count" : "1"
+      }, {
+        "item" : "-119.642033",
+        "count" : "1"
+      }, {
+        "item" : "-120.1967",
+        "count" : "1"
+      }, {
+        "item" : "-121.388415",
+        "count" : "1"
+      }, {
+        "item" : "-122.1075",
+        "count" : "1"
+      }, {
+        "item" : "-122.152295",
+        "count" : "1"
+      }, {
+        "item" : "-121.380312",
+        "count" : "1"
+      }, {
+        "item" : "-119.7294",
+        "count" : "1"
+      }, {
+        "item" : "-121.720043",
+        "count" : "1"
+      } ],
+      "smallest" : "-117.135552",
+      "count" : "199",
+      "cardinality" : "199"
+    },
+    "format" : { }
+  } ],
+  "grants" : [ {
+    "inherited" : false,
+    "type" : "viewer",
+    "flags" : [ "public" ]
+  } ],
+  "metadata" : {
+    "custom_fields" : {
+      "Temporal" : {
+        "Posting Frequency" : "Every 3 hours",
+        "Period of Time" : "This is a growing list as new and existing projects start using the centralized WDFW freshwater creel database. "
+      }
+    },
+    "availableDisplayTypes" : [ "table", "fatrow", "page" ]
+  },
+  "owner" : {
+    "id" : "msq3-adhc",
+    "createdAt" : 1741303986,
+    "displayName" : "Washington Department of Fish and Wildlife Data",
+    "screenName" : "Washington Department of Fish and Wildlife Data",
+    "type" : "team",
+    "members" : [ {
+      "id" : "b2s6-8ii9",
+      "createdAt" : 1332802552,
+      "displayName" : "Brodie Cox",
+      "profileImageUrlLarge" : "/api/users/b2s6-8ii9/profile_images/LARGE",
+      "profileImageUrlMedium" : "/api/users/b2s6-8ii9/profile_images/THUMB",
+      "profileImageUrlSmall" : "/api/users/b2s6-8ii9/profile_images/TINY",
+      "screenName" : "Brodie Cox",
+      "teamId" : 1713195,
+      "teamRole" : "owner",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "dszk-xw6k",
+      "createdAt" : 1558071229,
+      "displayName" : "Danny Warren",
+      "screenName" : "Danny Warren",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "i2u5-ieen",
+      "createdAt" : 1556912403,
+      "displayName" : "John Chen",
+      "screenName" : "John Chen",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "ks2t-85xg",
+      "createdAt" : 1741365632,
+      "displayName" : "Phil",
+      "screenName" : "Phil",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    } ]
+  },
+  "query" : { },
+  "rights" : [ "read" ],
+  "tableAuthor" : {
+    "id" : "msq3-adhc",
+    "createdAt" : 1741303986,
+    "displayName" : "Washington Department of Fish and Wildlife Data",
+    "screenName" : "Washington Department of Fish and Wildlife Data",
+    "type" : "team",
+    "members" : [ {
+      "id" : "b2s6-8ii9",
+      "createdAt" : 1332802552,
+      "displayName" : "Brodie Cox",
+      "profileImageUrlLarge" : "/api/users/b2s6-8ii9/profile_images/LARGE",
+      "profileImageUrlMedium" : "/api/users/b2s6-8ii9/profile_images/THUMB",
+      "profileImageUrlSmall" : "/api/users/b2s6-8ii9/profile_images/TINY",
+      "screenName" : "Brodie Cox",
+      "teamId" : 1713195,
+      "teamRole" : "owner",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "dszk-xw6k",
+      "createdAt" : 1558071229,
+      "displayName" : "Danny Warren",
+      "screenName" : "Danny Warren",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "i2u5-ieen",
+      "createdAt" : 1556912403,
+      "displayName" : "John Chen",
+      "screenName" : "John Chen",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "ks2t-85xg",
+      "createdAt" : 1741365632,
+      "displayName" : "Phil",
+      "screenName" : "Phil",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    } ]
+  },
+  "tags" : [ "wdfw", "creel" ],
+  "flags" : [ "default", "ownerMayBeContacted", "restorable", "restorePossibleForType" ]
+}

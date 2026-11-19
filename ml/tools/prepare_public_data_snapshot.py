@@ -239,6 +239,164 @@ for forum_path in sorted((RAW_ROOT / "reports").glob("longpoint-apify-2026-11-15
         ),
     }
 
+SOURCES["reports/longpoint-apify-targeted-2026-11-17.jsonl"] = {
+    "source_id": "longpoint-forum-apify-targeted-2026-11-17",
+    "owner": "Channel 6-8 / individual forum contributor",
+    "url": "https://longpoint.on.ca/threads/walleye-bows-elbow-sunday-july-14th.5108/",
+    "license": "Project-owner authorization for BiteCast trip_broad bootstrap use",
+    "commercial": "owner_directed_broad_model_use",
+    "coverage": "Opening post published 2013-07-14; retrieved 2026-11-17",
+    "geography": "Lake Erie, Long Point Elbow",
+    "catch": "explicit_no_catch",
+    "effort": "explicit_3.5_hours",
+    "eligible": True,
+    "retrieved_at": "2026-11-17",
+    "limitations": (
+        "One self-selected public report; eligible only for the trip_broad family and never for invented "
+        "hourly labels. Apify capture is limited to the opening post."
+    ),
+}
+
+SOURCES["reports/quintefishing-discourse-2026-11-18-topics.jsonl"] = {
+    "source_id": "quintefishing-discourse-2026-11-18",
+    "owner": "Quinte Fishing / individual forum contributors",
+    "url": "https://quintefishing.com/c/general/4",
+    "license": "Project-owner authorization for BiteCast trip_broad bootstrap use",
+    "commercial": "owner_directed_broad_model_use",
+    "coverage": "All 51 public Fishing-General topics available on 2026-11-18",
+    "geography": "Bay of Quinte and nearby eastern Lake Ontario",
+    "catch": "unstructured_and_incomplete",
+    "effort": "partial",
+    "eligible": True,
+    "retrieved_at": "2026-11-18",
+    "limitations": (
+        "Only posts explicitly admitted by the review ledger may become trip_broad rows; questions, "
+        "advice, uncertain species, repeated summaries, and vague dates remain excluded."
+    ),
+}
+
+for kind in ("index", "threads"):
+    relative = f"reports/longpoint-jina-{kind}-2026-11-18.jsonl"
+    SOURCES[relative] = {
+        "source_id": f"longpoint-forum-jina-{kind}-2026-11-18",
+        "owner": "Channel 6-8 / individual forum contributors",
+        "url": "https://longpoint.on.ca/forums/fishing-reports/",
+        "license": "Project-owner authorization for BiteCast trip_broad bootstrap use",
+        "commercial": "owner_directed_broad_model_use",
+        "coverage": (
+            "45 stratified forum index pages" if kind == "index" else "100 filtered candidate threads"
+        ),
+        "geography": "Primarily Lake Erie and Long Point region",
+        "catch": "unstructured_and_incomplete",
+        "effort": "partial",
+        "eligible": kind == "threads",
+        "retrieved_at": "2026-11-18",
+        "limitations": (
+            "Bounded discovery snapshot. Only technically filtered, explicit trip outcomes may enter "
+            "the low-weight trip_broad family; page presence and silence are never labels."
+        ),
+    }
+
+for coverage in (
+    "2013-07-14-2013-07-15",
+    "2026-08-15-2026-10-01",
+    "2026-10-22-2026-11-04",
+):
+    relative = f"historical-weather/lake-erie-open-meteo-{coverage}.json"
+    SOURCES[relative] = {
+        "source_id": f"open-meteo-lake-erie-evaluation-{coverage}",
+        "owner": "Open-Meteo and upstream weather-data providers",
+        "url": "https://archive-api.open-meteo.com/v1/archive",
+        "license": "Open-Meteo free API is non-commercial; upstream dataset licences also apply",
+        "commercial": "not_approved_for_production",
+        "coverage": coverage,
+        "geography": "Representative Lake Erie coordinates",
+        "catch": "no",
+        "effort": "no",
+        "eligible": False,
+        "retrieved_at": "2026-11-17",
+        "limitations": "Point reanalysis used only to exercise the bootstrap environmental join.",
+    }
+
+for coverage in ("2026-01-02-2026-03-03", "2026-07-31-2026-08-22"):
+    relative = f"historical-weather/bay-of-quinte-open-meteo-{coverage}.json"
+    SOURCES[relative] = {
+        "source_id": f"open-meteo-bay-of-quinte-evaluation-{coverage}",
+        "owner": "Open-Meteo and upstream weather-data providers",
+        "url": "https://archive-api.open-meteo.com/v1/archive",
+        "license": "Open-Meteo free API is non-commercial; upstream dataset licences also apply",
+        "commercial": "not_approved_for_production",
+        "coverage": coverage,
+        "geography": "Representative Bay of Quinte coordinates",
+        "catch": "no",
+        "effort": "no",
+        "eligible": False,
+        "retrieved_at": "2026-11-18",
+        "limitations": "Point reanalysis used only to exercise the bootstrap environmental join.",
+    }
+
+WDFW_COMMON = {
+    "owner": "Washington Department of Fish and Wildlife",
+    "license": "Public data portal record has no dataset-specific machine-readable licence",
+    "commercial": "review_required",
+    "coverage": "1996 and 2012 walleye-target interviews",
+    "geography": "Horsethief Lake, Washington; outside BiteCast launch geography",
+    "eligible": False,
+    "retrieved_at": "2026-11-17",
+}
+for relative, source_id, url, catch, effort, limitations in (
+    (
+        "fishing-outcomes/wdfw-walleye-interviews.json",
+        "wdfw-walleye-interviews-2026-11-17",
+        "https://data.wa.gov/d/rpax-ahqm",
+        "target_species_with_zero_catch_inferred_from_join",
+        "start_and_end_time",
+        "Only two target-species interviews; one trip is incomplete/right-censored.",
+    ),
+    (
+        "fishing-outcomes/wdfw-walleye-catches.json",
+        "wdfw-walleye-interview-catches-2026-11-17",
+        "https://data.wa.gov/d/6y4e-8ftk",
+        "caught_species_rows",
+        "no",
+        "Bounded to the two walleye-target interviews; contains only non-target catches.",
+    ),
+    (
+        "fishing-outcomes/wdfw-walleye-gear.json",
+        "wdfw-walleye-interview-gear-2026-11-17",
+        "https://data.wa.gov/d/d2ks-afhz",
+        "no",
+        "no",
+        "Bounded gear records only; no bait detail.",
+    ),
+    (
+        "lake-metadata/wdfw-horsethief-lake.json",
+        "wdfw-horsethief-lake-metadata-2026-11-17",
+        "https://data.wa.gov/d/nbd2-vdmz",
+        "no",
+        "no",
+        "Centroid only; lake morphology and clarity are absent.",
+    ),
+):
+    SOURCES[relative] = {
+        **WDFW_COMMON,
+        "source_id": source_id,
+        "url": url,
+        "catch": catch,
+        "effort": effort,
+        "limitations": limitations,
+    }
+
+for dataset_id in ("rpax-ahqm", "6y4e-8ftk", "d2ks-afhz", "nbd2-vdmz"):
+    SOURCES[f"fishing-outcomes/wdfw-{dataset_id}-metadata.json"] = {
+        **WDFW_COMMON,
+        "source_id": f"wdfw-{dataset_id}-metadata-2026-11-17",
+        "url": f"https://data.wa.gov/api/views/{dataset_id}",
+        "catch": "metadata_only",
+        "effort": "metadata_only",
+        "limitations": "Schema/provenance record only; never an outcome label.",
+    }
+
 
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -258,7 +416,7 @@ def write_manifest() -> pd.DataFrame:
                 "category": relative.split("/", 1)[0],
                 "owner": meta["owner"],
                 "source_url": meta["url"],
-                "retrieved_at": RETRIEVED_AT,
+                "retrieved_at": meta.get("retrieved_at", RETRIEVED_AT),
                 "licence": meta["license"],
                 "commercial_use_status": meta["commercial"],
                 "file_type": path.suffix.removeprefix(".").lower(),

@@ -1,0 +1,2764 @@
+{
+  "id" : "6y4e-8ftk",
+  "name" : "WDFW-Creel Analysis Catch",
+  "assetType" : "dataset",
+  "averageRating" : 0,
+  "category" : "Natural Resources & Environment",
+  "createdAt" : 1633038010,
+  "description" : "analysis of catch data",
+  "diciBackend" : false,
+  "displayType" : "table",
+  "downloadCount" : 3223,
+  "hideFromCatalog" : false,
+  "hideFromDataJson" : false,
+  "locked" : false,
+  "newBackend" : true,
+  "numberOfComments" : 0,
+  "oid" : 39049743,
+  "provenance" : "official",
+  "publicationAppendEnabled" : false,
+  "publicationDate" : 1668626936,
+  "publicationGroup" : 18467869,
+  "publicationStage" : "published",
+  "rowsUpdatedAt" : 1794746578,
+  "rowsUpdatedBy" : "6tru-9twk",
+  "tableId" : 18964571,
+  "totalTimesRated" : 0,
+  "viewCount" : 2840,
+  "viewLastModified" : 1749572280,
+  "viewType" : "tabular",
+  "approvals" : [ {
+    "reviewedAt" : 1633040746,
+    "reviewedAutomatically" : true,
+    "state" : "approved",
+    "submissionId" : 5106078,
+    "submissionObject" : "public_audience_request",
+    "submissionOutcome" : "change_audience",
+    "submittedAt" : 1633040746,
+    "targetAudience" : "public",
+    "workflowId" : 2106,
+    "submissionDetails" : {
+      "permissionType" : "READ"
+    },
+    "submissionOutcomeApplication" : {
+      "endedAt" : 1633040746,
+      "failureCount" : 0,
+      "startedAt" : 1633040746,
+      "status" : "success"
+    },
+    "submitter" : {
+      "id" : "h2p6-jrpv",
+      "displayName" : "WDFW Data"
+    }
+  } ],
+  "clientContext" : {
+    "clientContextVariables" : [ ],
+    "inheritedVariables" : { }
+  },
+  "columns" : [ {
+    "id" : 567925015,
+    "name" : "creel_event_id",
+    "dataTypeName" : "text",
+    "description" : "Primary key id value for record in creel_event table",
+    "fieldName" : "creel_event_id",
+    "position" : 1,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662068,
+    "cachedContents" : {
+      "non_null" : "119187",
+      "largest" : "FFFB9A3F-ABFE-4F1F-8B35-599D4CF047AD",
+      "null" : "0",
+      "top" : [ {
+        "item" : "93749BA1-948A-41A6-80FA-21D034C9079C",
+        "count" : "254"
+      }, {
+        "item" : "C87FD5C9-82E1-4578-B7CF-26D39AF15AC7",
+        "count" : "231"
+      }, {
+        "item" : "DA64C9C1-C827-4090-8836-CDBC8F08B0A2",
+        "count" : "178"
+      }, {
+        "item" : "EEA4CCF8-C879-492E-87DB-CFCB626792E3",
+        "count" : "167"
+      }, {
+        "item" : "D59B75CF-D4F1-43F8-8014-17E3E41DF3F3",
+        "count" : "160"
+      }, {
+        "item" : "212A909D-4C39-4BDA-AAB6-70514223A5CB",
+        "count" : "151"
+      }, {
+        "item" : "80197955-57B3-480F-BF8B-11C6FE3E9047",
+        "count" : "151"
+      }, {
+        "item" : "DCF781CA-0324-40E6-AA02-80A5AF565692",
+        "count" : "144"
+      }, {
+        "item" : "F5A13BB5-32D9-462B-924D-226C95F60C61",
+        "count" : "143"
+      }, {
+        "item" : "5868299D-2BCB-49B7-AE13-96C71F2E6CD1",
+        "count" : "136"
+      }, {
+        "item" : "F48FDD5C-B15B-43DF-B23B-76F08964B2C9",
+        "count" : "129"
+      }, {
+        "item" : "523E3BC7-A418-4E63-BB3B-7F2DFDD48124",
+        "count" : "126"
+      }, {
+        "item" : "DE34475B-895D-4D32-87F3-E8677D8C197A",
+        "count" : "126"
+      }, {
+        "item" : "F90D4BE2-870A-413D-A1F4-A06C7B38757C",
+        "count" : "126"
+      }, {
+        "item" : "BE35747B-3FFC-44A9-BA6F-22391B29821F",
+        "count" : "125"
+      }, {
+        "item" : "9553FE35-597F-412F-BF9E-EECF46673696",
+        "count" : "125"
+      }, {
+        "item" : "A24475E0-71B0-4428-990F-A95D2E4DAD50",
+        "count" : "124"
+      }, {
+        "item" : "AFCDDB20-787C-462A-81FC-756A1660ADB1",
+        "count" : "120"
+      }, {
+        "item" : "1A315C75-44E2-4E38-870B-F28E19903301",
+        "count" : "119"
+      }, {
+        "item" : "969824B8-6875-4F85-802D-E75EAF96F9B5",
+        "count" : "117"
+      } ],
+      "smallest" : "000928DB-33E8-4568-B2F3-C0BD6EA59519",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925016,
+    "name" : "event_date",
+    "dataTypeName" : "calendar_date",
+    "description" : "Date the fish was caught",
+    "fieldName" : "event_date",
+    "position" : 2,
+    "renderTypeName" : "calendar_date",
+    "tableColumnId" : 139662092,
+    "cachedContents" : {
+      "non_null" : "119187",
+      "largest" : "2026-11-14T00:00:00.000",
+      "null" : "0",
+      "top" : [ {
+        "item" : "1990-04-22T00:00:00.000",
+        "count" : "748"
+      }, {
+        "item" : "1992-04-26T00:00:00.000",
+        "count" : "666"
+      }, {
+        "item" : "1995-04-29T00:00:00.000",
+        "count" : "634"
+      }, {
+        "item" : "1996-04-27T00:00:00.000",
+        "count" : "626"
+      }, {
+        "item" : "2023-09-16T00:00:00.000",
+        "count" : "548"
+      }, {
+        "item" : "2023-09-02T00:00:00.000",
+        "count" : "525"
+      }, {
+        "item" : "1987-04-26T00:00:00.000",
+        "count" : "519"
+      }, {
+        "item" : "1989-04-23T00:00:00.000",
+        "count" : "512"
+      }, {
+        "item" : "2023-09-30T00:00:00.000",
+        "count" : "506"
+      }, {
+        "item" : "1991-04-21T00:00:00.000",
+        "count" : "459"
+      }, {
+        "item" : "1986-04-20T00:00:00.000",
+        "count" : "408"
+      }, {
+        "item" : "1993-04-25T00:00:00.000",
+        "count" : "385"
+      }, {
+        "item" : "1994-04-30T00:00:00.000",
+        "count" : "381"
+      }, {
+        "item" : "2025-09-27T00:00:00.000",
+        "count" : "374"
+      }, {
+        "item" : "2025-09-19T00:00:00.000",
+        "count" : "368"
+      }, {
+        "item" : "1988-04-24T00:00:00.000",
+        "count" : "355"
+      }, {
+        "item" : "2024-10-05T00:00:00.000",
+        "count" : "348"
+      }, {
+        "item" : "2023-09-23T00:00:00.000",
+        "count" : "344"
+      }, {
+        "item" : "2023-09-08T00:00:00.000",
+        "count" : "344"
+      }, {
+        "item" : "1985-04-21T00:00:00.000",
+        "count" : "343"
+      } ],
+      "smallest" : "1973-05-17T00:00:00.000",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925017,
+    "name" : "water_body",
+    "dataTypeName" : "text",
+    "description" : "Waterbody where fish was caught",
+    "fieldName" : "water_body",
+    "position" : 3,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662071,
+    "cachedContents" : {
+      "non_null" : "119187",
+      "largest" : "Wynoochee River",
+      "null" : "0",
+      "top" : [ {
+        "item" : "Cowlitz River",
+        "count" : "17478"
+      }, {
+        "item" : "Skagit River",
+        "count" : "11030"
+      }, {
+        "item" : "Humptulips River",
+        "count" : "9223"
+      }, {
+        "item" : "Little White Salmon - Drano Lake",
+        "count" : "8177"
+      }, {
+        "item" : "Chehalis River",
+        "count" : "6534"
+      }, {
+        "item" : "Puyallup River",
+        "count" : "5953"
+      }, {
+        "item" : "Klineline Pond",
+        "count" : "4771"
+      }, {
+        "item" : "Snohomish River",
+        "count" : "3814"
+      }, {
+        "item" : "Silver Lake",
+        "count" : "3603"
+      }, {
+        "item" : "Nisqually River",
+        "count" : "3478"
+      }, {
+        "item" : "Kalama River",
+        "count" : "2860"
+      }, {
+        "item" : "Mineral Lake",
+        "count" : "2741"
+      }, {
+        "item" : "Skykomish River",
+        "count" : "2500"
+      }, {
+        "item" : "Sol Duc River",
+        "count" : "2209"
+      }, {
+        "item" : "Cascade River",
+        "count" : "2161"
+      }, {
+        "item" : "Satsop River",
+        "count" : "2139"
+      }, {
+        "item" : "Hoh River",
+        "count" : "2065"
+      }, {
+        "item" : "Klickitat River",
+        "count" : "1669"
+      }, {
+        "item" : "Rowland Lake",
+        "count" : "1647"
+      }, {
+        "item" : "Wallace River",
+        "count" : "1622"
+      } ],
+      "smallest" : "Abernathy Creek",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925018,
+    "name" : "project_name",
+    "dataTypeName" : "text",
+    "description" : "Data collection project name",
+    "fieldName" : "project_name",
+    "position" : 4,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662077,
+    "cachedContents" : {
+      "non_null" : "119187",
+      "largest" : "R5 Steelhead",
+      "null" : "0",
+      "top" : [ {
+        "item" : "R5 Inland Fish",
+        "count" : "23750"
+      }, {
+        "item" : "District 17 North",
+        "count" : "18795"
+      }, {
+        "item" : "Cowlitz",
+        "count" : "17575"
+      }, {
+        "item" : "District 14",
+        "count" : "15261"
+      }, {
+        "item" : "District 11",
+        "count" : "10982"
+      }, {
+        "item" : "District 13",
+        "count" : "9525"
+      }, {
+        "item" : "CRM - Roving Creel Project",
+        "count" : "8177"
+      }, {
+        "item" : "R5 Steelhead",
+        "count" : "7650"
+      }, {
+        "item" : "District 16",
+        "count" : "6472"
+      }, {
+        "item" : "District 17 South",
+        "count" : "1000"
+      } ],
+      "smallest" : "Cowlitz",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925019,
+    "name" : "fishery_name",
+    "dataTypeName" : "text",
+    "description" : "Name of fishery being monitored",
+    "fieldName" : "fishery_name",
+    "position" : 5,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143739637,
+    "cachedContents" : {
+      "non_null" : "68676",
+      "largest" : "Wynoochee winter steelhead 2025-26",
+      "null" : "50511",
+      "top" : [ {
+        "item" : "Puyallup_Carbon salmon 2023",
+        "count" : "2701"
+      }, {
+        "item" : "Puyallup Carbon salmon 2025",
+        "count" : "2278"
+      }, {
+        "item" : "Skagit fall salmon 2025",
+        "count" : "2136"
+      }, {
+        "item" : "Silver Lake Winter Crappie 2025-26",
+        "count" : "2070"
+      }, {
+        "item" : "Snohomish fall salmon 2023",
+        "count" : "2069"
+      }, {
+        "item" : "Skagit fall salmon 2023",
+        "count" : "2014"
+      }, {
+        "item" : "Nisqually salmon 2021",
+        "count" : "1717"
+      }, {
+        "item" : "Skagit fall salmon 2026",
+        "count" : "1698"
+      }, {
+        "item" : "Chehalis salmon 2022",
+        "count" : "1465"
+      }, {
+        "item" : "Drano Lake salmon and steelhead 2025",
+        "count" : "1378"
+      }, {
+        "item" : "Chehalis salmon 2025",
+        "count" : "1364"
+      }, {
+        "item" : "Chehalis salmon 2024",
+        "count" : "1356"
+      }, {
+        "item" : "Humptulips salmon 2023",
+        "count" : "1259"
+      }, {
+        "item" : "Drano Lake salmon and steelhead 2024",
+        "count" : "1259"
+      }, {
+        "item" : "Humptulips salmon 2024",
+        "count" : "1235"
+      }, {
+        "item" : "Puyallup Carbon salmon 2024",
+        "count" : "1176"
+      }, {
+        "item" : "Humptulips salmon 2025",
+        "count" : "1147"
+      }, {
+        "item" : "Skagit fall salmon 2022",
+        "count" : "1124"
+      }, {
+        "item" : "Drano Lake salmon and steelhead 2023",
+        "count" : "1121"
+      }, {
+        "item" : "Nisqually salmon 2023",
+        "count" : "1095"
+      } ],
+      "smallest" : "Baker summer sockeye 2022",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925020,
+    "name" : "catch_id",
+    "dataTypeName" : "text",
+    "description" : "Primary key id value for record in catch table",
+    "fieldName" : "catch_id",
+    "position" : 6,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662086,
+    "cachedContents" : {
+      "non_null" : "119187",
+      "largest" : "FFFFA6B1-F834-4F31-A0CD-7C37D2ED0741",
+      "null" : "0",
+      "top" : [ {
+        "item" : "0C0CFC70-D886-4BB5-8E9B-8410F357EF94",
+        "count" : "2"
+      }, {
+        "item" : "0349275F-8666-4687-BD47-40B829364293",
+        "count" : "2"
+      }, {
+        "item" : "FC064326-4EF6-410F-BF97-0A2A56EF880C",
+        "count" : "2"
+      }, {
+        "item" : "2D611F53-D833-4322-9D65-3DFB36AC968A",
+        "count" : "2"
+      }, {
+        "item" : "8832399F-81B9-441B-B010-587AC11296D5",
+        "count" : "2"
+      }, {
+        "item" : "D47DB130-A5AB-4B58-8982-6CFE144D1CE6",
+        "count" : "2"
+      }, {
+        "item" : "3CD93153-317F-4BF2-AD1D-DB9A90E70919",
+        "count" : "2"
+      }, {
+        "item" : "5C40107A-E724-4E15-9A65-380F53F25612",
+        "count" : "2"
+      }, {
+        "item" : "160AED9A-B868-4993-B46E-1D496CF2AA17",
+        "count" : "2"
+      }, {
+        "item" : "F09BBFB5-BF87-4A80-A011-8F5A2BFC71F7",
+        "count" : "2"
+      }, {
+        "item" : "CEAF45E8-C6BA-4E5C-AB84-6F5ADE4F5A0E",
+        "count" : "2"
+      }, {
+        "item" : "B549A27E-7099-4739-B552-E9E69B556B0F",
+        "count" : "2"
+      }, {
+        "item" : "3780E9D8-21BD-4DF9-939E-3DED28FE5DE5",
+        "count" : "2"
+      }, {
+        "item" : "0DA5A5B5-FB97-442D-BAAD-BF0411EEF82F",
+        "count" : "2"
+      }, {
+        "item" : "A759C94D-1FE5-4673-B595-465B4512F98E",
+        "count" : "2"
+      }, {
+        "item" : "3B14A991-5721-431A-8630-9A83C48C6011",
+        "count" : "2"
+      }, {
+        "item" : "A49F7CBE-2F10-4DF1-AA16-5724E6BA334A",
+        "count" : "2"
+      }, {
+        "item" : "FC17B5BB-8E8D-48C7-8073-5393332FBEFE",
+        "count" : "2"
+      }, {
+        "item" : "D39AC432-1AC1-4D2E-AA2F-7F91AC6C8D40",
+        "count" : "2"
+      }, {
+        "item" : "3D7D560D-E8FE-46F7-89B2-6E057851A2D4",
+        "count" : "2"
+      } ],
+      "smallest" : "0000848A-1EDF-4EAD-88D5-344D0BC12431",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925021,
+    "name" : "interview_id",
+    "dataTypeName" : "text",
+    "description" : "Primary key id value for record in interview table",
+    "fieldName" : "interview_id",
+    "position" : 7,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662093,
+    "cachedContents" : {
+      "non_null" : "119187",
+      "largest" : "FFFF66D3-62C3-4001-B5F7-474EADC786AC",
+      "null" : "0",
+      "top" : [ {
+        "item" : "F851C375-9894-40DE-8A0B-3D9CCF70AAF4",
+        "count" : "59"
+      }, {
+        "item" : "322FB5D4-DA2C-427E-8B27-55C44683D9E1",
+        "count" : "50"
+      }, {
+        "item" : "3952B1BC-60B7-4D86-BF50-A8794F6BFB98",
+        "count" : "48"
+      }, {
+        "item" : "F6BCDCAF-5EAB-4016-AE36-E80FEC21185A",
+        "count" : "44"
+      }, {
+        "item" : "9FBC7054-E3C7-4133-A19C-516C8118720D",
+        "count" : "37"
+      }, {
+        "item" : "38D7466E-250B-4BC8-A3D1-A05CF7F9802C",
+        "count" : "36"
+      }, {
+        "item" : "AD7BA95B-F526-4859-B0E5-9A35AAAF8029",
+        "count" : "35"
+      }, {
+        "item" : "E60922F8-F54A-4114-9DA1-D3FE2E29AD46",
+        "count" : "34"
+      }, {
+        "item" : "D294F0E1-6875-4E19-AD83-9FE8B93C1E31",
+        "count" : "33"
+      }, {
+        "item" : "16F6D947-BC74-4333-8636-EDE18A6C1034",
+        "count" : "33"
+      }, {
+        "item" : "B9EEEF4A-BCA2-4D40-80A3-5CA3BD47BB8F",
+        "count" : "32"
+      }, {
+        "item" : "B8B389A4-9D49-4133-82B9-CAFD2DBBFB44",
+        "count" : "32"
+      }, {
+        "item" : "7161E5FB-579E-49CB-892D-6DDAA3B52B38",
+        "count" : "30"
+      }, {
+        "item" : "8BC91A6A-0458-4115-88AE-3F1DC72E10D0",
+        "count" : "30"
+      }, {
+        "item" : "6C18D7D4-2C40-426D-9BDB-C8EC37C94A4A",
+        "count" : "28"
+      }, {
+        "item" : "6DF1CA71-8424-4FD8-935B-AE08439CEBD9",
+        "count" : "26"
+      }, {
+        "item" : "9BC3B7C5-BB07-4EF4-A789-1B42C4EC5220",
+        "count" : "26"
+      }, {
+        "item" : "F9B8A3EE-56EF-4165-B3F7-FC168B1CF93C",
+        "count" : "25"
+      }, {
+        "item" : "21B4501C-B145-464A-A6DB-C3AEA3DE36F3",
+        "count" : "25"
+      }, {
+        "item" : "4BBA1760-F063-4BCD-9D63-670668078257",
+        "count" : "24"
+      } ],
+      "smallest" : "0000C463-4FCA-4834-B597-59E6B756CC06",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925022,
+    "name" : "species",
+    "dataTypeName" : "text",
+    "description" : "Species of fish",
+    "fieldName" : "species",
+    "position" : 8,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662091,
+    "cachedContents" : {
+      "non_null" : "119187",
+      "largest" : "Yellow Perch",
+      "null" : "0",
+      "top" : [ {
+        "item" : "Coho",
+        "count" : "30887"
+      }, {
+        "item" : "Chinook",
+        "count" : "22091"
+      }, {
+        "item" : "Steelhead",
+        "count" : "20298"
+      }, {
+        "item" : "Rainbow Trout",
+        "count" : "16724"
+      }, {
+        "item" : "Pink",
+        "count" : "10735"
+      }, {
+        "item" : "Chum",
+        "count" : "2416"
+      }, {
+        "item" : "Brown Trout",
+        "count" : "2056"
+      }, {
+        "item" : "Coastal Cutthroat",
+        "count" : "2022"
+      }, {
+        "item" : "Sockeye",
+        "count" : "1429"
+      }, {
+        "item" : "Whitefish",
+        "count" : "1364"
+      }, {
+        "item" : "Bull Trout",
+        "count" : "1233"
+      }, {
+        "item" : "Yellow Perch",
+        "count" : "1123"
+      }, {
+        "item" : "Bluegill",
+        "count" : "1032"
+      }, {
+        "item" : "White Crappie",
+        "count" : "756"
+      }, {
+        "item" : "Black Crappie",
+        "count" : "703"
+      }, {
+        "item" : "Trout - Unspecified",
+        "count" : "641"
+      }, {
+        "item" : "Crappie - Unspecified",
+        "count" : "525"
+      }, {
+        "item" : "Dolly Varden",
+        "count" : "476"
+      }, {
+        "item" : "Largemouth Bass",
+        "count" : "429"
+      }, {
+        "item" : "Sucker",
+        "count" : "376"
+      } ],
+      "smallest" : "Bass - Unspecified",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925023,
+    "name" : "run",
+    "dataTypeName" : "text",
+    "description" : "Run of fish",
+    "fieldName" : "run",
+    "position" : 9,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662087,
+    "cachedContents" : {
+      "non_null" : "31048",
+      "largest" : "Winter",
+      "null" : "88139",
+      "top" : [ {
+        "item" : "Fall",
+        "count" : "17000"
+      }, {
+        "item" : "Winter",
+        "count" : "6012"
+      }, {
+        "item" : "Summer",
+        "count" : "4573"
+      }, {
+        "item" : "Spring",
+        "count" : "3006"
+      }, {
+        "item" : "Unknown",
+        "count" : "396"
+      }, {
+        "item" : "Type N",
+        "count" : "58"
+      }, {
+        "item" : "Upriver Bright",
+        "count" : "2"
+      }, {
+        "item" : "Type S",
+        "count" : "1"
+      } ],
+      "smallest" : "Fall",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925024,
+    "name" : "gear_type",
+    "dataTypeName" : "text",
+    "description" : "Gear type used",
+    "fieldName" : "gear_type",
+    "position" : 10,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662076,
+    "cachedContents" : {
+      "non_null" : "88916",
+      "largest" : "Unknown",
+      "null" : "30271",
+      "top" : [ {
+        "item" : "Bait",
+        "count" : "23861"
+      }, {
+        "item" : "Lure",
+        "count" : "23028"
+      }, {
+        "item" : "Gear",
+        "count" : "21214"
+      }, {
+        "item" : "Bait-Lure",
+        "count" : "8089"
+      }, {
+        "item" : "Jig",
+        "count" : "5770"
+      }, {
+        "item" : "Fly",
+        "count" : "3854"
+      }, {
+        "item" : "Multiple gear types",
+        "count" : "1143"
+      }, {
+        "item" : "Bait-Jig",
+        "count" : "1042"
+      }, {
+        "item" : "Unknown",
+        "count" : "915"
+      } ],
+      "smallest" : "Bait",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925025,
+    "name" : "fate",
+    "dataTypeName" : "text",
+    "description" : "Fate (kept / released) of the fish",
+    "fieldName" : "fate",
+    "position" : 11,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662069,
+    "cachedContents" : {
+      "non_null" : "119187",
+      "largest" : "Unknown",
+      "null" : "0",
+      "top" : [ {
+        "item" : "Kept",
+        "count" : "77483"
+      }, {
+        "item" : "Released",
+        "count" : "41649"
+      }, {
+        "item" : "Unknown",
+        "count" : "53"
+      }, {
+        "item" : "Broodstock",
+        "count" : "2"
+      } ],
+      "smallest" : "Broodstock",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925026,
+    "name" : "life_stage",
+    "dataTypeName" : "text",
+    "description" : "Life stage of the fish",
+    "fieldName" : "life_stage",
+    "position" : 12,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662095,
+    "cachedContents" : {
+      "non_null" : "84816",
+      "largest" : "Unknown",
+      "null" : "34371",
+      "top" : [ {
+        "item" : "Adult",
+        "count" : "77444"
+      }, {
+        "item" : "Jack",
+        "count" : "6639"
+      }, {
+        "item" : "Smolt",
+        "count" : "457"
+      }, {
+        "item" : "Sublegal sturgeon",
+        "count" : "111"
+      }, {
+        "item" : "Oversize sturgeon",
+        "count" : "70"
+      }, {
+        "item" : "Legal sturgeon",
+        "count" : "52"
+      }, {
+        "item" : "Unknown",
+        "count" : "43"
+      } ],
+      "smallest" : "Adult",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925027,
+    "name" : "fin_mark",
+    "dataTypeName" : "text",
+    "description" : "Fin clip(s) present on fish",
+    "fieldName" : "fin_mark",
+    "position" : 13,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662082,
+    "cachedContents" : {
+      "non_null" : "84837",
+      "largest" : "UNK",
+      "null" : "34350",
+      "top" : [ {
+        "item" : "AD",
+        "count" : "41765"
+      }, {
+        "item" : "UM",
+        "count" : "37336"
+      }, {
+        "item" : "UNK",
+        "count" : "5241"
+      }, {
+        "item" : "AD+LV",
+        "count" : "193"
+      }, {
+        "item" : "AD+RV",
+        "count" : "175"
+      }, {
+        "item" : "RV",
+        "count" : "68"
+      }, {
+        "item" : "LV",
+        "count" : "52"
+      }, {
+        "item" : "SD+UM",
+        "count" : "6"
+      }, {
+        "item" : "LP",
+        "count" : "1"
+      } ],
+      "smallest" : "AD",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925028,
+    "name" : "sex",
+    "dataTypeName" : "text",
+    "description" : "Sex of fish",
+    "fieldName" : "sex",
+    "position" : 14,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662064,
+    "cachedContents" : {
+      "non_null" : "24368",
+      "largest" : "U",
+      "null" : "94819",
+      "top" : [ {
+        "item" : "M",
+        "count" : "11903"
+      }, {
+        "item" : "F",
+        "count" : "10774"
+      }, {
+        "item" : "U",
+        "count" : "1691"
+      } ],
+      "smallest" : "F",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925029,
+    "name" : "maturity",
+    "dataTypeName" : "text",
+    "description" : "Maturity of the fish",
+    "fieldName" : "maturity",
+    "position" : 15,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662090,
+    "cachedContents" : {
+      "non_null" : "7006",
+      "largest" : "Unknown",
+      "null" : "112181",
+      "top" : [ {
+        "item" : "Mature",
+        "count" : "4019"
+      }, {
+        "item" : "Immature",
+        "count" : "1848"
+      }, {
+        "item" : "Unknown",
+        "count" : "879"
+      }, {
+        "item" : "Kelt/Spent",
+        "count" : "260"
+      } ],
+      "smallest" : "Immature",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925030,
+    "name" : "fork_length_cm",
+    "dataTypeName" : "text",
+    "description" : "Fork length in centimeters",
+    "fieldName" : "fork_length_cm",
+    "position" : 16,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662061,
+    "cachedContents" : {
+      "non_null" : "34051",
+      "largest" : "99.0",
+      "null" : "85136",
+      "top" : [ {
+        "item" : "68.0",
+        "count" : "1499"
+      }, {
+        "item" : "71.0",
+        "count" : "1405"
+      }, {
+        "item" : "70.0",
+        "count" : "1386"
+      }, {
+        "item" : "66.0",
+        "count" : "1326"
+      }, {
+        "item" : "67.0",
+        "count" : "1323"
+      }, {
+        "item" : "69.0",
+        "count" : "1298"
+      }, {
+        "item" : "72.0",
+        "count" : "1285"
+      }, {
+        "item" : "64.0",
+        "count" : "1275"
+      }, {
+        "item" : "74.0",
+        "count" : "1269"
+      }, {
+        "item" : "65.0",
+        "count" : "1147"
+      }, {
+        "item" : "63.0",
+        "count" : "1003"
+      }, {
+        "item" : "62.0",
+        "count" : "961"
+      }, {
+        "item" : "76.0",
+        "count" : "924"
+      }, {
+        "item" : "73.0",
+        "count" : "881"
+      }, {
+        "item" : "60.0",
+        "count" : "872"
+      }, {
+        "item" : "61.0",
+        "count" : "790"
+      }, {
+        "item" : "56.0",
+        "count" : "786"
+      }, {
+        "item" : "75.0",
+        "count" : "765"
+      }, {
+        "item" : "59.0",
+        "count" : "718"
+      }, {
+        "item" : "57.0",
+        "count" : "714"
+      } ],
+      "smallest" : "0.0",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925031,
+    "name" : "total_length_in",
+    "dataTypeName" : "text",
+    "description" : "Total length in inches",
+    "fieldName" : "total_length_in",
+    "position" : 17,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662063,
+    "cachedContents" : {
+      "non_null" : "5790",
+      "largest" : "9.8",
+      "null" : "113397",
+      "top" : [ {
+        "item" : "10.0",
+        "count" : "712"
+      }, {
+        "item" : "10.5",
+        "count" : "448"
+      }, {
+        "item" : "9.5",
+        "count" : "363"
+      }, {
+        "item" : "11.0",
+        "count" : "362"
+      }, {
+        "item" : "9.0",
+        "count" : "347"
+      }, {
+        "item" : "9.75",
+        "count" : "305"
+      }, {
+        "item" : "8.0",
+        "count" : "269"
+      }, {
+        "item" : "8.5",
+        "count" : "256"
+      }, {
+        "item" : "12.0",
+        "count" : "218"
+      }, {
+        "item" : "11.5",
+        "count" : "200"
+      }, {
+        "item" : "13.0",
+        "count" : "184"
+      }, {
+        "item" : "7.75",
+        "count" : "137"
+      }, {
+        "item" : "11.75",
+        "count" : "126"
+      }, {
+        "item" : "7.0",
+        "count" : "109"
+      }, {
+        "item" : "7.5",
+        "count" : "102"
+      }, {
+        "item" : "14.0",
+        "count" : "99"
+      }, {
+        "item" : "15.0",
+        "count" : "85"
+      }, {
+        "item" : "16.0",
+        "count" : "76"
+      }, {
+        "item" : "12.75",
+        "count" : "66"
+      }, {
+        "item" : "13.5",
+        "count" : "64"
+      } ],
+      "smallest" : "1.0",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925032,
+    "name" : "fish_processing_status",
+    "dataTypeName" : "text",
+    "description" : "Indicates if fish was cleaned/gutted when sampled",
+    "fieldName" : "fish_processing_status",
+    "position" : 18,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662058,
+    "cachedContents" : {
+      "non_null" : "57643",
+      "largest" : "Whole",
+      "null" : "61544",
+      "top" : [ {
+        "item" : "Whole",
+        "count" : "52360"
+      }, {
+        "item" : "Cleaned",
+        "count" : "5283"
+      } ],
+      "smallest" : "Cleaned",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925033,
+    "name" : "cwt_detection_status",
+    "dataTypeName" : "text",
+    "description" : "Status of electronic coded wire scan",
+    "fieldName" : "cwt_detection_status",
+    "position" : 19,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662062,
+    "cachedContents" : {
+      "non_null" : "50253",
+      "largest" : "Not Wanded",
+      "null" : "68934",
+      "top" : [ {
+        "item" : "CWT - (No Beep)",
+        "count" : "35982"
+      }, {
+        "item" : "Not Wanded",
+        "count" : "11504"
+      }, {
+        "item" : "CWT + (Beep)",
+        "count" : "2767"
+      } ],
+      "smallest" : "CWT + (Beep)",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925034,
+    "name" : "pit_detection_status",
+    "dataTypeName" : "text",
+    "description" : "Status of electronic passive integrated transponder (PIT) tag scan",
+    "fieldName" : "pit_detection_status",
+    "position" : 20,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662057,
+    "cachedContents" : {
+      "non_null" : "30505",
+      "largest" : "Positive",
+      "null" : "88682",
+      "top" : [ {
+        "item" : "Not Wanded",
+        "count" : "24930"
+      }, {
+        "item" : "Negative",
+        "count" : "5532"
+      }, {
+        "item" : "Positive",
+        "count" : "43"
+      } ],
+      "smallest" : "Negative",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925035,
+    "name" : "fish_count",
+    "dataTypeName" : "number",
+    "description" : "Count of fish",
+    "fieldName" : "fish_count",
+    "position" : 21,
+    "renderTypeName" : "number",
+    "tableColumnId" : 139662085,
+    "cachedContents" : {
+      "non_null" : "119187",
+      "largest" : "450",
+      "null" : "0",
+      "top" : [ {
+        "item" : "1",
+        "count" : "79313"
+      }, {
+        "item" : "2",
+        "count" : "13956"
+      }, {
+        "item" : "3",
+        "count" : "6952"
+      }, {
+        "item" : "4",
+        "count" : "4923"
+      }, {
+        "item" : "5",
+        "count" : "3110"
+      }, {
+        "item" : "6",
+        "count" : "1992"
+      }, {
+        "item" : "10",
+        "count" : "1449"
+      }, {
+        "item" : "8",
+        "count" : "1359"
+      }, {
+        "item" : "7",
+        "count" : "1125"
+      }, {
+        "item" : "12",
+        "count" : "690"
+      }, {
+        "item" : "15",
+        "count" : "639"
+      }, {
+        "item" : "9",
+        "count" : "629"
+      }, {
+        "item" : "20",
+        "count" : "521"
+      }, {
+        "item" : "11",
+        "count" : "305"
+      }, {
+        "item" : "16",
+        "count" : "265"
+      }, {
+        "item" : "14",
+        "count" : "264"
+      }, {
+        "item" : "13",
+        "count" : "207"
+      }, {
+        "item" : "30",
+        "count" : "196"
+      }, {
+        "item" : "25",
+        "count" : "151"
+      }, {
+        "item" : "18",
+        "count" : "120"
+      } ],
+      "smallest" : "0",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925036,
+    "name" : "scale_card_num",
+    "dataTypeName" : "text",
+    "description" : "Scale card number",
+    "fieldName" : "scale_card_num",
+    "position" : 22,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662067,
+    "cachedContents" : {
+      "non_null" : "14679",
+      "largest" : "Yes no number",
+      "null" : "104508",
+      "top" : [ {
+        "item" : "",
+        "count" : "273"
+      }, {
+        "item" : "1",
+        "count" : "38"
+      }, {
+        "item" : "39240",
+        "count" : "24"
+      }, {
+        "item" : "6513",
+        "count" : "21"
+      }, {
+        "item" : "41993",
+        "count" : "21"
+      }, {
+        "item" : "12208",
+        "count" : "20"
+      }, {
+        "item" : "12211",
+        "count" : "20"
+      }, {
+        "item" : "12218",
+        "count" : "20"
+      }, {
+        "item" : "12036",
+        "count" : "20"
+      }, {
+        "item" : "12048",
+        "count" : "20"
+      }, {
+        "item" : "05812",
+        "count" : "20"
+      }, {
+        "item" : "0391",
+        "count" : "20"
+      }, {
+        "item" : "12039",
+        "count" : "20"
+      }, {
+        "item" : "12047",
+        "count" : "20"
+      }, {
+        "item" : "12214",
+        "count" : "20"
+      }, {
+        "item" : "05811",
+        "count" : "20"
+      }, {
+        "item" : "12035",
+        "count" : "20"
+      }, {
+        "item" : "12205",
+        "count" : "20"
+      }, {
+        "item" : "11057",
+        "count" : "20"
+      }, {
+        "item" : "12030",
+        "count" : "20"
+      } ],
+      "smallest" : "",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925037,
+    "name" : "scale_card_pos",
+    "dataTypeName" : "text",
+    "description" : "Scale card position",
+    "fieldName" : "scale_card_pos",
+    "position" : 23,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662066,
+    "cachedContents" : {
+      "non_null" : "14297",
+      "largest" : "9",
+      "null" : "104890",
+      "top" : [ {
+        "item" : "1",
+        "count" : "3281"
+      }, {
+        "item" : "2",
+        "count" : "2077"
+      }, {
+        "item" : "3",
+        "count" : "1578"
+      }, {
+        "item" : "4",
+        "count" : "1188"
+      }, {
+        "item" : "5",
+        "count" : "989"
+      }, {
+        "item" : "6",
+        "count" : "798"
+      }, {
+        "item" : "7",
+        "count" : "636"
+      }, {
+        "item" : "8",
+        "count" : "529"
+      }, {
+        "item" : "9",
+        "count" : "465"
+      }, {
+        "item" : "10",
+        "count" : "395"
+      }, {
+        "item" : "11",
+        "count" : "348"
+      }, {
+        "item" : "12",
+        "count" : "307"
+      }, {
+        "item" : "13",
+        "count" : "288"
+      }, {
+        "item" : "14",
+        "count" : "258"
+      }, {
+        "item" : "15",
+        "count" : "234"
+      }, {
+        "item" : "16",
+        "count" : "216"
+      }, {
+        "item" : "17",
+        "count" : "200"
+      }, {
+        "item" : "18",
+        "count" : "184"
+      }, {
+        "item" : "19",
+        "count" : "166"
+      }, {
+        "item" : "20",
+        "count" : "153"
+      } ],
+      "smallest" : "0",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925038,
+    "name" : "dna_code",
+    "dataTypeName" : "text",
+    "description" : "Genetic sample code",
+    "fieldName" : "dna_code",
+    "position" : 24,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662070,
+    "cachedContents" : {
+      "non_null" : "905",
+      "largest" : "n",
+      "null" : "118282",
+      "top" : [ {
+        "item" : "A1",
+        "count" : "192"
+      }, {
+        "item" : "A2",
+        "count" : "123"
+      }, {
+        "item" : "A3",
+        "count" : "83"
+      }, {
+        "item" : "A4",
+        "count" : "60"
+      }, {
+        "item" : "A5",
+        "count" : "49"
+      }, {
+        "item" : "A6",
+        "count" : "38"
+      }, {
+        "item" : "B1",
+        "count" : "30"
+      }, {
+        "item" : "B2",
+        "count" : "25"
+      }, {
+        "item" : "B3",
+        "count" : "19"
+      }, {
+        "item" : "B4",
+        "count" : "14"
+      }, {
+        "item" : "B5",
+        "count" : "12"
+      }, {
+        "item" : "1-A1",
+        "count" : "11"
+      }, {
+        "item" : "B6",
+        "count" : "10"
+      }, {
+        "item" : "1-A2",
+        "count" : "7"
+      }, {
+        "item" : "1/1 a1",
+        "count" : "7"
+      }, {
+        "item" : "A-1",
+        "count" : "7"
+      }, {
+        "item" : "C1",
+        "count" : "6"
+      }, {
+        "item" : "39009",
+        "count" : "5"
+      }, {
+        "item" : "1A",
+        "count" : "4"
+      }, {
+        "item" : "C2",
+        "count" : "4"
+      } ],
+      "smallest" : "0012",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925039,
+    "name" : "pit_code",
+    "dataTypeName" : "text",
+    "description" : "Passive integrated transponder (PIT) tag code",
+    "fieldName" : "pit_code",
+    "position" : 25,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662065,
+    "cachedContents" : {
+      "non_null" : "36",
+      "largest" : "No tag found .undefined",
+      "null" : "119151",
+      "top" : [ {
+        "item" : "28038EBB",
+        "count" : "1"
+      }, {
+        "item" : "2D73C8BF",
+        "count" : "1"
+      }, {
+        "item" : "3843B23A57644",
+        "count" : "1"
+      }, {
+        "item" : "3843B23A737E1",
+        "count" : "1"
+      }, {
+        "item" : "3D9.2794EA942B",
+        "count" : "1"
+      }, {
+        "item" : "3DD.00362ADA56",
+        "count" : "1"
+      }, {
+        "item" : "3DD.003D2F213C",
+        "count" : "1"
+      }, {
+        "item" : "3DD.003D42BB53",
+        "count" : "1"
+      }, {
+        "item" : "3DD.003D4775C0",
+        "count" : "1"
+      }, {
+        "item" : "3DD.003D6AB638",
+        "count" : "1"
+      }, {
+        "item" : "3DD.003D84C01C",
+        "count" : "1"
+      }, {
+        "item" : "3DD.003DEA3055",
+        "count" : "1"
+      }, {
+        "item" : "3DD.003DEAA5C2",
+        "count" : "1"
+      }, {
+        "item" : "3DD.003DEAA9E1",
+        "count" : "1"
+      }, {
+        "item" : "3DD.003DFF9D20",
+        "count" : "1"
+      }, {
+        "item" : "3DD003E112873",
+        "count" : "1"
+      }, {
+        "item" : "3DD.003E11331D",
+        "count" : "1"
+      }, {
+        "item" : "3DD.003E133917",
+        "count" : "1"
+      }, {
+        "item" : "3DD.003E133F04",
+        "count" : "1"
+      }, {
+        "item" : "3DD.003E1340FA",
+        "count" : "1"
+      } ],
+      "smallest" : "28038EBB",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925040,
+    "name" : "snout_code",
+    "dataTypeName" : "text",
+    "description" : "CWT snout sample code",
+    "fieldName" : "snout_code",
+    "position" : 26,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662080,
+    "cachedContents" : {
+      "non_null" : "2773",
+      "largest" : "WBCWT00062",
+      "null" : "116414",
+      "top" : [ {
+        "item" : "30824",
+        "count" : "20"
+      }, {
+        "item" : "30814",
+        "count" : "14"
+      }, {
+        "item" : "30823",
+        "count" : "11"
+      }, {
+        "item" : "30811",
+        "count" : "10"
+      }, {
+        "item" : "missing",
+        "count" : "5"
+      }, {
+        "item" : "30815",
+        "count" : "4"
+      }, {
+        "item" : "30821",
+        "count" : "3"
+      }, {
+        "item" : "30822",
+        "count" : "3"
+      }, {
+        "item" : "N/A",
+        "count" : "3"
+      }, {
+        "item" : "CWT00120722",
+        "count" : "2"
+      }, {
+        "item" : "CWT00120682",
+        "count" : "2"
+      }, {
+        "item" : "CWT00120655",
+        "count" : "2"
+      }, {
+        "item" : "CWT00120703",
+        "count" : "2"
+      }, {
+        "item" : "CWT00120707",
+        "count" : "2"
+      }, {
+        "item" : "CWT00120701",
+        "count" : "2"
+      }, {
+        "item" : "CWT00139801",
+        "count" : "2"
+      }, {
+        "item" : "4943",
+        "count" : "2"
+      }, {
+        "item" : "CWT00063977",
+        "count" : "2"
+      }, {
+        "item" : "15093",
+        "count" : "2"
+      }, {
+        "item" : "30812",
+        "count" : "2"
+      } ],
+      "smallest" : "*",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925041,
+    "name" : "scale_age_code",
+    "dataTypeName" : "text",
+    "description" : "Scale age code",
+    "fieldName" : "scale_age_code",
+    "position" : 27,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662083,
+    "cachedContents" : {
+      "non_null" : "4468",
+      "largest" : "R.3",
+      "null" : "114719",
+      "top" : [ {
+        "item" : "4/2",
+        "count" : "1904"
+      }, {
+        "item" : "4/1",
+        "count" : "723"
+      }, {
+        "item" : "88",
+        "count" : "633"
+      }, {
+        "item" : "3/1",
+        "count" : "427"
+      }, {
+        "item" : "5/2",
+        "count" : "226"
+      }, {
+        "item" : "2/1",
+        "count" : "155"
+      }, {
+        "item" : "3/2",
+        "count" : "129"
+      }, {
+        "item" : "5/1",
+        "count" : "106"
+      }, {
+        "item" : "1.2",
+        "count" : "60"
+      }, {
+        "item" : "1.2+",
+        "count" : "27"
+      }, {
+        "item" : "2/2",
+        "count" : "20"
+      }, {
+        "item" : "R.2",
+        "count" : "10"
+      }, {
+        "item" : "9",
+        "count" : "9"
+      }, {
+        "item" : "6/2",
+        "count" : "7"
+      }, {
+        "item" : "1.1+",
+        "count" : "5"
+      }, {
+        "item" : "R.3",
+        "count" : "4"
+      }, {
+        "item" : "R.1+",
+        "count" : "4"
+      }, {
+        "item" : "1.1",
+        "count" : "3"
+      }, {
+        "item" : "2.2",
+        "count" : "3"
+      }, {
+        "item" : "3",
+        "count" : "2"
+      } ],
+      "smallest" : "1.1",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925042,
+    "name" : "scale_pattern",
+    "dataTypeName" : "text",
+    "description" : "Hatchery or natural origin determination based on scale reading",
+    "fieldName" : "scale_pattern",
+    "position" : 28,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662074,
+    "cachedContents" : {
+      "non_null" : "519",
+      "largest" : "Wild",
+      "null" : "118668",
+      "top" : [ {
+        "item" : "Hatchery",
+        "count" : "431"
+      }, {
+        "item" : "Unreadable",
+        "count" : "75"
+      }, {
+        "item" : "Unknown",
+        "count" : "11"
+      }, {
+        "item" : "Wild",
+        "count" : "2"
+      } ],
+      "smallest" : "Hatchery",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925056,
+    "name" : "comments",
+    "dataTypeName" : "text",
+    "description" : "comments",
+    "fieldName" : "comments",
+    "position" : 29,
+    "renderTypeName" : "text",
+    "tableColumnId" : 144626223,
+    "cachedContents" : {
+      "non_null" : "7215",
+      "largest" : "Zombies",
+      "null" : "111972",
+      "top" : [ {
+        "item" : "F",
+        "count" : "418"
+      }, {
+        "item" : "M",
+        "count" : "333"
+      }, {
+        "item" : "Fillet",
+        "count" : "166"
+      }, {
+        "item" : "Filleted",
+        "count" : "161"
+      }, {
+        "item" : "",
+        "count" : "152"
+      }, {
+        "item" : "Tule",
+        "count" : "135"
+      }, {
+        "item" : "Filet",
+        "count" : "133"
+      }, {
+        "item" : "JL",
+        "count" : "123"
+      }, {
+        "item" : "BJL",
+        "count" : "99"
+      }, {
+        "item" : "1 male",
+        "count" : "88"
+      }, {
+        "item" : "J",
+        "count" : "85"
+      }, {
+        "item" : "1 female",
+        "count" : "80"
+      }, {
+        "item" : "Chrome",
+        "count" : "64"
+      }, {
+        "item" : "Already processed",
+        "count" : "57"
+      }, {
+        "item" : "Male",
+        "count" : "54"
+      }, {
+        "item" : "L",
+        "count" : "54"
+      }, {
+        "item" : "Female",
+        "count" : "50"
+      }, {
+        "item" : "Gutted",
+        "count" : "46"
+      }, {
+        "item" : "BJ",
+        "count" : "42"
+      }, {
+        "item" : "Smolt",
+        "count" : "38"
+      } ],
+      "smallest" : "",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925043,
+    "name" : "cwt_code",
+    "dataTypeName" : "text",
+    "description" : "Coded wire tag code",
+    "fieldName" : "cwt_code",
+    "position" : 30,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662075,
+    "cachedContents" : {
+      "non_null" : "2168",
+      "largest" : "CWT00085866",
+      "null" : "117019",
+      "top" : [ {
+        "item" : "637188",
+        "count" : "121"
+      }, {
+        "item" : "638023",
+        "count" : "66"
+      }, {
+        "item" : "630012",
+        "count" : "45"
+      }, {
+        "item" : "638258",
+        "count" : "43"
+      }, {
+        "item" : "638257",
+        "count" : "43"
+      }, {
+        "item" : "636729",
+        "count" : "40"
+      }, {
+        "item" : "638071",
+        "count" : "37"
+      }, {
+        "item" : "636730",
+        "count" : "36"
+      }, {
+        "item" : "637572",
+        "count" : "34"
+      }, {
+        "item" : "630013",
+        "count" : "32"
+      }, {
+        "item" : "637504",
+        "count" : "31"
+      }, {
+        "item" : "637423",
+        "count" : "30"
+      }, {
+        "item" : "637036",
+        "count" : "28"
+      }, {
+        "item" : "636727",
+        "count" : "27"
+      }, {
+        "item" : "637680",
+        "count" : "26"
+      }, {
+        "item" : "636731",
+        "count" : "26"
+      }, {
+        "item" : "636643",
+        "count" : "26"
+      }, {
+        "item" : "636732",
+        "count" : "24"
+      }, {
+        "item" : "638017",
+        "count" : "24"
+      }, {
+        "item" : "637681",
+        "count" : "22"
+      } ],
+      "smallest" : "050025",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925044,
+    "name" : "cwt_read_status",
+    "dataTypeName" : "text",
+    "description" : "Outcome of coded wire tag decoding attempt",
+    "fieldName" : "cwt_read_status",
+    "position" : 31,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662094,
+    "cachedContents" : {
+      "non_null" : "2449",
+      "largest" : "Unreadable Tag",
+      "null" : "116738",
+      "top" : [ {
+        "item" : "Decoded Tag",
+        "count" : "2132"
+      }, {
+        "item" : "No Tag",
+        "count" : "227"
+      }, {
+        "item" : "No Snout",
+        "count" : "45"
+      }, {
+        "item" : "Blank Wire Tag",
+        "count" : "19"
+      }, {
+        "item" : "Tag Discrepancy",
+        "count" : "14"
+      }, {
+        "item" : "Lost Tag",
+        "count" : "10"
+      }, {
+        "item" : "Unreadable Tag",
+        "count" : "2"
+      } ],
+      "smallest" : "Blank Wire Tag",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925045,
+    "name" : "cwt_rearing_location",
+    "dataTypeName" : "text",
+    "description" : "Location fish was reared based on CWT tag code",
+    "fieldName" : "cwt_rearing_location",
+    "position" : 32,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662059,
+    "cachedContents" : {
+      "non_null" : "1996",
+      "largest" : "WINTHROP NFH",
+      "null" : "117191",
+      "top" : [ {
+        "item" : "COWLITZ SALMON HATCHERY",
+        "count" : "651"
+      }, {
+        "item" : "BINGHAM CR HATCHERY",
+        "count" : "305"
+      }, {
+        "item" : "MARBLEMOUNT HATCHERY",
+        "count" : "155"
+      }, {
+        "item" : "HUMPTULIPS HATCHERY",
+        "count" : "127"
+      }, {
+        "item" : "COWLITZ TROUT HATCHERY",
+        "count" : "117"
+      }, {
+        "item" : "LTL WHITE SALMON NFH",
+        "count" : "102"
+      }, {
+        "item" : "WALLACE R HATCHERY",
+        "count" : "84"
+      }, {
+        "item" : "SOLDUC HATCHERY",
+        "count" : "75"
+      }, {
+        "item" : "VOIGHTS CR HATCHERY",
+        "count" : "50"
+      }, {
+        "item" : "LYONS FERRY HATCHERY",
+        "count" : "43"
+      }, {
+        "item" : "CARSON NFH",
+        "count" : "26"
+      }, {
+        "item" : "IRRIGON HATCHERY",
+        "count" : "17"
+      }, {
+        "item" : "SKOOKUMCHUCK HATCHERY",
+        "count" : "14"
+      }, {
+        "item" : "NASELLE HATCHERY",
+        "count" : "13"
+      }, {
+        "item" : "PRIEST RAPIDS HATCHERY",
+        "count" : "12"
+      }, {
+        "item" : "KENDALL CR HATCHERY",
+        "count" : "12"
+      }, {
+        "item" : "MAYR BROTHERS REARIN",
+        "count" : "10"
+      }, {
+        "item" : "FORKS CREEK HATCHERY",
+        "count" : "10"
+      }, {
+        "item" : "CASCADE HATCHERY",
+        "count" : "10"
+      }, {
+        "item" : "CARLISLE LK PROJECT",
+        "count" : "9"
+      } ],
+      "smallest" : "ABERNATHY SCDC HATCH",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925046,
+    "name" : "cwt_release_site",
+    "dataTypeName" : "text",
+    "description" : "Location fish was released based on CWT tag code",
+    "fieldName" : "cwt_release_site",
+    "position" : 33,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662088,
+    "cachedContents" : {
+      "non_null" : "2095",
+      "largest" : "YAKIMA R-LOW 37.0002",
+      "null" : "117092",
+      "top" : [ {
+        "item" : "COWLITZ R    26.0002",
+        "count" : "667"
+      }, {
+        "item" : "SATSOP R -EF 22.0360",
+        "count" : "240"
+      }, {
+        "item" : "STEVENS CR   22.0064",
+        "count" : "127"
+      }, {
+        "item" : "CASCADE R    03.1411",
+        "count" : "125"
+      }, {
+        "item" : "LTL WHITE SALMON@NFH",
+        "count" : "103"
+      }, {
+        "item" : "BLUE CR      26.0527",
+        "count" : "94"
+      }, {
+        "item" : "WALLACE R    07.0940",
+        "count" : "84"
+      }, {
+        "item" : "SOL DUC R   20.0096",
+        "count" : "75"
+      }, {
+        "item" : "SATSOP R -MF 22.0414",
+        "count" : "65"
+      }, {
+        "item" : "BINGHAM CR   22.0465",
+        "count" : "48"
+      }, {
+        "item" : "VOIGHT CR    10.0414",
+        "count" : "46"
+      }, {
+        "item" : "WIND R       29.0023",
+        "count" : "26"
+      }, {
+        "item" : "CASCADE POND 3.1411B",
+        "count" : "26"
+      }, {
+        "item" : "LYONS FERRY REL.SITE",
+        "count" : "17"
+      }, {
+        "item" : "SKOOKUMCHUCK 23.0761",
+        "count" : "14"
+      }, {
+        "item" : "CHEHALIS R   22.0190",
+        "count" : "13"
+      }, {
+        "item" : "NASELLE R    24.0543",
+        "count" : "13"
+      }, {
+        "item" : "SNAKE R @PITTSBURG L",
+        "count" : "12"
+      }, {
+        "item" : "COL R @ PRIEST RAPIDS",
+        "count" : "12"
+      }, {
+        "item" : "KENDALL CR   01.0406",
+        "count" : "11"
+      } ],
+      "smallest" : "ABERNATHY CR 25.0297",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925047,
+    "name" : "cwt_species",
+    "dataTypeName" : "text",
+    "description" : "Species of fish based on CWT tag code",
+    "fieldName" : "cwt_species",
+    "position" : 34,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662084,
+    "cachedContents" : {
+      "non_null" : "2095",
+      "largest" : "Steelhead",
+      "null" : "117092",
+      "top" : [ {
+        "item" : "Coho",
+        "count" : "1346"
+      }, {
+        "item" : "Chinook",
+        "count" : "579"
+      }, {
+        "item" : "Steelhead",
+        "count" : "170"
+      } ],
+      "smallest" : "Chinook",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925048,
+    "name" : "cwt_run",
+    "dataTypeName" : "text",
+    "description" : "Run of fish based on CWT tag code",
+    "fieldName" : "cwt_run",
+    "position" : 35,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662081,
+    "cachedContents" : {
+      "non_null" : "1338",
+      "largest" : "9",
+      "null" : "117849",
+      "top" : [ {
+        "item" : "7",
+        "count" : "568"
+      }, {
+        "item" : "1",
+        "count" : "304"
+      }, {
+        "item" : "3",
+        "count" : "180"
+      }, {
+        "item" : "9",
+        "count" : "111"
+      }, {
+        "item" : "2",
+        "count" : "79"
+      }, {
+        "item" : "8",
+        "count" : "59"
+      }, {
+        "item" : "5",
+        "count" : "20"
+      }, {
+        "item" : "4",
+        "count" : "17"
+      } ],
+      "smallest" : "1",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925049,
+    "name" : "cwt_brood_year",
+    "dataTypeName" : "text",
+    "description" : "Brood year of fish based on CWT tag code",
+    "fieldName" : "cwt_brood_year",
+    "position" : 36,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662097,
+    "cachedContents" : {
+      "non_null" : "2095",
+      "largest" : "2024",
+      "null" : "117092",
+      "top" : [ {
+        "item" : "2021",
+        "count" : "478"
+      }, {
+        "item" : "2019",
+        "count" : "351"
+      }, {
+        "item" : "2022",
+        "count" : "292"
+      }, {
+        "item" : "2020",
+        "count" : "208"
+      }, {
+        "item" : "2023",
+        "count" : "153"
+      }, {
+        "item" : "2014",
+        "count" : "152"
+      }, {
+        "item" : "2013",
+        "count" : "147"
+      }, {
+        "item" : "2016",
+        "count" : "135"
+      }, {
+        "item" : "2018",
+        "count" : "80"
+      }, {
+        "item" : "2015",
+        "count" : "39"
+      }, {
+        "item" : "2012",
+        "count" : "28"
+      }, {
+        "item" : "2017",
+        "count" : "21"
+      }, {
+        "item" : "2011",
+        "count" : "9"
+      }, {
+        "item" : "2024",
+        "count" : "2"
+      } ],
+      "smallest" : "2011",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925050,
+    "name" : "hook_location_reported",
+    "dataTypeName" : "text",
+    "description" : "Location on fish that angler reported fish was hooked",
+    "fieldName" : "hook_location_reported",
+    "position" : 37,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662078,
+    "cachedContents" : {
+      "non_null" : "15493",
+      "largest" : "Upper Jaw",
+      "null" : "103694",
+      "top" : [ {
+        "item" : "Side of Mouth",
+        "count" : "3659"
+      }, {
+        "item" : "Jaw",
+        "count" : "2612"
+      }, {
+        "item" : "Unknown",
+        "count" : "2519"
+      }, {
+        "item" : "Upper Jaw",
+        "count" : "1646"
+      }, {
+        "item" : "Roof of Mouth",
+        "count" : "1479"
+      }, {
+        "item" : "Not Checked",
+        "count" : "1123"
+      }, {
+        "item" : "Lower Jaw",
+        "count" : "837"
+      }, {
+        "item" : "Tongue",
+        "count" : "483"
+      }, {
+        "item" : "Stomach",
+        "count" : "292"
+      }, {
+        "item" : "Could not confirm",
+        "count" : "227"
+      }, {
+        "item" : "Throat",
+        "count" : "219"
+      }, {
+        "item" : "Body",
+        "count" : "147"
+      }, {
+        "item" : "Floor of Mouth",
+        "count" : "97"
+      }, {
+        "item" : "Other",
+        "count" : "55"
+      }, {
+        "item" : "Gill",
+        "count" : "48"
+      }, {
+        "item" : "Head",
+        "count" : "39"
+      }, {
+        "item" : "Eye",
+        "count" : "11"
+      } ],
+      "smallest" : "Body",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925051,
+    "name" : "hook_location_observed",
+    "dataTypeName" : "text",
+    "description" : "Location on fish that sampler observed fish to be hooked",
+    "fieldName" : "hook_location_observed",
+    "position" : 38,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662072,
+    "cachedContents" : {
+      "non_null" : "15493",
+      "largest" : "Upper Jaw",
+      "null" : "103694",
+      "top" : [ {
+        "item" : "Side of Mouth",
+        "count" : "3659"
+      }, {
+        "item" : "Jaw",
+        "count" : "2612"
+      }, {
+        "item" : "Unknown",
+        "count" : "2519"
+      }, {
+        "item" : "Upper Jaw",
+        "count" : "1646"
+      }, {
+        "item" : "Roof of Mouth",
+        "count" : "1479"
+      }, {
+        "item" : "Not Checked",
+        "count" : "1123"
+      }, {
+        "item" : "Lower Jaw",
+        "count" : "837"
+      }, {
+        "item" : "Tongue",
+        "count" : "483"
+      }, {
+        "item" : "Stomach",
+        "count" : "292"
+      }, {
+        "item" : "Could not confirm",
+        "count" : "227"
+      }, {
+        "item" : "Throat",
+        "count" : "219"
+      }, {
+        "item" : "Body",
+        "count" : "147"
+      }, {
+        "item" : "Floor of Mouth",
+        "count" : "97"
+      }, {
+        "item" : "Other",
+        "count" : "55"
+      }, {
+        "item" : "Gill",
+        "count" : "48"
+      }, {
+        "item" : "Head",
+        "count" : "39"
+      }, {
+        "item" : "Eye",
+        "count" : "11"
+      } ],
+      "smallest" : "Body",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925052,
+    "name" : "other_mark_types",
+    "dataTypeName" : "text",
+    "description" : "Types external marks and tags present on fish",
+    "fieldName" : "other_mark_types",
+    "position" : 39,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662096,
+    "cachedContents" : {
+      "non_null" : "7496",
+      "largest" : "Scute Marks, Tag Scars",
+      "null" : "111691",
+      "top" : [ {
+        "item" : "Floy Tag",
+        "count" : "7260"
+      }, {
+        "item" : "Punch",
+        "count" : "151"
+      }, {
+        "item" : "Floy Tag, Punch",
+        "count" : "42"
+      }, {
+        "item" : "Punch, Floy Tag",
+        "count" : "41"
+      }, {
+        "item" : "Scute Marks",
+        "count" : "1"
+      }, {
+        "item" : "Scute Marks, Tag Scars",
+        "count" : "1"
+      } ],
+      "smallest" : "Floy Tag",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925053,
+    "name" : "other_marks",
+    "dataTypeName" : "text",
+    "description" : "External marks and tags",
+    "fieldName" : "other_marks",
+    "position" : 40,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662079,
+    "cachedContents" : {
+      "non_null" : "514",
+      "largest" : "Tag Scars     | Scute Marks   2L ",
+      "null" : "118673",
+      "top" : [ {
+        "item" : "Punch Left   ",
+        "count" : "68"
+      }, {
+        "item" : "Punch Left   Lop recycle ",
+        "count" : "26"
+      }, {
+        "item" : "Punch Right   ",
+        "count" : "21"
+      }, {
+        "item" : "Punch Left   Lop recycle",
+        "count" : "10"
+      }, {
+        "item" : "Floy Tag  Pink  Original color:pink",
+        "count" : "7"
+      }, {
+        "item" : "Floy Tag  Pink  Original color:Pink",
+        "count" : "5"
+      }, {
+        "item" : "Floy Tag  Orange  Original color:Orange",
+        "count" : "5"
+      }, {
+        "item" : "Punch Left   1 lop recycle ",
+        "count" : "4"
+      }, {
+        "item" : "Floy Tag  Pink/Blue  Original color:Pink/Blue",
+        "count" : "4"
+      }, {
+        "item" : "Floy Tag  Yellow  Original color:Yellow",
+        "count" : "3"
+      }, {
+        "item" : "Floy Tag  Pink  Original color:FL Pink",
+        "count" : "3"
+      }, {
+        "item" : "Floy Tag  Orange/White  Original color:OW",
+        "count" : "3"
+      }, {
+        "item" : "Floy Tag  Orange  Original color:Orange/Pink",
+        "count" : "3"
+      }, {
+        "item" : "Floy Tag  Pink  Original color:PK",
+        "count" : "3"
+      }, {
+        "item" : "Punch Right   Rop recycle",
+        "count" : "3"
+      }, {
+        "item" : "Punch Left   1lop recycle ",
+        "count" : "2"
+      }, {
+        "item" : "Floy Tag  Yellow  Original color:yellow",
+        "count" : "2"
+      }, {
+        "item" : "Floy Tag  Yellow/Blue  Original color:Yellow/Blue",
+        "count" : "2"
+      }, {
+        "item" : "Punch Left   3 lop recycle",
+        "count" : "2"
+      }, {
+        "item" : "Floy Tag  Pink  Original color:pink X2",
+        "count" : "2"
+      } ],
+      "smallest" : "Floy Tag   03440 Original color:",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925054,
+    "name" : "created_datetime",
+    "dataTypeName" : "text",
+    "description" : "Date record was created",
+    "fieldName" : "created_datetime",
+    "position" : 41,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662073,
+    "width" : 312,
+    "cachedContents" : {
+      "non_null" : "118463",
+      "largest" : "2026-11-14 14:23:54",
+      "null" : "724",
+      "top" : [ {
+        "item" : "2019-06-24 15:20:00",
+        "count" : "4507"
+      }, {
+        "item" : "2024-11-26 11:41:57",
+        "count" : "1717"
+      }, {
+        "item" : "2021-11-22 15:23:32",
+        "count" : "683"
+      }, {
+        "item" : "2022-06-02 12:23:34",
+        "count" : "111"
+      }, {
+        "item" : "2019-06-17 17:59:14",
+        "count" : "80"
+      }, {
+        "item" : "2016-03-02 13:38:47",
+        "count" : "70"
+      }, {
+        "item" : "2022-05-24 12:36:11",
+        "count" : "59"
+      }, {
+        "item" : "2026-01-04 16:11:02",
+        "count" : "45"
+      }, {
+        "item" : "2025-12-07 14:59:01",
+        "count" : "32"
+      }, {
+        "item" : "2016-12-12 14:13:22",
+        "count" : "27"
+      }, {
+        "item" : "2016-12-13 15:00:22",
+        "count" : "25"
+      }, {
+        "item" : "2016-12-12 15:17:28",
+        "count" : "24"
+      }, {
+        "item" : "2016-12-12 10:28:47",
+        "count" : "23"
+      }, {
+        "item" : "2017-01-10 07:48:13",
+        "count" : "23"
+      }, {
+        "item" : "2026-02-07 14:05:21",
+        "count" : "22"
+      }, {
+        "item" : "2016-12-13 10:58:04",
+        "count" : "21"
+      }, {
+        "item" : "2016-12-13 10:20:44",
+        "count" : "21"
+      }, {
+        "item" : "2016-11-28 14:27:12",
+        "count" : "20"
+      }, {
+        "item" : "2016-12-27 11:14:44",
+        "count" : "20"
+      }, {
+        "item" : "2016-12-05 10:31:57",
+        "count" : "18"
+      } ],
+      "smallest" : "2015-11-12 13:21:40",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  }, {
+    "id" : 567925055,
+    "name" : "modified_datetime",
+    "dataTypeName" : "text",
+    "description" : "Date record was modified",
+    "fieldName" : "modified_datetime",
+    "position" : 42,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139662318,
+    "cachedContents" : {
+      "non_null" : "119187",
+      "largest" : "2026-11-14 22:31:08.368023",
+      "null" : "0",
+      "top" : [ {
+        "item" : "2023-05-10 17:55:03.327917",
+        "count" : "38485"
+      }, {
+        "item" : "2026-04-08 04:41:05.051914",
+        "count" : "2841"
+      }, {
+        "item" : "2024-11-26 19:41:57.486837",
+        "count" : "1717"
+      }, {
+        "item" : "2023-05-10 21:13:17.019489",
+        "count" : "1395"
+      }, {
+        "item" : "2023-09-10 20:29:54.102467",
+        "count" : "370"
+      }, {
+        "item" : "2024-11-11 18:59:25.022047",
+        "count" : "198"
+      }, {
+        "item" : "2025-08-29 15:41:01.470042",
+        "count" : "188"
+      }, {
+        "item" : "2024-11-08 01:36:31.8234",
+        "count" : "176"
+      }, {
+        "item" : "2024-10-06 02:49:18.760549",
+        "count" : "160"
+      }, {
+        "item" : "2024-11-10 00:21:29.810225",
+        "count" : "160"
+      }, {
+        "item" : "2025-11-10 00:46:07.581308",
+        "count" : "153"
+      }, {
+        "item" : "2026-09-18 16:31:21.629416",
+        "count" : "152"
+      }, {
+        "item" : "2024-10-07 02:34:36.203744",
+        "count" : "126"
+      }, {
+        "item" : "2026-02-22 02:45:47.573251",
+        "count" : "125"
+      }, {
+        "item" : "2023-10-21 04:15:47.105466",
+        "count" : "124"
+      }, {
+        "item" : "2026-10-31 14:04:09.121026",
+        "count" : "120"
+      }, {
+        "item" : "2025-11-30 02:00:47.005835",
+        "count" : "120"
+      }, {
+        "item" : "2024-11-03 00:06:08.207781",
+        "count" : "119"
+      }, {
+        "item" : "2025-08-21 16:29:42.595962",
+        "count" : "116"
+      }, {
+        "item" : "2026-01-07 07:45:43.373676",
+        "count" : "115"
+      } ],
+      "smallest" : "2023-05-10 17:20:06.473005",
+      "count" : "119187",
+      "cardinality" : "119187"
+    },
+    "format" : { }
+  } ],
+  "grants" : [ {
+    "inherited" : false,
+    "type" : "viewer",
+    "flags" : [ "public" ]
+  } ],
+  "metadata" : {
+    "custom_fields" : {
+      "Temporal" : {
+        "Posting Frequency" : "twice daily",
+        "Period of Time" : "Timeline varies by project"
+      }
+    },
+    "availableDisplayTypes" : [ "table", "fatrow", "page" ]
+  },
+  "owner" : {
+    "id" : "msq3-adhc",
+    "createdAt" : 1741303986,
+    "displayName" : "Washington Department of Fish and Wildlife Data",
+    "screenName" : "Washington Department of Fish and Wildlife Data",
+    "type" : "team",
+    "members" : [ {
+      "id" : "b2s6-8ii9",
+      "createdAt" : 1332802552,
+      "displayName" : "Brodie Cox",
+      "profileImageUrlLarge" : "/api/users/b2s6-8ii9/profile_images/LARGE",
+      "profileImageUrlMedium" : "/api/users/b2s6-8ii9/profile_images/THUMB",
+      "profileImageUrlSmall" : "/api/users/b2s6-8ii9/profile_images/TINY",
+      "screenName" : "Brodie Cox",
+      "teamId" : 1713195,
+      "teamRole" : "owner",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "dszk-xw6k",
+      "createdAt" : 1558071229,
+      "displayName" : "Danny Warren",
+      "screenName" : "Danny Warren",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "i2u5-ieen",
+      "createdAt" : 1556912403,
+      "displayName" : "John Chen",
+      "screenName" : "John Chen",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "ks2t-85xg",
+      "createdAt" : 1741365632,
+      "displayName" : "Phil",
+      "screenName" : "Phil",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    } ]
+  },
+  "query" : { },
+  "rights" : [ "read" ],
+  "tableAuthor" : {
+    "id" : "msq3-adhc",
+    "createdAt" : 1741303986,
+    "displayName" : "Washington Department of Fish and Wildlife Data",
+    "screenName" : "Washington Department of Fish and Wildlife Data",
+    "type" : "team",
+    "members" : [ {
+      "id" : "b2s6-8ii9",
+      "createdAt" : 1332802552,
+      "displayName" : "Brodie Cox",
+      "profileImageUrlLarge" : "/api/users/b2s6-8ii9/profile_images/LARGE",
+      "profileImageUrlMedium" : "/api/users/b2s6-8ii9/profile_images/THUMB",
+      "profileImageUrlSmall" : "/api/users/b2s6-8ii9/profile_images/TINY",
+      "screenName" : "Brodie Cox",
+      "teamId" : 1713195,
+      "teamRole" : "owner",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "dszk-xw6k",
+      "createdAt" : 1558071229,
+      "displayName" : "Danny Warren",
+      "screenName" : "Danny Warren",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "i2u5-ieen",
+      "createdAt" : 1556912403,
+      "displayName" : "John Chen",
+      "screenName" : "John Chen",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "ks2t-85xg",
+      "createdAt" : 1741365632,
+      "displayName" : "Phil",
+      "screenName" : "Phil",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    } ]
+  },
+  "tags" : [ "wdfw" ],
+  "flags" : [ "default", "ownerMayBeContacted", "restorable", "restorePossibleForType" ]
+}

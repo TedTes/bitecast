@@ -1,0 +1,2433 @@
+{
+  "id" : "rpax-ahqm",
+  "name" : "WDFW-Creel Analysis Interview",
+  "assetType" : "dataset",
+  "averageRating" : 0,
+  "category" : "Natural Resources & Environment",
+  "createdAt" : 1633125211,
+  "description" : "Analysis Interviews",
+  "diciBackend" : false,
+  "displayType" : "table",
+  "downloadCount" : 3289,
+  "hideFromCatalog" : false,
+  "hideFromDataJson" : false,
+  "locked" : false,
+  "newBackend" : true,
+  "numberOfComments" : 0,
+  "oid" : 41210313,
+  "provenance" : "official",
+  "publicationAppendEnabled" : false,
+  "publicationDate" : 1742494744,
+  "publicationGroup" : 18468689,
+  "publicationStage" : "published",
+  "rowsUpdatedAt" : 1794745853,
+  "rowsUpdatedBy" : "6tru-9twk",
+  "tableId" : 19817321,
+  "totalTimesRated" : 0,
+  "viewCount" : 1507,
+  "viewLastModified" : 1749860733,
+  "viewType" : "tabular",
+  "approvals" : [ {
+    "reviewedAt" : 1741306888,
+    "reviewedAutomatically" : true,
+    "state" : "approved",
+    "submissionId" : 6799714,
+    "submissionObject" : "public_audience_request",
+    "submissionOutcome" : "change_audience",
+    "submittedAt" : 1741306888,
+    "targetAudience" : "public",
+    "workflowId" : 2106,
+    "submissionDetails" : {
+      "permissionType" : "READ"
+    },
+    "submissionOutcomeApplication" : {
+      "endedAt" : 1741306888,
+      "failureCount" : 0,
+      "startedAt" : 1741306888,
+      "status" : "success"
+    },
+    "submitter" : {
+      "id" : "v4iv-qfyh",
+      "displayName" : "Washington State Open Data Program"
+    }
+  } ],
+  "clientContext" : {
+    "clientContextVariables" : [ ],
+    "inheritedVariables" : { }
+  },
+  "columns" : [ {
+    "id" : 607714984,
+    "name" : "creel_event_id",
+    "dataTypeName" : "text",
+    "description" : "Primary key id value for record in creel_event table",
+    "fieldName" : "creel_event_id",
+    "position" : 1,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673316,
+    "cachedContents" : {
+      "non_null" : "170804",
+      "largest" : "FFFB9A3F-ABFE-4F1F-8B35-599D4CF047AD",
+      "null" : "0",
+      "top" : [ {
+        "item" : "969824B8-6875-4F85-802D-E75EAF96F9B5",
+        "count" : "129"
+      }, {
+        "item" : "DCF781CA-0324-40E6-AA02-80A5AF565692",
+        "count" : "127"
+      }, {
+        "item" : "EEA4CCF8-C879-492E-87DB-CFCB626792E3",
+        "count" : "113"
+      }, {
+        "item" : "99B0A7E0-FE1F-43FE-9BC3-B6DD715451FD",
+        "count" : "112"
+      }, {
+        "item" : "C974E8B0-A850-47D7-B14A-C83E0BE823C5",
+        "count" : "97"
+      }, {
+        "item" : "D59B75CF-D4F1-43F8-8014-17E3E41DF3F3",
+        "count" : "96"
+      }, {
+        "item" : "ECA7DEC2-37E2-4080-9952-93CF0D8B462B",
+        "count" : "85"
+      }, {
+        "item" : "7FC8FFBE-6DD5-4E44-B608-B401BCF57EA7",
+        "count" : "83"
+      }, {
+        "item" : "FC9F76CD-5A50-49BA-95D9-FF9DE6F1D3AC",
+        "count" : "81"
+      }, {
+        "item" : "1DBEB3E1-31F5-4B38-B693-8F8C7891BD1A",
+        "count" : "80"
+      }, {
+        "item" : "EC6152B1-191F-4182-AA12-8FDD74866A47",
+        "count" : "79"
+      }, {
+        "item" : "212A909D-4C39-4BDA-AAB6-70514223A5CB",
+        "count" : "78"
+      }, {
+        "item" : "7C7A7C88-C0B3-4666-B620-E0D1DDE246A4",
+        "count" : "78"
+      }, {
+        "item" : "C49A335A-1E6B-4690-91A6-05AE19B0710C",
+        "count" : "76"
+      }, {
+        "item" : "6F8077A8-9628-4680-B77B-6B7BD03A2B12",
+        "count" : "76"
+      }, {
+        "item" : "CA628FAB-AB65-4C68-AE95-8FF087E2D0AC",
+        "count" : "75"
+      }, {
+        "item" : "3F0433D1-4AC3-426F-ACD5-F0523CEA62B1",
+        "count" : "75"
+      }, {
+        "item" : "44852165-0584-4351-8F46-24DB48334622",
+        "count" : "75"
+      }, {
+        "item" : "117F9484-70D0-433B-BBF7-5E319B490660",
+        "count" : "74"
+      }, {
+        "item" : "8A8B13AF-4BA4-40AD-972F-95079F378474",
+        "count" : "74"
+      } ],
+      "smallest" : "00065D2B-8BD6-440E-8D5E-B5F639246868",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714985,
+    "name" : "event_date",
+    "dataTypeName" : "text",
+    "description" : "Date interview was conducted",
+    "fieldName" : "event_date",
+    "position" : 2,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673317,
+    "cachedContents" : {
+      "non_null" : "170804",
+      "largest" : "2026-11-14",
+      "null" : "0",
+      "top" : [ {
+        "item" : "2023-09-02",
+        "count" : "513"
+      }, {
+        "item" : "2023-09-16",
+        "count" : "502"
+      }, {
+        "item" : "1990-04-22",
+        "count" : "499"
+      }, {
+        "item" : "2023-09-23",
+        "count" : "472"
+      }, {
+        "item" : "2023-09-30",
+        "count" : "461"
+      }, {
+        "item" : "2024-10-05",
+        "count" : "444"
+      }, {
+        "item" : "2024-09-28",
+        "count" : "444"
+      }, {
+        "item" : "2024-09-21",
+        "count" : "402"
+      }, {
+        "item" : "2023-09-29",
+        "count" : "391"
+      }, {
+        "item" : "2022-09-03",
+        "count" : "377"
+      }, {
+        "item" : "2025-09-27",
+        "count" : "375"
+      }, {
+        "item" : "2023-09-08",
+        "count" : "374"
+      }, {
+        "item" : "2023-09-01",
+        "count" : "372"
+      }, {
+        "item" : "2023-10-07",
+        "count" : "365"
+      }, {
+        "item" : "1996-04-27",
+        "count" : "363"
+      }, {
+        "item" : "1987-04-26",
+        "count" : "358"
+      }, {
+        "item" : "2025-09-13",
+        "count" : "345"
+      }, {
+        "item" : "2025-08-23",
+        "count" : "344"
+      }, {
+        "item" : "2023-09-09",
+        "count" : "336"
+      }, {
+        "item" : "2024-10-06",
+        "count" : "333"
+      } ],
+      "smallest" : "1973-05-17",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714986,
+    "name" : "water_body",
+    "dataTypeName" : "text",
+    "description" : "Waterbody where angling party fished",
+    "fieldName" : "water_body",
+    "position" : 3,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673318,
+    "cachedContents" : {
+      "non_null" : "167727",
+      "largest" : "Wynoochee River",
+      "null" : "3077",
+      "top" : [ {
+        "item" : "Cowlitz River",
+        "count" : "30821"
+      }, {
+        "item" : "Skagit River",
+        "count" : "19718"
+      }, {
+        "item" : "Puyallup River",
+        "count" : "8668"
+      }, {
+        "item" : "Little White Salmon - Drano Lake",
+        "count" : "8249"
+      }, {
+        "item" : "Nisqually River",
+        "count" : "8006"
+      }, {
+        "item" : "Klineline Pond",
+        "count" : "7566"
+      }, {
+        "item" : "Humptulips River",
+        "count" : "7173"
+      }, {
+        "item" : "Kalama River",
+        "count" : "7032"
+      }, {
+        "item" : "Chehalis River",
+        "count" : "6165"
+      }, {
+        "item" : "Snohomish River",
+        "count" : "5854"
+      }, {
+        "item" : "Skykomish River",
+        "count" : "5270"
+      }, {
+        "item" : "Washougal River",
+        "count" : "4771"
+      }, {
+        "item" : "Hoh River",
+        "count" : "3169"
+      }, {
+        "item" : "Sauk River",
+        "count" : "3034"
+      }, {
+        "item" : "Sol Duc River",
+        "count" : "2585"
+      }, {
+        "item" : "Cascade River",
+        "count" : "2581"
+      }, {
+        "item" : "East Fork Lewis River",
+        "count" : "2469"
+      }, {
+        "item" : "Stillaguamish River",
+        "count" : "2244"
+      }, {
+        "item" : "Carbon River",
+        "count" : "2134"
+      }, {
+        "item" : "Satsop River",
+        "count" : "2116"
+      } ],
+      "smallest" : "Abernathy Creek",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714987,
+    "name" : "project_name",
+    "dataTypeName" : "text",
+    "description" : "Data collection project name",
+    "fieldName" : "project_name",
+    "position" : 4,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673319,
+    "cachedContents" : {
+      "non_null" : "170804",
+      "largest" : "R5 Steelhead",
+      "null" : "0",
+      "top" : [ {
+        "item" : "Cowlitz",
+        "count" : "30912"
+      }, {
+        "item" : "District 14",
+        "count" : "27431"
+      }, {
+        "item" : "R5 Steelhead",
+        "count" : "21127"
+      }, {
+        "item" : "R5 Inland Fish",
+        "count" : "19774"
+      }, {
+        "item" : "District 11",
+        "count" : "18808"
+      }, {
+        "item" : "District 17 North",
+        "count" : "17405"
+      }, {
+        "item" : "District 13",
+        "count" : "16875"
+      }, {
+        "item" : "District 16",
+        "count" : "8317"
+      }, {
+        "item" : "CRM - Roving Creel Project",
+        "count" : "8249"
+      }, {
+        "item" : "District 17 South",
+        "count" : "1906"
+      } ],
+      "smallest" : "Cowlitz",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714988,
+    "name" : "fishery_name",
+    "dataTypeName" : "text",
+    "description" : "Name of fishery being monitored\n",
+    "fieldName" : "fishery_name",
+    "position" : 5,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143499747,
+    "cachedContents" : {
+      "non_null" : "95132",
+      "largest" : "Wynoochee winter steelhead 2025-26",
+      "null" : "75672",
+      "top" : [ {
+        "item" : "Nisqually salmon 2021",
+        "count" : "3497"
+      }, {
+        "item" : "Puyallup_Carbon salmon 2023",
+        "count" : "2853"
+      }, {
+        "item" : "Skagit fall salmon 2023",
+        "count" : "2730"
+      }, {
+        "item" : "Skagit fall salmon 2025",
+        "count" : "2673"
+      }, {
+        "item" : "Snohomish fall salmon 2023",
+        "count" : "2549"
+      }, {
+        "item" : "Skagit fall salmon 2026",
+        "count" : "2521"
+      }, {
+        "item" : "Puyallup Carbon salmon 2025",
+        "count" : "2413"
+      }, {
+        "item" : "Nisqually salmon 2022",
+        "count" : "2370"
+      }, {
+        "item" : "Puyallup Carbon salmon 2024",
+        "count" : "2151"
+      }, {
+        "item" : "Nisqually salmon 2023",
+        "count" : "2139"
+      }, {
+        "item" : "Puyallup_Carbon salmon 2022",
+        "count" : "2068"
+      }, {
+        "item" : "Lower Cowlitz salmon and steelhead 2023-24",
+        "count" : "1882"
+      }, {
+        "item" : "Skagit winter steelhead 2021",
+        "count" : "1860"
+      }, {
+        "item" : "Skagit fall salmon 2024",
+        "count" : "1811"
+      }, {
+        "item" : "Skagit fall salmon 2022",
+        "count" : "1694"
+      }, {
+        "item" : "Snohomish fall salmon 2024",
+        "count" : "1513"
+      }, {
+        "item" : "Chehalis salmon 2025",
+        "count" : "1361"
+      }, {
+        "item" : "Chehalis salmon 2024",
+        "count" : "1361"
+      }, {
+        "item" : "Snohomish fall salmon 2025",
+        "count" : "1331"
+      }, {
+        "item" : "Puyallup Carbon salmon 2026",
+        "count" : "1317"
+      } ],
+      "smallest" : "Baker summer sockeye 2022",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714989,
+    "name" : "interview_id",
+    "dataTypeName" : "text",
+    "description" : "Primary key id value for record in interview table",
+    "fieldName" : "interview_id",
+    "position" : 6,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673320,
+    "cachedContents" : {
+      "non_null" : "170804",
+      "largest" : "FFFF66D3-62C3-4001-B5F7-474EADC786AC",
+      "null" : "0",
+      "top" : [ {
+        "item" : "7F80FC06-64A2-4F77-8D9C-FC8991007950",
+        "count" : "2"
+      }, {
+        "item" : "333E8FE6-ABCC-49B8-9946-0265E92F7BE0",
+        "count" : "2"
+      }, {
+        "item" : "C9FFFA9B-EC80-41B2-8B63-7A4EF86CFC21",
+        "count" : "2"
+      }, {
+        "item" : "5BDFED14-6300-4DC8-A25E-1FAF2EFA45CF",
+        "count" : "2"
+      }, {
+        "item" : "BF3A2A4F-E332-4BEE-B74E-CBE16D563EDB",
+        "count" : "2"
+      }, {
+        "item" : "9CAA93C9-3DD1-4961-8A26-CA589535928D",
+        "count" : "2"
+      }, {
+        "item" : "35BA494B-25B4-4BB1-8D6D-70B1ED85F488",
+        "count" : "2"
+      }, {
+        "item" : "355E3B6D-E072-4526-89CC-20D204626A38",
+        "count" : "2"
+      }, {
+        "item" : "EB5E2FDD-D781-41A4-9055-3BF41E8EF9CE",
+        "count" : "2"
+      }, {
+        "item" : "FA816EA4-1273-4FB4-89CA-0762D94816C9",
+        "count" : "2"
+      }, {
+        "item" : "0A90117C-1008-457C-8324-D505D10079D0",
+        "count" : "2"
+      }, {
+        "item" : "7804DA63-6944-4F8F-81B3-011211DDF804",
+        "count" : "2"
+      }, {
+        "item" : "F1DD7350-3A49-4504-96B3-11CB8C16CCDD",
+        "count" : "2"
+      }, {
+        "item" : "EF2C9047-4DD8-434F-8F8A-A0B8BA2585BA",
+        "count" : "2"
+      }, {
+        "item" : "E09E4E87-45D6-472A-A450-6C49042E4180",
+        "count" : "2"
+      }, {
+        "item" : "19604DFF-36BE-4439-9322-04884AAE54AA",
+        "count" : "2"
+      }, {
+        "item" : "F7BFAB5A-8D9F-4E45-BA72-CC9700986FF6",
+        "count" : "2"
+      }, {
+        "item" : "2BC197B0-A1E3-4C78-9C99-FE718E50FE00",
+        "count" : "2"
+      }, {
+        "item" : "1656CAA2-6F77-484B-A34B-E4D416974A8C",
+        "count" : "2"
+      }, {
+        "item" : "72DA7B86-359D-41B7-B1EB-11712B921E0D",
+        "count" : "2"
+      } ],
+      "smallest" : "00000DC0-F155-493C-AEA0-A4A072AE0AC6",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714990,
+    "name" : "interview_number",
+    "dataTypeName" : "text",
+    "description" : "Interview number",
+    "fieldName" : "interview_number",
+    "position" : 7,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673321,
+    "cachedContents" : {
+      "non_null" : "170802",
+      "largest" : "99",
+      "null" : "2",
+      "top" : [ {
+        "item" : "1",
+        "count" : "20794"
+      }, {
+        "item" : "2",
+        "count" : "17624"
+      }, {
+        "item" : "3",
+        "count" : "15314"
+      }, {
+        "item" : "4",
+        "count" : "13373"
+      }, {
+        "item" : "5",
+        "count" : "11639"
+      }, {
+        "item" : "6",
+        "count" : "10196"
+      }, {
+        "item" : "7",
+        "count" : "8945"
+      }, {
+        "item" : "8",
+        "count" : "7866"
+      }, {
+        "item" : "9",
+        "count" : "6957"
+      }, {
+        "item" : "10",
+        "count" : "6126"
+      }, {
+        "item" : "11",
+        "count" : "5382"
+      }, {
+        "item" : "12",
+        "count" : "4767"
+      }, {
+        "item" : "13",
+        "count" : "4177"
+      }, {
+        "item" : "14",
+        "count" : "3659"
+      }, {
+        "item" : "15",
+        "count" : "3249"
+      }, {
+        "item" : "16",
+        "count" : "2927"
+      }, {
+        "item" : "17",
+        "count" : "2630"
+      }, {
+        "item" : "18",
+        "count" : "2370"
+      }, {
+        "item" : "19",
+        "count" : "2115"
+      }, {
+        "item" : "20",
+        "count" : "1909"
+      } ],
+      "smallest" : "0",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714991,
+    "name" : "angler_type",
+    "dataTypeName" : "text",
+    "description" : "Categorical classification of angler to bank or boat used by some projects",
+    "fieldName" : "angler_type",
+    "position" : 8,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673322,
+    "cachedContents" : {
+      "non_null" : "71513",
+      "largest" : "Unk",
+      "null" : "99291",
+      "top" : [ {
+        "item" : "Bank",
+        "count" : "56427"
+      }, {
+        "item" : "Boat",
+        "count" : "15050"
+      }, {
+        "item" : "Unk",
+        "count" : "35"
+      }, {
+        "item" : "NA",
+        "count" : "1"
+      } ],
+      "smallest" : "Bank",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714992,
+    "name" : "interview_location",
+    "dataTypeName" : "text",
+    "description" : "Location where the interview occurred",
+    "fieldName" : "interview_location",
+    "position" : 9,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673323,
+    "cachedContents" : {
+      "non_null" : "129085",
+      "largest" : "Zurfleuh Boat Launch",
+      "null" : "41719",
+      "top" : [ {
+        "item" : "Blue Creek",
+        "count" : "9400"
+      }, {
+        "item" : "Barrier Dam",
+        "count" : "8585"
+      }, {
+        "item" : "Klineline Pond",
+        "count" : "7566"
+      }, {
+        "item" : "Boat Ramp",
+        "count" : "6364"
+      }, {
+        "item" : "Camelot Beach",
+        "count" : "4281"
+      }, {
+        "item" : "KAL 2",
+        "count" : "3984"
+      }, {
+        "item" : "WASH 1",
+        "count" : "3645"
+      }, {
+        "item" : "Fort Lewis",
+        "count" : "2722"
+      }, {
+        "item" : "Mouth Stevens Crk",
+        "count" : "2654"
+      }, {
+        "item" : "Lincoln St launch",
+        "count" : "1902"
+      }, {
+        "item" : "Olequa Boat Ramp",
+        "count" : "1870"
+      }, {
+        "item" : "From mouth to Darrington Bridge (Sauk Prairie Rd. Bridge) CRC (828)",
+        "count" : "1736"
+      }, {
+        "item" : "Mineral Lake",
+        "count" : "1712"
+      }, {
+        "item" : "Reynvann Bar",
+        "count" : "1593"
+      }, {
+        "item" : "Fuller Bridge",
+        "count" : "1529"
+      }, {
+        "item" : "Wallace Fish Hatchery",
+        "count" : "1472"
+      }, {
+        "item" : "Dike Rd. Ramp",
+        "count" : "1380"
+      }, {
+        "item" : "Guide Drop off/ADA",
+        "count" : "1371"
+      }, {
+        "item" : "Olequa Shacks",
+        "count" : "1358"
+      }, {
+        "item" : "SF Toutle - General",
+        "count" : "1303"
+      } ],
+      "smallest" : "363rd Bridge to Hatchery intake",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714993,
+    "name" : "fishing_location",
+    "dataTypeName" : "text",
+    "description" : "Location where the angling party primarily fished",
+    "fieldName" : "fishing_location",
+    "position" : 10,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673324,
+    "cachedContents" : {
+      "non_null" : "88208",
+      "largest" : "Zurfleuh Boat Launch",
+      "null" : "82596",
+      "top" : [ {
+        "item" : "Mouth to Hwy 101 Bridge",
+        "count" : "7153"
+      }, {
+        "item" : "Main Lake - Drano",
+        "count" : "6707"
+      }, {
+        "item" : "From Hwy. 536 at Mt. Vernon (Memorial Hwy. Bridge) to Hwy. 9 Bridge",
+        "count" : "5078"
+      }, {
+        "item" : "Mouth to Fuller Bridge",
+        "count" : "3690"
+      }, {
+        "item" : "Fort Lewis",
+        "count" : "3029"
+      }, {
+        "item" : "MP- Sumner Sewage Treatment Plant",
+        "count" : "2846"
+      }, {
+        "item" : "From Hwy. 9 Bridge to mouth of Gilligan Creek",
+        "count" : "2699"
+      }, {
+        "item" : "From Hwy. 530 Bridge at Rockport to Cascade River Rd. (Marblemount Bridge).",
+        "count" : "2467"
+      }, {
+        "item" : "LP1- Soccer Fields",
+        "count" : "2463"
+      }, {
+        "item" : "From the Dalles Bridge at Concrete to the Hwy. 530 Bridge at Rockport",
+        "count" : "2422"
+      }, {
+        "item" : "From mouth to Rockport-Cascade Rd. Bridge",
+        "count" : "2206"
+      }, {
+        "item" : "Mouth to Schafer State Park",
+        "count" : "2116"
+      }, {
+        "item" : "Lower - ONP coastal boundary upstream to Oxbow Campground",
+        "count" : "1874"
+      }, {
+        "item" : "From mouth to Darrington Bridge (Sauk Prairie Rd. Bridge) CRC (828)",
+        "count" : "1866"
+      }, {
+        "item" : "LP4- N. Levee Rd. between 66th Ave Br. and N. Meridian Ave",
+        "count" : "1832"
+      }, {
+        "item" : "From mouth of Gilligan Creek to the Dalles Bridge at Concrete",
+        "count" : "1832"
+      }, {
+        "item" : "Mouth to Hwy. 536 at Mt. Vernon (Memorial Hwy. Bridge)",
+        "count" : "1657"
+      }, {
+        "item" : "Inlet",
+        "count" : "1542"
+      }, {
+        "item" : "Lewis St. Bridge to Wallace River",
+        "count" : "1492"
+      }, {
+        "item" : "mouth (railroad bridge) to railroad bridge upstream Lincoln launch",
+        "count" : "1465"
+      } ],
+      "smallest" : "363rd Bridge to Hatchery intake",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714994,
+    "name" : "location_id",
+    "dataTypeName" : "text",
+    "description" : "Primary key id value for the fishing location if present, otherwise the id value for the interview location\n",
+    "fieldName" : "location_id",
+    "position" : 11,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143499746,
+    "cachedContents" : {
+      "non_null" : "95132",
+      "largest" : "FED4A3DF-2A24-475F-B443-AA34A87B5CBE",
+      "null" : "75672",
+      "top" : [ {
+        "item" : "DE6878A4-6367-404A-A52B-1895DAE607BD",
+        "count" : "6097"
+      }, {
+        "item" : "9E5C07F8-2874-4E94-8E1E-5707D4B022D1",
+        "count" : "5738"
+      }, {
+        "item" : "8A3D4571-9DFF-4803-AB09-6A41EC0BADE5",
+        "count" : "5068"
+      }, {
+        "item" : "A1C21DC3-00E2-4ED8-A617-CC7CD31A610B",
+        "count" : "4053"
+      }, {
+        "item" : "ED85EFDF-9DDA-49A1-BF7F-DE50B3F050A7",
+        "count" : "3668"
+      }, {
+        "item" : "3B506A50-965B-4805-9C14-496D0358E0B4",
+        "count" : "3034"
+      }, {
+        "item" : "3F00B222-865C-4DB6-92B4-9108F95DF3A1",
+        "count" : "2846"
+      }, {
+        "item" : "464F1F1A-1A86-4F7C-B6D9-A358893F7A78",
+        "count" : "2699"
+      }, {
+        "item" : "5A6E3BD0-05CD-4224-A7C4-63F18EA01357",
+        "count" : "2615"
+      }, {
+        "item" : "8173F6C9-A12F-475A-82AB-6DBFCF004B7F",
+        "count" : "2581"
+      }, {
+        "item" : "BCEC2B65-6312-4D2F-9CBB-BE0E6AAB8943",
+        "count" : "2463"
+      }, {
+        "item" : "26159ABE-296C-4B40-BFEF-DF501521DD66",
+        "count" : "2422"
+      }, {
+        "item" : "80C245F3-C711-41B0-A483-0CDF29FA2461",
+        "count" : "2114"
+      }, {
+        "item" : "3A94F0A0-7F59-41F7-B6C7-853B9B1E24D2",
+        "count" : "2085"
+      }, {
+        "item" : "E4C0099F-F28A-41A2-B95A-9A947A326BF0",
+        "count" : "1978"
+      }, {
+        "item" : "420DCD70-DE33-4C56-B9B0-563E5707F729",
+        "count" : "1874"
+      }, {
+        "item" : "9196EC61-50A9-474B-84E0-97DA00421B7B",
+        "count" : "1832"
+      }, {
+        "item" : "95639308-398A-4DA8-975A-1EE4BB600818",
+        "count" : "1832"
+      }, {
+        "item" : "AEE6CA10-5BED-4FEE-89EE-1130A18DA54D",
+        "count" : "1496"
+      }, {
+        "item" : "3B80BCB6-A524-4384-856E-EA34165E9B53",
+        "count" : "1465"
+      } ],
+      "smallest" : "030D6E60-F4D0-44D6-868C-45DED9BC663B",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714995,
+    "name" : "crc_area",
+    "dataTypeName" : "text",
+    "description" : "Catch record card area",
+    "fieldName" : "crc_area",
+    "position" : 12,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673325,
+    "cachedContents" : {
+      "non_null" : "147949",
+      "largest" : "876",
+      "null" : "22855",
+      "top" : [ {
+        "item" : "561",
+        "count" : "30821"
+      }, {
+        "item" : "830",
+        "count" : "19718"
+      }, {
+        "item" : "804",
+        "count" : "8668"
+      }, {
+        "item" : "618",
+        "count" : "8249"
+      }, {
+        "item" : "786",
+        "count" : "8006"
+      }, {
+        "item" : "358",
+        "count" : "7173"
+      }, {
+        "item" : "850",
+        "count" : "5854"
+      }, {
+        "item" : "844",
+        "count" : "5270"
+      }, {
+        "item" : "603",
+        "count" : "5166"
+      }, {
+        "item" : "317",
+        "count" : "4852"
+      }, {
+        "item" : "667",
+        "count" : "4762"
+      }, {
+        "item" : "828",
+        "count" : "3034"
+      }, {
+        "item" : "406",
+        "count" : "2585"
+      }, {
+        "item" : "826",
+        "count" : "2581"
+      }, {
+        "item" : "613",
+        "count" : "2469"
+      }, {
+        "item" : "876",
+        "count" : "2357"
+      }, {
+        "item" : "802",
+        "count" : "2134"
+      }, {
+        "item" : "329",
+        "count" : "2116"
+      }, {
+        "item" : "350",
+        "count" : "1874"
+      }, {
+        "item" : "860",
+        "count" : "1571"
+      } ],
+      "smallest" : "2-2",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714996,
+    "name" : "angler_count",
+    "dataTypeName" : "text",
+    "description" : "Count of people angling in the interview party",
+    "fieldName" : "angler_count",
+    "position" : 13,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673326,
+    "cachedContents" : {
+      "non_null" : "170804",
+      "largest" : "9",
+      "null" : "0",
+      "top" : [ {
+        "item" : "1",
+        "count" : "80700"
+      }, {
+        "item" : "2",
+        "count" : "57105"
+      }, {
+        "item" : "3",
+        "count" : "21227"
+      }, {
+        "item" : "4",
+        "count" : "7643"
+      }, {
+        "item" : "5",
+        "count" : "2664"
+      }, {
+        "item" : "6",
+        "count" : "901"
+      }, {
+        "item" : "7",
+        "count" : "228"
+      }, {
+        "item" : "-1",
+        "count" : "86"
+      }, {
+        "item" : "8",
+        "count" : "83"
+      }, {
+        "item" : "0",
+        "count" : "71"
+      }, {
+        "item" : "9",
+        "count" : "40"
+      }, {
+        "item" : "10",
+        "count" : "21"
+      }, {
+        "item" : "11",
+        "count" : "17"
+      }, {
+        "item" : "13",
+        "count" : "5"
+      }, {
+        "item" : "12",
+        "count" : "5"
+      }, {
+        "item" : "15",
+        "count" : "3"
+      }, {
+        "item" : "133",
+        "count" : "1"
+      }, {
+        "item" : "31",
+        "count" : "1"
+      }, {
+        "item" : "14",
+        "count" : "1"
+      }, {
+        "item" : "21",
+        "count" : "1"
+      } ],
+      "smallest" : "0",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714997,
+    "name" : "total_group_count",
+    "dataTypeName" : "text",
+    "description" : "Total count of people in the interview party",
+    "fieldName" : "total_group_count",
+    "position" : 14,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673327,
+    "cachedContents" : {
+      "non_null" : "84726",
+      "largest" : "9",
+      "null" : "86078",
+      "top" : [ {
+        "item" : "1",
+        "count" : "36566"
+      }, {
+        "item" : "2",
+        "count" : "29929"
+      }, {
+        "item" : "3",
+        "count" : "12710"
+      }, {
+        "item" : "4",
+        "count" : "3744"
+      }, {
+        "item" : "5",
+        "count" : "1171"
+      }, {
+        "item" : "6",
+        "count" : "375"
+      }, {
+        "item" : "7",
+        "count" : "101"
+      }, {
+        "item" : "8",
+        "count" : "66"
+      }, {
+        "item" : "9",
+        "count" : "27"
+      }, {
+        "item" : "10",
+        "count" : "17"
+      }, {
+        "item" : "11",
+        "count" : "8"
+      }, {
+        "item" : "15",
+        "count" : "5"
+      }, {
+        "item" : "12",
+        "count" : "4"
+      }, {
+        "item" : "13",
+        "count" : "2"
+      }, {
+        "item" : "17",
+        "count" : "1"
+      } ],
+      "smallest" : "1",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714998,
+    "name" : "pole_count",
+    "dataTypeName" : "text",
+    "description" : "Count of poles used simultaneously by interview party",
+    "fieldName" : "pole_count",
+    "position" : 15,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673328,
+    "cachedContents" : {
+      "non_null" : "124575",
+      "largest" : "9",
+      "null" : "46229",
+      "top" : [ {
+        "item" : "1",
+        "count" : "53489"
+      }, {
+        "item" : "2",
+        "count" : "44256"
+      }, {
+        "item" : "3",
+        "count" : "15799"
+      }, {
+        "item" : "4",
+        "count" : "7373"
+      }, {
+        "item" : "5",
+        "count" : "2269"
+      }, {
+        "item" : "6",
+        "count" : "1020"
+      }, {
+        "item" : "7",
+        "count" : "176"
+      }, {
+        "item" : "8",
+        "count" : "113"
+      }, {
+        "item" : "9",
+        "count" : "27"
+      }, {
+        "item" : "10",
+        "count" : "24"
+      }, {
+        "item" : "11",
+        "count" : "8"
+      }, {
+        "item" : "0",
+        "count" : "6"
+      }, {
+        "item" : "12",
+        "count" : "4"
+      }, {
+        "item" : "13",
+        "count" : "3"
+      }, {
+        "item" : "15",
+        "count" : "3"
+      }, {
+        "item" : "18",
+        "count" : "2"
+      }, {
+        "item" : "14",
+        "count" : "2"
+      }, {
+        "item" : "20",
+        "count" : "1"
+      } ],
+      "smallest" : "0",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607714999,
+    "name" : "trip_status",
+    "dataTypeName" : "text",
+    "description" : "Defines if the angling trip was complete or still in progress when the party was interviewed",
+    "fieldName" : "trip_status",
+    "position" : 16,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673329,
+    "cachedContents" : {
+      "non_null" : "156738",
+      "largest" : "Incomplete",
+      "null" : "14066",
+      "top" : [ {
+        "item" : "Complete",
+        "count" : "98191"
+      }, {
+        "item" : "Incomplete",
+        "count" : "58547"
+      } ],
+      "smallest" : "Complete",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715000,
+    "name" : "fishing_start_time",
+    "dataTypeName" : "text",
+    "description" : "Time the angling group began fishing",
+    "fieldName" : "fishing_start_time",
+    "position" : 17,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673330,
+    "cachedContents" : {
+      "non_null" : "170614",
+      "largest" : "23:45:00",
+      "null" : "190",
+      "top" : [ {
+        "item" : "07:00:00",
+        "count" : "17286"
+      }, {
+        "item" : "08:00:00",
+        "count" : "12054"
+      }, {
+        "item" : "07:30:00",
+        "count" : "11231"
+      }, {
+        "item" : "06:00:00",
+        "count" : "9628"
+      }, {
+        "item" : "09:00:00",
+        "count" : "9275"
+      }, {
+        "item" : "06:30:00",
+        "count" : "8814"
+      }, {
+        "item" : "10:00:00",
+        "count" : "8161"
+      }, {
+        "item" : "08:30:00",
+        "count" : "6212"
+      }, {
+        "item" : "12:00:00",
+        "count" : "5999"
+      }, {
+        "item" : "11:00:00",
+        "count" : "5852"
+      }, {
+        "item" : "09:30:00",
+        "count" : "4866"
+      }, {
+        "item" : "05:30:00",
+        "count" : "4791"
+      }, {
+        "item" : "05:00:00",
+        "count" : "4366"
+      }, {
+        "item" : "13:00:00",
+        "count" : "4035"
+      }, {
+        "item" : "10:30:00",
+        "count" : "3930"
+      }, {
+        "item" : "14:00:00",
+        "count" : "2906"
+      }, {
+        "item" : "11:30:00",
+        "count" : "2784"
+      }, {
+        "item" : "12:30:00",
+        "count" : "2241"
+      }, {
+        "item" : "15:00:00",
+        "count" : "2020"
+      }, {
+        "item" : "13:30:00",
+        "count" : "1908"
+      } ],
+      "smallest" : "00:00:00",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715001,
+    "name" : "fishing_end_time",
+    "dataTypeName" : "text",
+    "description" : "Time the angling group stopped fishing",
+    "fieldName" : "fishing_end_time",
+    "position" : 18,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673331,
+    "cachedContents" : {
+      "non_null" : "138220",
+      "largest" : "23:45:00",
+      "null" : "32584",
+      "top" : [ {
+        "item" : "12:00:00",
+        "count" : "3555"
+      }, {
+        "item" : "14:00:00",
+        "count" : "3007"
+      }, {
+        "item" : "13:00:00",
+        "count" : "2736"
+      }, {
+        "item" : "11:00:00",
+        "count" : "2597"
+      }, {
+        "item" : "15:00:00",
+        "count" : "2465"
+      }, {
+        "item" : "10:00:00",
+        "count" : "2219"
+      }, {
+        "item" : "16:00:00",
+        "count" : "1930"
+      }, {
+        "item" : "11:30:00",
+        "count" : "1916"
+      }, {
+        "item" : "14:30:00",
+        "count" : "1746"
+      }, {
+        "item" : "13:30:00",
+        "count" : "1732"
+      }, {
+        "item" : "12:30:00",
+        "count" : "1730"
+      }, {
+        "item" : "10:30:00",
+        "count" : "1716"
+      }, {
+        "item" : "09:30:00",
+        "count" : "1407"
+      }, {
+        "item" : "09:00:00",
+        "count" : "1385"
+      }, {
+        "item" : "17:00:00",
+        "count" : "1358"
+      }, {
+        "item" : "15:30:00",
+        "count" : "1292"
+      }, {
+        "item" : "16:30:00",
+        "count" : "948"
+      }, {
+        "item" : "10:45:00",
+        "count" : "945"
+      }, {
+        "item" : "11:45:00",
+        "count" : "931"
+      }, {
+        "item" : "12:45:00",
+        "count" : "916"
+      } ],
+      "smallest" : "00:00:00",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715002,
+    "name" : "interview_time",
+    "dataTypeName" : "text",
+    "description" : "Time the angling group was interviewed",
+    "fieldName" : "interview_time",
+    "position" : 19,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673332,
+    "cachedContents" : {
+      "non_null" : "152613",
+      "largest" : "23:45:00",
+      "null" : "18191",
+      "top" : [ {
+        "item" : "11:30:00",
+        "count" : "1442"
+      }, {
+        "item" : "12:00:00",
+        "count" : "1319"
+      }, {
+        "item" : "11:00:00",
+        "count" : "1318"
+      }, {
+        "item" : "10:30:00",
+        "count" : "1238"
+      }, {
+        "item" : "10:00:00",
+        "count" : "1187"
+      }, {
+        "item" : "14:00:00",
+        "count" : "1182"
+      }, {
+        "item" : "13:30:00",
+        "count" : "1162"
+      }, {
+        "item" : "13:00:00",
+        "count" : "1152"
+      }, {
+        "item" : "12:30:00",
+        "count" : "1138"
+      }, {
+        "item" : "14:30:00",
+        "count" : "1049"
+      }, {
+        "item" : "09:30:00",
+        "count" : "1032"
+      }, {
+        "item" : "15:00:00",
+        "count" : "1017"
+      }, {
+        "item" : "15:30:00",
+        "count" : "860"
+      }, {
+        "item" : "11:45:00",
+        "count" : "816"
+      }, {
+        "item" : "11:15:00",
+        "count" : "791"
+      }, {
+        "item" : "09:00:00",
+        "count" : "770"
+      }, {
+        "item" : "16:00:00",
+        "count" : "742"
+      }, {
+        "item" : "10:45:00",
+        "count" : "714"
+      }, {
+        "item" : "12:15:00",
+        "count" : "681"
+      }, {
+        "item" : "13:15:00",
+        "count" : "673"
+      } ],
+      "smallest" : "00:00:00",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715003,
+    "name" : "target_species",
+    "dataTypeName" : "text",
+    "description" : "Species the angling group was targeting",
+    "fieldName" : "target_species",
+    "position" : 20,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673333,
+    "cachedContents" : {
+      "non_null" : "144266",
+      "largest" : "Yellow Perch",
+      "null" : "26538",
+      "top" : [ {
+        "item" : "Steelhead",
+        "count" : "34417"
+      }, {
+        "item" : "Coho",
+        "count" : "25291"
+      }, {
+        "item" : "Chinook",
+        "count" : "21040"
+      }, {
+        "item" : "Trout",
+        "count" : "17135"
+      }, {
+        "item" : "Target species not asked",
+        "count" : "13315"
+      }, {
+        "item" : "Salmonid",
+        "count" : "11158"
+      }, {
+        "item" : "Pink",
+        "count" : "9100"
+      }, {
+        "item" : "Any species",
+        "count" : "3923"
+      }, {
+        "item" : "Sockeye",
+        "count" : "3437"
+      }, {
+        "item" : "Unknown",
+        "count" : "1903"
+      }, {
+        "item" : "Other",
+        "count" : "616"
+      }, {
+        "item" : "Rainbow Trout",
+        "count" : "514"
+      }, {
+        "item" : "Crappie",
+        "count" : "507"
+      }, {
+        "item" : "Sturgeon",
+        "count" : "304"
+      }, {
+        "item" : "Bass",
+        "count" : "298"
+      }, {
+        "item" : "Cutthroat",
+        "count" : "280"
+      }, {
+        "item" : "Bull Trout",
+        "count" : "265"
+      }, {
+        "item" : "Multiple salmon and/or steelhead targeted",
+        "count" : "199"
+      }, {
+        "item" : "Bullhead",
+        "count" : "154"
+      }, {
+        "item" : "Yellow Perch",
+        "count" : "141"
+      } ],
+      "smallest" : "Any species",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715004,
+    "name" : "trip_guided",
+    "dataTypeName" : "text",
+    "description" : "Indicator if the angling trip was guided",
+    "fieldName" : "trip_guided",
+    "position" : 21,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673334,
+    "cachedContents" : {
+      "non_null" : "80072",
+      "largest" : "Unknown",
+      "null" : "90732",
+      "top" : [ {
+        "item" : "Non-guided",
+        "count" : "71068"
+      }, {
+        "item" : "Guided",
+        "count" : "8625"
+      }, {
+        "item" : "Unknown",
+        "count" : "379"
+      } ],
+      "smallest" : "Guided",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715005,
+    "name" : "boat_type",
+    "dataTypeName" : "text",
+    "description" : "Type of boat used if applicable",
+    "fieldName" : "boat_type",
+    "position" : 22,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673335,
+    "cachedContents" : {
+      "non_null" : "35830",
+      "largest" : "Trailered Motorized Boat",
+      "null" : "134974",
+      "top" : [ {
+        "item" : "Trailered Motorized Boat",
+        "count" : "24027"
+      }, {
+        "item" : "Drift Boat/ Raft",
+        "count" : "10397"
+      }, {
+        "item" : "Pontoon/Kick/Kayak/Dinghy",
+        "count" : "1099"
+      }, {
+        "item" : "Skiff / Pram",
+        "count" : "290"
+      }, {
+        "item" : "Small Boat (Untrailered)",
+        "count" : "14"
+      }, {
+        "item" : "Large Boat (Trailered)",
+        "count" : "3"
+      } ],
+      "smallest" : "Drift Boat/ Raft",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715006,
+    "name" : "boat_used",
+    "dataTypeName" : "text",
+    "description" : "Indicator if the party used a boat or other watercraft",
+    "fieldName" : "boat_used",
+    "position" : 23,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673336,
+    "cachedContents" : {
+      "non_null" : "105560",
+      "largest" : "Yes",
+      "null" : "65244",
+      "top" : [ {
+        "item" : "No",
+        "count" : "68575"
+      }, {
+        "item" : "Yes",
+        "count" : "36985"
+      } ],
+      "smallest" : "No",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715007,
+    "name" : "fish_from_boat",
+    "dataTypeName" : "text",
+    "description" : "Indicator if the party primarily fished out of a boat or watercraft",
+    "fieldName" : "fish_from_boat",
+    "position" : 24,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673337,
+    "cachedContents" : {
+      "non_null" : "31027",
+      "largest" : "Boat",
+      "null" : "139777",
+      "top" : [ {
+        "item" : "Boat",
+        "count" : "26310"
+      }, {
+        "item" : "Bank",
+        "count" : "4717"
+      } ],
+      "smallest" : "Bank",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715008,
+    "name" : "vehicle_count",
+    "dataTypeName" : "text",
+    "description" : "Count of vehicles associated with angling party",
+    "fieldName" : "vehicle_count",
+    "position" : 25,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673338,
+    "cachedContents" : {
+      "non_null" : "90610",
+      "largest" : "8",
+      "null" : "80194",
+      "top" : [ {
+        "item" : "1",
+        "count" : "75792"
+      }, {
+        "item" : "2",
+        "count" : "12422"
+      }, {
+        "item" : "3",
+        "count" : "1505"
+      }, {
+        "item" : "0",
+        "count" : "618"
+      }, {
+        "item" : "4",
+        "count" : "207"
+      }, {
+        "item" : "5",
+        "count" : "46"
+      }, {
+        "item" : "6",
+        "count" : "16"
+      }, {
+        "item" : "8",
+        "count" : "3"
+      }, {
+        "item" : "7",
+        "count" : "1"
+      } ],
+      "smallest" : "0",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715009,
+    "name" : "trailer_count",
+    "dataTypeName" : "text",
+    "description" : "Count of trailers associated with angling party",
+    "fieldName" : "trailer_count",
+    "position" : 26,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673339,
+    "cachedContents" : {
+      "non_null" : "84722",
+      "largest" : "9",
+      "null" : "86082",
+      "top" : [ {
+        "item" : "0",
+        "count" : "57221"
+      }, {
+        "item" : "1",
+        "count" : "27292"
+      }, {
+        "item" : "2",
+        "count" : "191"
+      }, {
+        "item" : "3",
+        "count" : "10"
+      }, {
+        "item" : "4",
+        "count" : "3"
+      }, {
+        "item" : "5",
+        "count" : "3"
+      }, {
+        "item" : "9",
+        "count" : "2"
+      } ],
+      "smallest" : "0",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715010,
+    "name" : "state_residence",
+    "dataTypeName" : "text",
+    "description" : "Primary residence state of angling party",
+    "fieldName" : "state_residence",
+    "position" : 27,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673340,
+    "cachedContents" : {
+      "non_null" : "0",
+      "null" : "170804",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715011,
+    "name" : "zip_code",
+    "dataTypeName" : "text",
+    "description" : "Zip code(s) of angling party members",
+    "fieldName" : "zip_code",
+    "position" : 28,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673341,
+    "cachedContents" : {
+      "non_null" : "62215",
+      "largest" : "Yelm Wa",
+      "null" : "108589",
+      "top" : [ {
+        "item" : "98671",
+        "count" : "2317"
+      }, {
+        "item" : "98284",
+        "count" : "2265"
+      }, {
+        "item" : "",
+        "count" : "1981"
+      }, {
+        "item" : "98632",
+        "count" : "1580"
+      }, {
+        "item" : "98625",
+        "count" : "1560"
+      }, {
+        "item" : "98273",
+        "count" : "1526"
+      }, {
+        "item" : "98223",
+        "count" : "1289"
+      }, {
+        "item" : "98604",
+        "count" : "1166"
+      }, {
+        "item" : "98660",
+        "count" : "1090"
+      }, {
+        "item" : "98331",
+        "count" : "1036"
+      }, {
+        "item" : "98233",
+        "count" : "1021"
+      }, {
+        "item" : "98626",
+        "count" : "959"
+      }, {
+        "item" : "98274",
+        "count" : "883"
+      }, {
+        "item" : "98270",
+        "count" : "830"
+      }, {
+        "item" : "98607",
+        "count" : "778"
+      }, {
+        "item" : "98290",
+        "count" : "770"
+      }, {
+        "item" : "98258",
+        "count" : "693"
+      }, {
+        "item" : "98225",
+        "count" : "669"
+      }, {
+        "item" : "98362",
+        "count" : "665"
+      }, {
+        "item" : "98226",
+        "count" : "626"
+      } ],
+      "smallest" : "",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715025,
+    "name" : "previously_interviewed",
+    "dataTypeName" : "checkbox",
+    "description" : "Flag to indicate if the angling party was previously interviewed that day",
+    "fieldName" : "previously_interviewed",
+    "position" : 29,
+    "renderTypeName" : "checkbox",
+    "tableColumnId" : 157511452,
+    "cachedContents" : {
+      "non_null" : "72341",
+      "null" : "98463",
+      "top" : [ {
+        "item" : false,
+        "count" : "69912"
+      }, {
+        "item" : true,
+        "count" : "2429"
+      } ],
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715013,
+    "name" : "comment_txt",
+    "dataTypeName" : "text",
+    "description" : "Comments pertaining to the interview",
+    "fieldName" : "comment_txt",
+    "position" : 30,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673343,
+    "cachedContents" : {
+      "non_null" : "36243",
+      "largest" : "Zone 2 was fished and launched at power plant, ",
+      "null" : "134561",
+      "top" : [ {
+        "item" : "No catch",
+        "count" : "1617"
+      }, {
+        "item" : "Fishing Location: 3",
+        "count" : "1086"
+      }, {
+        "item" : "Fishing Location: 2",
+        "count" : "1014"
+      }, {
+        "item" : "Fishing Location: 4",
+        "count" : "867"
+      }, {
+        "item" : "Fishing Location: 1",
+        "count" : "772"
+      }, {
+        "item" : "Fishing Location: Beginners",
+        "count" : "647"
+      }, {
+        "item" : "Fishing Location: Hath",
+        "count" : "621"
+      }, {
+        "item" : "Fishing Location: 5",
+        "count" : "603"
+      }, {
+        "item" : "",
+        "count" : "588"
+      }, {
+        "item" : "No fish",
+        "count" : "497"
+      }, {
+        "item" : "Fishing Location: 2 Beginners Hole",
+        "count" : "347"
+      }, {
+        "item" : "Fishing Location: BA",
+        "count" : "340"
+      }, {
+        "item" : "Fishing Location: Hath to BA",
+        "count" : "321"
+      }, {
+        "item" : "Fishing Location: 7",
+        "count" : "312"
+      }, {
+        "item" : "Fishing Location: Modrow",
+        "count" : "309"
+      }, {
+        "item" : "Fishing Location: 2 Modrow",
+        "count" : "261"
+      }, {
+        "item" : "Fishing Location: Deadline",
+        "count" : "206"
+      }, {
+        "item" : "Fishing Location: 1 Mouth",
+        "count" : "196"
+      }, {
+        "item" : "Fishing Location: Powerline",
+        "count" : "193"
+      }, {
+        "item" : "Fishing Location: Sandy Swim",
+        "count" : "191"
+      } ],
+      "smallest" : "",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715014,
+    "name" : "location_type",
+    "dataTypeName" : "text",
+    "description" : "Defines if the location is a discrete site or a broader section\n",
+    "fieldName" : "location_type",
+    "position" : 31,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143499745,
+    "cachedContents" : {
+      "non_null" : "95132",
+      "largest" : "Site",
+      "null" : "75672",
+      "top" : [ {
+        "item" : "Section",
+        "count" : "72194"
+      }, {
+        "item" : "Site",
+        "count" : "22938"
+      } ],
+      "smallest" : "Section",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715015,
+    "name" : "survey_type",
+    "dataTypeName" : "text",
+    "description" : "Defines if the location is used as an index or census \n",
+    "fieldName" : "survey_type",
+    "position" : 32,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143499744,
+    "cachedContents" : {
+      "non_null" : "95132",
+      "largest" : "Index",
+      "null" : "75672",
+      "top" : [ {
+        "item" : "Census",
+        "count" : "65894"
+      }, {
+        "item" : "Index",
+        "count" : "29006"
+      }, {
+        "item" : "census",
+        "count" : "232"
+      } ],
+      "smallest" : "census",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715016,
+    "name" : "location_season_name",
+    "dataTypeName" : "text",
+    "description" : "Optional name for location specific to the fishery\n",
+    "fieldName" : "location_season_name",
+    "position" : 33,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143499743,
+    "cachedContents" : {
+      "non_null" : "0",
+      "null" : "170804",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715017,
+    "name" : "section_num",
+    "dataTypeName" : "text",
+    "description" : "Section number assigned to survey location\n",
+    "fieldName" : "section_num",
+    "position" : 34,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143499742,
+    "cachedContents" : {
+      "non_null" : "94881",
+      "largest" : "99",
+      "null" : "75923",
+      "top" : [ {
+        "item" : "1",
+        "count" : "45780"
+      }, {
+        "item" : "2",
+        "count" : "27396"
+      }, {
+        "item" : "3",
+        "count" : "9938"
+      }, {
+        "item" : "4",
+        "count" : "4215"
+      }, {
+        "item" : "5",
+        "count" : "1930"
+      }, {
+        "item" : "6",
+        "count" : "1679"
+      }, {
+        "item" : "100",
+        "count" : "980"
+      }, {
+        "item" : "109",
+        "count" : "794"
+      }, {
+        "item" : "99",
+        "count" : "649"
+      }, {
+        "item" : "7",
+        "count" : "642"
+      }, {
+        "item" : "105",
+        "count" : "251"
+      }, {
+        "item" : "103",
+        "count" : "131"
+      }, {
+        "item" : "108",
+        "count" : "128"
+      }, {
+        "item" : "104",
+        "count" : "105"
+      }, {
+        "item" : "8",
+        "count" : "72"
+      }, {
+        "item" : "9",
+        "count" : "63"
+      }, {
+        "item" : "101",
+        "count" : "50"
+      }, {
+        "item" : "639",
+        "count" : "20"
+      }, {
+        "item" : "1116",
+        "count" : "15"
+      }, {
+        "item" : "106",
+        "count" : "13"
+      } ],
+      "smallest" : "1",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715018,
+    "name" : "surveyor_num",
+    "dataTypeName" : "text",
+    "description" : "Survey number assigned to each creel survey location\n",
+    "fieldName" : "surveyor_num",
+    "position" : 35,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143499741,
+    "cachedContents" : {
+      "non_null" : "71693",
+      "largest" : "7",
+      "null" : "99111",
+      "top" : [ {
+        "item" : "1",
+        "count" : "51603"
+      }, {
+        "item" : "2",
+        "count" : "12964"
+      }, {
+        "item" : "3",
+        "count" : "3663"
+      }, {
+        "item" : "4",
+        "count" : "1307"
+      }, {
+        "item" : "5",
+        "count" : "1063"
+      }, {
+        "item" : "6",
+        "count" : "1059"
+      }, {
+        "item" : "7",
+        "count" : "34"
+      } ],
+      "smallest" : "1",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715019,
+    "name" : "p_census_bank",
+    "dataTypeName" : "text",
+    "description" : "The asssumed proportion of bank anglers in a particular section that are surveyed during a census effort count\n",
+    "fieldName" : "p_census_bank",
+    "position" : 36,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143499740,
+    "cachedContents" : {
+      "non_null" : "71968",
+      "largest" : "1",
+      "null" : "98836",
+      "top" : [ {
+        "item" : "1",
+        "count" : "71968"
+      } ],
+      "smallest" : "1",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715020,
+    "name" : "p_census_boat",
+    "dataTypeName" : "text",
+    "description" : "The asssumed proportion of bank anglers in a particular section that are surveyed during a census effort count\n",
+    "fieldName" : "p_census_boat",
+    "position" : 37,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143499739,
+    "cachedContents" : {
+      "non_null" : "69868",
+      "largest" : "1",
+      "null" : "100936",
+      "top" : [ {
+        "item" : "1",
+        "count" : "69868"
+      } ],
+      "smallest" : "1",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715021,
+    "name" : "indirect_census_bank",
+    "dataTypeName" : "text",
+    "description" : "The assumed spatial expansion of bank anglers in a particular section used when census count data are unavailable\n",
+    "fieldName" : "indirect_census_bank",
+    "position" : 38,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143499738,
+    "cachedContents" : {
+      "non_null" : "14488",
+      "largest" : "1",
+      "null" : "156316",
+      "top" : [ {
+        "item" : "1",
+        "count" : "14268"
+      }, {
+        "item" : "0",
+        "count" : "220"
+      } ],
+      "smallest" : "0",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715022,
+    "name" : "direct_census_bank",
+    "dataTypeName" : "text",
+    "description" : "The assumed spatial expansion of boat anglers in a particular section used when census count data are unavailable\n",
+    "fieldName" : "direct_census_bank",
+    "position" : 39,
+    "renderTypeName" : "text",
+    "tableColumnId" : 143499737,
+    "cachedContents" : {
+      "non_null" : "10508",
+      "largest" : "1",
+      "null" : "160296",
+      "top" : [ {
+        "item" : "1",
+        "count" : "10508"
+      } ],
+      "smallest" : "1",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715023,
+    "name" : "created_datetime",
+    "dataTypeName" : "text",
+    "description" : "Date record was created",
+    "fieldName" : "created_datetime",
+    "position" : 40,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673344,
+    "cachedContents" : {
+      "non_null" : "170804",
+      "largest" : "2026-11-14 14:23:15",
+      "null" : "0",
+      "top" : [ {
+        "item" : "2016-03-09 11:39:32",
+        "count" : "4543"
+      }, {
+        "item" : "2024-11-26 11:02:01",
+        "count" : "3497"
+      }, {
+        "item" : "2016-03-01 12:00:00",
+        "count" : "3206"
+      }, {
+        "item" : "2021-11-22 15:23:27",
+        "count" : "1860"
+      }, {
+        "item" : "2016-02-23 14:29:53",
+        "count" : "1477"
+      }, {
+        "item" : "2016-02-20 12:00:00",
+        "count" : "1137"
+      }, {
+        "item" : "2016-02-12 18:13:04",
+        "count" : "1096"
+      }, {
+        "item" : "2016-03-02 12:38:27",
+        "count" : "455"
+      }, {
+        "item" : "2022-06-02 12:21:20",
+        "count" : "340"
+      }, {
+        "item" : "2022-05-24 12:34:40",
+        "count" : "184"
+      }, {
+        "item" : "2023-02-27 13:43:20",
+        "count" : "121"
+      }, {
+        "item" : "2015-12-30 12:26:09",
+        "count" : "75"
+      }, {
+        "item" : "2016-02-17 12:57:56",
+        "count" : "18"
+      }, {
+        "item" : "2016-02-17 12:54:29",
+        "count" : "16"
+      }, {
+        "item" : "2022-10-17 20:29:26",
+        "count" : "12"
+      }, {
+        "item" : "2022-10-18 13:46:30",
+        "count" : "10"
+      }, {
+        "item" : "2022-10-13 10:26:32",
+        "count" : "9"
+      }, {
+        "item" : "2016-02-17 12:56:47",
+        "count" : "8"
+      }, {
+        "item" : "2016-12-14 12:56:05",
+        "count" : "8"
+      }, {
+        "item" : "2017-08-10 10:05:02",
+        "count" : "7"
+      } ],
+      "smallest" : "2015-11-12 13:19:05",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  }, {
+    "id" : 607715024,
+    "name" : "modified_datetime",
+    "dataTypeName" : "text",
+    "description" : "Date record was modified",
+    "fieldName" : "modified_datetime",
+    "position" : 41,
+    "renderTypeName" : "text",
+    "tableColumnId" : 139673345,
+    "cachedContents" : {
+      "non_null" : "170804",
+      "largest" : "2026-11-14 22:31:14.303427",
+      "null" : "0",
+      "top" : [ {
+        "item" : "2020-06-09 20:02:50.855724",
+        "count" : "17254"
+      }, {
+        "item" : "2021-05-05 23:02:56.38337",
+        "count" : "13295"
+      }, {
+        "item" : "2020-05-22 04:30:46.18901",
+        "count" : "4285"
+      }, {
+        "item" : "2022-06-05 04:04:26.858947",
+        "count" : "4087"
+      }, {
+        "item" : "2024-11-26 19:02:01.316028",
+        "count" : "3497"
+      }, {
+        "item" : "2021-11-22 23:49:46.409647",
+        "count" : "1859"
+      }, {
+        "item" : "2023-04-11 21:56:38.11793",
+        "count" : "877"
+      }, {
+        "item" : "2022-06-02 19:21:20.654172",
+        "count" : "340"
+      }, {
+        "item" : "2022-10-17 16:00:30.28117",
+        "count" : "332"
+      }, {
+        "item" : "2022-07-27 21:16:23.607585",
+        "count" : "309"
+      }, {
+        "item" : "2026-08-28 03:32:41.679523",
+        "count" : "287"
+      }, {
+        "item" : "2023-09-10 20:30:05.169544",
+        "count" : "282"
+      }, {
+        "item" : "2022-10-12 21:45:04.988874",
+        "count" : "215"
+      }, {
+        "item" : "2025-08-29 15:41:18.100804",
+        "count" : "207"
+      }, {
+        "item" : "2022-05-24 19:34:40.202452",
+        "count" : "180"
+      }, {
+        "item" : "2022-10-19 19:30:26.291814",
+        "count" : "161"
+      }, {
+        "item" : "2022-10-19 19:45:26.297135",
+        "count" : "159"
+      }, {
+        "item" : "2023-09-10 20:29:51.812764",
+        "count" : "144"
+      }, {
+        "item" : "2022-10-11 20:30:03.425139",
+        "count" : "134"
+      }, {
+        "item" : "2024-11-10 00:21:34.043705",
+        "count" : "131"
+      } ],
+      "smallest" : "2020-05-18 15:40:54.072594",
+      "count" : "170804",
+      "cardinality" : "170804"
+    },
+    "format" : { }
+  } ],
+  "grants" : [ {
+    "inherited" : false,
+    "type" : "viewer",
+    "flags" : [ "public" ]
+  } ],
+  "metadata" : {
+    "custom_fields" : {
+      "Temporal" : {
+        "Posting Frequency" : "Nightly",
+        "Period of Time" : "Nightly"
+      }
+    },
+    "availableDisplayTypes" : [ "table", "fatrow", "page" ]
+  },
+  "owner" : {
+    "id" : "msq3-adhc",
+    "createdAt" : 1741303986,
+    "displayName" : "Washington Department of Fish and Wildlife Data",
+    "screenName" : "Washington Department of Fish and Wildlife Data",
+    "type" : "team",
+    "members" : [ {
+      "id" : "b2s6-8ii9",
+      "createdAt" : 1332802552,
+      "displayName" : "Brodie Cox",
+      "profileImageUrlLarge" : "/api/users/b2s6-8ii9/profile_images/LARGE",
+      "profileImageUrlMedium" : "/api/users/b2s6-8ii9/profile_images/THUMB",
+      "profileImageUrlSmall" : "/api/users/b2s6-8ii9/profile_images/TINY",
+      "screenName" : "Brodie Cox",
+      "teamId" : 1713195,
+      "teamRole" : "owner",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "dszk-xw6k",
+      "createdAt" : 1558071229,
+      "displayName" : "Danny Warren",
+      "screenName" : "Danny Warren",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "i2u5-ieen",
+      "createdAt" : 1556912403,
+      "displayName" : "John Chen",
+      "screenName" : "John Chen",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "ks2t-85xg",
+      "createdAt" : 1741365632,
+      "displayName" : "Phil",
+      "screenName" : "Phil",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    } ]
+  },
+  "query" : { },
+  "rights" : [ "read" ],
+  "tableAuthor" : {
+    "id" : "msq3-adhc",
+    "createdAt" : 1741303986,
+    "displayName" : "Washington Department of Fish and Wildlife Data",
+    "screenName" : "Washington Department of Fish and Wildlife Data",
+    "type" : "team",
+    "members" : [ {
+      "id" : "b2s6-8ii9",
+      "createdAt" : 1332802552,
+      "displayName" : "Brodie Cox",
+      "profileImageUrlLarge" : "/api/users/b2s6-8ii9/profile_images/LARGE",
+      "profileImageUrlMedium" : "/api/users/b2s6-8ii9/profile_images/THUMB",
+      "profileImageUrlSmall" : "/api/users/b2s6-8ii9/profile_images/TINY",
+      "screenName" : "Brodie Cox",
+      "teamId" : 1713195,
+      "teamRole" : "owner",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "dszk-xw6k",
+      "createdAt" : 1558071229,
+      "displayName" : "Danny Warren",
+      "screenName" : "Danny Warren",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "i2u5-ieen",
+      "createdAt" : 1556912403,
+      "displayName" : "John Chen",
+      "screenName" : "John Chen",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    }, {
+      "id" : "ks2t-85xg",
+      "createdAt" : 1741365632,
+      "displayName" : "Phil",
+      "screenName" : "Phil",
+      "teamId" : 1713195,
+      "teamRole" : "member",
+      "type" : "interactive",
+      "flags" : [ "siteMember" ]
+    } ]
+  },
+  "tags" : [ "wdfw", "creel" ],
+  "flags" : [ "default", "ownerMayBeContacted", "restorable", "restorePossibleForType" ]
+}

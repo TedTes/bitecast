@@ -1,0 +1,9 @@
+topic_id,post_number,report_start,report_end,time_precision,time_block,caught,catch_count,effort_minutes,season_mode,method,general_location,source_quality,review_note
+103,2,2026-08-21T00:00:00-04:00,2026-08-22T00:00:00-04:00,day,day,true,4,600,open_water,other,Bay of Quinte,0.30,"First-person completed trip; fished 09:00-19:00 and reached a four-walleye limit."
+110,1,2026-07-31T00:00:00-04:00,2026-08-01T00:00:00-04:00,day,afternoon,true,,,open_water,other,Bay of Quinte,0.20,"First-person afternoon report; walleye image labels identify the target species, count is not explicit."
+81,1,2026-03-01T00:00:00-05:00,2026-03-02T00:00:00-05:00,day,evening,true,1,,ice,other,Peat's Point,0.25,"First-person report explicitly says one pickerel at 18:00 the previous day."
+62,1,2026-01-23T00:00:00-05:00,2026-01-24T00:00:00-05:00,day,day,true,2,45,ice,other,Belleville,0.35,"First-person report explicitly says two pickerel in 45 minutes."
+70,4,2026-02-15T00:00:00-05:00,2026-02-16T00:00:00-05:00,day,day,true,4,,ice,other,North Port channel,0.25,"First-person completed report explicitly says four walleye taken home."
+42,3,2026-01-14T00:00:00-05:00,2026-01-15T00:00:00-05:00,day,day,false,0,,ice,other,Wager Farm,0.25,"First-person completed trip caught perch but explicitly zero walleye."
+49,4,2026-01-02T00:00:00-05:00,2026-01-03T00:00:00-05:00,day,day,true,1,,ice,other,Huffs Lane,0.25,"First-person same-day report explicitly says one small walleye."
+49,5,2026-01-03T00:00:00-05:00,2026-01-05T00:00:00-05:00,unknown,multi_day,false,0,,ice,other,Huffs Lane,0.10,"First-person weekend report explicitly says no walleye; exact day and duration are unknown."

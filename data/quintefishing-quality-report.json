@@ -1,0 +1,15 @@
+{
+  "snapshot_date": "2026-11-18",
+  "raw_topics": 51,
+  "raw_posts": 166,
+  "reviewed_outcomes": 8,
+  "catch_rows": 6,
+  "no_catch_rows": 2,
+  "known_effort_rows": 2,
+  "open_water_rows": 2,
+  "ice_rows": 6,
+  "unique_contributors": 6,
+  "unselected_posts": 158,
+  "training_ready_rows": 0,
+  "decision": "accepted_for_broad_snapshot_pending_environmental_join"
+}

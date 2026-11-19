@@ -39,6 +39,7 @@ LOCATIONS = {
 SPECIES = {
     "walleye": "walleye",
     "pickerel": "walleye",
+    "walters": "walleye",
     "yellow perch": "yellow_perch",
     "perch": "yellow_perch",
     "pike": "northern_pike",
@@ -50,6 +51,7 @@ SPECIES = {
 METHODS = {
     "troll": "troll",
     "dipsy": "troll",
+    "dipsey": "troll",
     "flatline": "troll",
     "jig": "jig",
     "drift": "drift",
@@ -153,6 +155,8 @@ def date_from_title(title: str) -> date | None:
 
 
 def first_post(markdown: str) -> tuple[str | None, str]:
+    if "Markdown Content:" in markdown:
+        return jina_first_post(markdown)
     avatar = re.compile(
         r"\[!\[[^\]]*\]\(https://cdn\.longpoint\.on\.ca/data/avatars/[^)]+\)\]"
         r"\(https://www\.longpoint\.on\.ca/members/([^.)/]+)\.(\d+)/\)"
@@ -195,6 +199,29 @@ def first_post(markdown: str) -> tuple[str | None, str]:
     end = min(end_candidates)
     body = clean_body(markdown[start:end])
     contributor_hash = hashlib.sha256(f"longpoint-public:{matches[0].group(2)}".encode()).hexdigest()
+    return contributor_hash, body
+
+
+def jina_first_post(markdown: str) -> tuple[str | None, str]:
+    """Extract only XenForo post #1 from a Jina Reader rendering."""
+    marker = re.search(r"\[#1\]\([^)]*/post-\d+\)", markdown)
+    if marker is None:
+        return None, ""
+    tail = markdown[marker.end() :]
+    next_post = re.search(r"\n\*\s+\[\]\([^\n)]*/post-\d+\)", tail)
+    body = tail[: next_post.start() if next_post else len(tail)]
+    body = re.sub(r"\n#### Attachments.*", " ", body, flags=re.S)
+    body = re.sub(r"\[!\[[^\]]*\]\([^)]+\)\]\([^)]+\)", " ", body)
+    body = re.sub(r"!\[[^\]]*\]\([^)]+\)", " ", body)
+    body = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", body)
+    body = re.sub(r"\s+", " ", body).strip()
+    prefix = markdown[: marker.start()]
+    members = re.findall(r"longpoint\.on\.ca/members/[^.)/]+\.(\d+)/", prefix, re.I)
+    contributor_hash = (
+        hashlib.sha256(f"longpoint-public:{members[-1]}".encode()).hexdigest()
+        if members
+        else None
+    )
     return contributor_hash, body
 
 
@@ -269,7 +296,11 @@ def infer_species_outcome(
 
 def infer_effort_minutes(text: str) -> tuple[int | None, str]:
     lowered = text.casefold()
-    duration = re.search(r"\b(?:for|in|under|about|around)\s+(\d+(?:\.\d+)?)\s*(hours?|hrs?)\b", lowered)
+    duration = re.search(
+        r"\b(?:for|in|under|about|around|fished(?:\s+for)?)\s+"
+        r"(\d+(?:\.\d+)?)\s*(hours?|hrs?)\b",
+        lowered,
+    )
     if duration:
         return round(float(duration.group(1)) * 60), "explicit_duration"
     times = re.findall(r"\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b", lowered)
@@ -293,7 +324,14 @@ def numeric_feature(text: str, pattern: str, conversion: float = 1.0) -> float |
 
 def extract() -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     threads = load_jsonl("longpoint-apify-2026-11-15-part-*.jsonl")
+    targeted = load_jsonl("longpoint-apify-targeted-*.jsonl")
+    threads.extend(targeted)
+    jina_threads = load_jsonl("longpoint-jina-threads-*.jsonl")
+    for row in jina_threads:
+        row.setdefault("source_id", "longpoint-forum-jina-2026-11-18")
+    threads.extend(jina_threads)
     indexes = load_jsonl("longpoint-apify-2026-11-15-index-pages.jsonl")
+    indexes.extend(load_jsonl("longpoint-jina-index-*.jsonl"))
     index_dates = parse_index_dates(indexes)
     unique: dict[str, dict] = {}
     for row in threads:
@@ -309,7 +347,14 @@ def extract() -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     rejected = []
     for url, source in sorted(unique.items()):
         title = re.sub(r"\s*\|\s*Channel 6-8\s*$", "", source.get("title") or "").strip()
+        title = re.sub(r"^Fishing Report\s*-\s*", "", title, flags=re.I)
         contributor_hash, body = first_post(source.get("markdown") or "")
+        if source.get("first_post_text"):
+            body = re.sub(r"\s+", " ", str(source["first_post_text"])).strip()
+        if source.get("member_id"):
+            contributor_hash = hashlib.sha256(
+                f"longpoint-public:{source['member_id']}".encode()
+            ).hexdigest()
         combined = f"{title} {body}"
         # Prefer the thread title when it names a species; a report may mention
         # incidental species later in the post.
@@ -318,7 +363,7 @@ def extract() -> tuple[pd.DataFrame, pd.DataFrame, dict]:
         location = first_match(combined, LOCATIONS)
         caught, count, outcome_basis = infer_species_outcome(body, species, title_species == species)
         effort, effort_basis = infer_effort_minutes(body)
-        report_date = index_dates.get(url) or (
+        report_date = source.get("published_date") or index_dates.get(url) or (
             inferred.isoformat() if (inferred := date_from_title(title)) else None
         )
         method = first_match(body, METHODS)
@@ -347,7 +392,7 @@ def extract() -> tuple[pd.DataFrame, pd.DataFrame, dict]:
 
         row = {
             "record_id": hashlib.sha256(url.encode()).hexdigest(),
-            "source_id": "longpoint-forum-apify-2026-11-15",
+            "source_id": source.get("source_id") or "longpoint-forum-apify-2026-11-15",
             "source_url": url,
             "title": title,
             "contributor_hash": contributor_hash,
@@ -410,7 +455,7 @@ def extract() -> tuple[pd.DataFrame, pd.DataFrame, dict]:
         "snapshot_date": SNAPSHOT_DATE.isoformat(),
         "apify_run_id": "KVAUbIfzkaRlQMzzS",
         "apify_dataset_id": "wmZnm7UZ0Z0KzXfMh",
-        "raw_dataset_items": 92,
+        "raw_dataset_items": len(threads) + len(indexes),
         "raw_thread_pages": len(threads),
         "unique_threads": len(frame),
         "off_topic_threads": int(frame["quality_flags"].str.contains("off_topic_prefix").sum()),
@@ -433,10 +478,13 @@ def extract() -> tuple[pd.DataFrame, pd.DataFrame, dict]:
         "broad_technically_usable_rows": len(broad_candidate),
         "broad_authorized_rows": len(broad_candidate),
         "broad_training_ready_rows": 0,
-        "capture_scope": "forum index pages 1-5 and 1346-1348; not a complete archive",
+        "capture_scope": (
+            "original forum sample plus a bounded 45-page stratified index snapshot and "
+            "100 candidate thread pages; not a complete archive"
+        ),
         "training_blockers": [
             "No records contain exact hourly outcome labels required by the hourly model",
-            "Only three records pass broad technical filtering and all three are catches",
+            "Broad observations remain below the 100-row training threshold",
             "Broad records still require period-matched historical weather",
             "Forum selection/reporting bias and regex fields require review",
         ],
