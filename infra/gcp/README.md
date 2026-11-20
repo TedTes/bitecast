@@ -25,7 +25,7 @@ Run `./infra/gcp/verify-workers.sh` to confirm the jobs remain unscheduled and h
 
 Before either worker is activated:
 
-1. Add secret versions for the Supabase service-role key and provider credentials.
+1. Add a secret version for the Supabase service-role key. ECCC forecast access is anonymous and needs no provider credential.
 2. Attach only the secrets needed by each job.
 3. Upload and approve separate open-water and ice champion bundles.
 4. Run one manual forecast canary and inspect its database audit rows.

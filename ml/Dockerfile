@@ -9,4 +9,4 @@ RUN uv sync --frozen --no-dev
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
-CMD ["bitecast-ml", "forecast-worker", "--horizon-days", "7"]
+CMD ["bitecast-ml", "forecast-worker", "--horizon-days", "3"]

@@ -81,17 +81,21 @@ Promotion compares Brier score and top-window lift only within the same model fa
 - `BASE_TRAINING_DATA_TOKEN` (optional for a signed public URL)
 - `HISTORICAL_WEATHER_URL`
 - `HISTORICAL_WEATHER_API_KEY`
-- `WEATHER_PROVIDER=open_meteo`
-- `OPEN_METEO_BASE_URL=https://customer-api.open-meteo.com`
-- `OPEN_METEO_API_KEY` (paid commercial customer key)
+- `WEATHER_PROVIDER=eccc`
+- `ECCC_BASE_URL=https://geo.weather.gc.ca/geomet`
+- `ECCC_MAX_CONCURRENCY=8`
+- `ECCC_USER_AGENT=BiteCast/0.1 (+https://github.com/TedTes/bitecast)`
+- `OPEN_METEO_BASE_URL`, `OPEN_METEO_API_KEY` (optional legacy commercial adapter)
 - `WEATHER_API_BASE_URL`, `WEATHER_API_KEY` (only when using the legacy provider-neutral contract)
 - `MODEL_REGISTRY_PATH`
 
-The service-role and weather keys belong in the worker environment, never in the mobile app. Production
-uses Open-Meteo's paid customer endpoint; the free endpoint is not an automatic fallback. BiteCast requests
-UTC hourly temperature, precipitation, sea-level pressure, cloud cover, wind speed/direction and gusts,
-then computes the three-hour pressure change locally. Open-Meteo attribution must be included in the app's
-legal/data-source presentation.
+The service-role and optional legacy weather keys belong in the worker environment, never in the mobile app.
+Production uses the anonymous ECCC GeoMet RDPS 10 km feed for up to 84 hourly forecast steps. BiteCast
+requests UTC temperature, one-hour precipitation, sea-level pressure, total cloud cover, wind
+speed/direction and gusts; converts Pa to hPa and m/s to km/h; and computes the three-hour pressure change
+locally. The app's legal/data-source presentation must acknowledge Environment and Climate Change Canada.
+The paid Open-Meteo adapter remains available only as an explicit fallback and is never selected
+automatically.
 
 ## Retraining
 
