@@ -27,7 +27,7 @@ Before either worker is activated:
 
 1. Add a secret version for the Supabase service-role key. ECCC forecast access is anonymous and needs no provider credential.
 2. Attach only the secrets needed by each job.
-3. Upload and approve separate open-water and ice champion bundles.
+3. Upload separate open-water and ice champion bundles, or explicitly protected early-access canaries.
 4. Run one manual forecast canary and inspect its database audit rows.
 5. Run one manual training canary and ensure it produces a challenger only.
 6. Add schedules only after canaries pass and usage is measured.
