@@ -1,8 +1,10 @@
+import type { LakeForecast } from '@bitecast/engine';
 import type { CatchLog, LakeRequest } from '@/types/app';
 import { normalizeCatchLog } from '@/features/catch-log';
 
 const storageKey = 'bitecast.catchLogs';
 const requestKey = 'bitecast.lakeRequests';
+const forecastKey = 'bitecast.forecast.';
 
 export async function loadCatchLogs(): Promise<CatchLog[]> {
   if (typeof localStorage === 'undefined') return [];
@@ -16,7 +18,28 @@ export async function saveCatchLog(log: CatchLog) {
 }
 
 export async function removeAllLocalData() {
-  if (typeof localStorage !== 'undefined') { localStorage.removeItem(storageKey); localStorage.removeItem(requestKey); }
+  if (typeof localStorage === 'undefined') return;
+  localStorage.removeItem(storageKey);
+  localStorage.removeItem(requestKey);
+  for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith(forecastKey)) localStorage.removeItem(key);
+  }
+}
+
+export async function loadForecastCache(key: string): Promise<LakeForecast | null> {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const value = localStorage.getItem(`${forecastKey}${key}`);
+    return value ? JSON.parse(value) as LakeForecast : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveForecastCache(key: string, forecast: LakeForecast) {
+  if (typeof localStorage === 'undefined') return;
+  localStorage.setItem(`${forecastKey}${key}`, JSON.stringify(forecast));
 }
 
 export async function loadLakeRequests(): Promise<LakeRequest[]> {
