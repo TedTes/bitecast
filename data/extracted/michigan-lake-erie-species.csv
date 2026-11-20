@@ -1,0 +1,75 @@
+Species,Harvest per hour,March 2025,April 2025,May 2025,June 2025,July 2025,August 2025,September 2025,October 2025,November 2025,Total 2025
+Rainbow Trout,0.00014693457737942182,0,0,2,0,0,0,0,0,0,2
+Brown Trout,0,0,0,0,0,0,0,0,0,0,0
+Other,0.0013224111964147962,0,0,12,0,0,0,0,6,0,18
+Smallmouth Bass,0,0,0,0,0,0,0,0,0,0,0
+Walleye,0.8904970062079859,357,908,3707,5618,1382,84,16,22,27,12121
+Chinook Salmon,0,0,0,0,0,0,0,0,0,0,0
+Muskellunge,0,0,0,0,0,0,0,0,0,0,0
+Yellow Perch,0.4641663299415935,140,0,72,22,0,950,2413,2720,1,6318
+Coho Salmon,7.346728868971091e-05,0,1,0,0,0,0,0,0,0,1
+Lake Trout,0,0,0,0,0,0,0,0,0,0,0
+Northern Pike,0.00014693457737942182,0,0,2,0,0,0,0,0,0,2
+Largemouth Bass,0,0,0,0,0,0,0,0,0,0,0
+Common Carp,0.0010285420416559527,0,0,14,0,0,0,0,0,0,14
+Bowfin,0,0,0,0,0,0,0,0,0,0,0
+Common Sucker,0,0,0,0,0,0,0,0,0,0,0
+Pink Salmon,0,0,0,0,0,0,0,0,0,0,0
+Channel Catfish,0.003820299011864967,0,0,1,1,0,0,1,49,0,52
+Brook Trout,0,0,0,0,0,0,0,0,0,0,0
+Freshwater Drum,0.00080814017558682,0,0,0,9,0,0,2,0,0,11
+White Bass,0.0012489439077250854,0,0,3,0,0,0,14,0,0,17
+Flathead Catfish,0,0,0,0,0,0,0,0,0,0,0
+Lake Sturgeon,0,0,0,0,0,0,0,0,0,0,0
+Blugill,0,0,0,0,0,0,0,0,0,0,0
+White Perch,0.009036476508834441,0,0,2,4,2,8,68,39,0,123
+Round Whitefish,0,0,0,0,0,0,0,0,0,0,0
+Buffalo,7.346728868971091e-05,0,0,1,0,0,0,0,0,0,1
+Lake Whitefish,0,0,0,0,0,0,0,0,0,0,0
+Bullhead,0,0,0,0,0,0,0,0,0,0,0
+Burbot,0,0,0,0,0,0,0,0,0,0,0
+Atlantic Salmon,0,0,0,0,0,0,0,0,0,0,0
+Lake Herring (Cisco),0,0,0,0,0,0,0,0,0,0,0
+Black Crappie,0,0,0,0,0,0,0,0,0,0,0
+Rock Bass,0,0,0,0,0,0,0,0,0,0,0
+Splake,0,0,0,0,0,0,0,0,0,0,0
+Fat  Lake Trout,0,0,0,0,0,0,0,0,0,0,0
+Total Harvest,1.3723689527237997,497,909,3816,5654,1384,1042,2514,2836,28,18680
+Released,Release per hour,3,4,5,6,7,8,9,10,11,Season
+Released Rainbow Trout,0,0,0,0,0,0,0,0,0,0,0
+Released Brown Trout,0,0,0,0,0,0,0,0,0,0,0
+Released Other,0.015281196047459868,0,0,0,0,0,0,0,208,0,208
+Released Smallmouth Bass,0.020203504389670498,0,0,1,40,18,0,0,122,94,275
+Released Walleye,0.1712522499357161,19,59,447,1313,314,18,69,91,1,2331
+Released Chinook Salmon,0,0,0,0,0,0,0,0,0,0,0
+Released Muskellunge,0,0,0,0,0,0,0,0,0,0,0
+Released Yellow Perch,0.19152922161407634,200,0,11,3,0,171,1148,1074,0,2607
+Released Coho Salmon,0,0,0,0,0,0,0,0,0,0,0
+Released Lake Trout,0,0,0,0,0,0,0,0,0,0,0
+Released Northern Pike,0.00022040186606913273,1,0,2,0,0,0,0,0,0,3
+Released Largemouth Bass,0.0005142710208279763,0,0,5,0,0,0,0,2,0,7
+Released Common Carp,0,0,0,0,0,0,0,0,0,0,0
+Released Bowfin,0,0,0,0,0,0,0,0,0,0,0
+Released Common Sucker,7.346728868971091e-05,0,1,0,0,0,0,0,0,0,1
+Released Pink Salmon,0,0,0,0,0,0,0,0,0,0,0
+Released Channel Catfish,0.00080814017558682,0,0,1,7,0,1,0,2,0,11
+Released Brook Trout,0,0,0,0,0,0,0,0,0,0,0
+Released Freshwater Drum,0.01939536421408368,0,0,30,175,34,17,5,3,0,264
+Released White Bass,0.03658670976747603,1,4,379,89,0,0,18,7,0,498
+Released Flathead Catfish,7.346728868971091e-05,0,0,0,1,0,0,0,0,0,1
+Released Lake Sturgeon,0,0,0,0,0,0,0,0,0,0,0
+Released Blugill,0,0,0,0,0,0,0,0,0,0,0
+Released White Perch,0.05267604599052272,0,0,37,77,6,22,118,457,0,717
+Released Round Whitefish,0,0,0,0,0,0,0,0,0,0,0
+Released Buffalo,0,0,0,0,0,0,0,0,0,0,0
+Released Lake Whitefish,0,0,0,0,0,0,0,0,0,0,0
+Released Bullhead,0,0,0,0,0,0,0,0,0,0,0
+Released Burbot,0,0,0,0,0,0,0,0,0,0,0
+Released Atlantic Salmon,0,0,0,0,0,0,0,0,0,0,0
+Released Lake Herring (Cisco),0,0,0,0,0,0,0,0,0,0,0
+Released Black Crappie,0,0,0,0,0,0,0,0,0,0,0
+Released Rock Bass,0,0,0,0,0,0,0,0,0,0,0
+Released Splake,0,0,0,0,0,0,0,0,0,0,0
+Released Fat  Lake Trout,0,0,0,0,0,0,0,0,0,0,0
+Total Released,0.5086140395988686,221,64,913,1705,372,229,1358,1966,95,6923
+,,,,,,,,,,,

@@ -1,0 +1,509 @@
+{
+  "$defs": {
+    "Clarity": {
+      "enum": [
+        "clear",
+        "stained",
+        "murky",
+        "unknown"
+      ],
+      "title": "Clarity",
+      "type": "string"
+    },
+    "Method": {
+      "enum": [
+        "jig",
+        "troll",
+        "tip-up",
+        "cast",
+        "other"
+      ],
+      "title": "Method",
+      "type": "string"
+    },
+    "SeasonMode": {
+      "enum": [
+        "open_water",
+        "ice"
+      ],
+      "title": "SeasonMode",
+      "type": "string"
+    },
+    "TimePrecision": {
+      "enum": [
+        "exact",
+        "time_block",
+        "day",
+        "unknown"
+      ],
+      "title": "TimePrecision",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Trip-level evidence used by the broad bootstrap model without inventing hourly labels.",
+  "properties": {
+    "observation_id": {
+      "minLength": 1,
+      "title": "Observation Id",
+      "type": "string"
+    },
+    "trip_id": {
+      "minLength": 1,
+      "title": "Trip Id",
+      "type": "string"
+    },
+    "anonymous_angler_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Anonymous Angler Id"
+    },
+    "lake_id": {
+      "minLength": 1,
+      "title": "Lake Id",
+      "type": "string"
+    },
+    "region": {
+      "default": "unknown",
+      "title": "Region",
+      "type": "string"
+    },
+    "latitude": {
+      "maximum": 90,
+      "minimum": -90,
+      "title": "Latitude",
+      "type": "number"
+    },
+    "longitude": {
+      "maximum": 180,
+      "minimum": -180,
+      "title": "Longitude",
+      "type": "number"
+    },
+    "period_start": {
+      "format": "date-time",
+      "title": "Period Start",
+      "type": "string"
+    },
+    "period_end": {
+      "format": "date-time",
+      "title": "Period End",
+      "type": "string"
+    },
+    "time_precision": {
+      "$ref": "#/$defs/TimePrecision"
+    },
+    "time_block": {
+      "default": "day",
+      "title": "Time Block",
+      "type": "string"
+    },
+    "label_granularity": {
+      "const": "trip",
+      "default": "trip",
+      "title": "Label Granularity",
+      "type": "string"
+    },
+    "effort_minutes": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "maximum": 10080,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Effort Minutes"
+    },
+    "effort_known": {
+      "default": false,
+      "title": "Effort Known",
+      "type": "boolean"
+    },
+    "caught": {
+      "title": "Caught",
+      "type": "boolean"
+    },
+    "catch_count": {
+      "anyOf": [
+        {
+          "maximum": 100,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Catch Count"
+    },
+    "species": {
+      "default": "walleye",
+      "title": "Species",
+      "type": "string"
+    },
+    "season_mode": {
+      "$ref": "#/$defs/SeasonMode"
+    },
+    "method": {
+      "$ref": "#/$defs/Method",
+      "default": "other"
+    },
+    "bait_category": {
+      "default": "unknown",
+      "title": "Bait Category",
+      "type": "string"
+    },
+    "fishing_depth_m": {
+      "anyOf": [
+        {
+          "maximum": 100,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Fishing Depth M"
+    },
+    "water_depth_m": {
+      "anyOf": [
+        {
+          "maximum": 300,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Water Depth M"
+    },
+    "water_clarity": {
+      "$ref": "#/$defs/Clarity",
+      "default": "unknown"
+    },
+    "secchi_depth_m": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Secchi Depth M"
+    },
+    "air_temp_c": {
+      "anyOf": [
+        {
+          "maximum": 60,
+          "minimum": -60,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Air Temp C"
+    },
+    "air_temp_range_c": {
+      "anyOf": [
+        {
+          "maximum": 120,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Air Temp Range C"
+    },
+    "water_temp_c": {
+      "anyOf": [
+        {
+          "maximum": 40,
+          "minimum": -5,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Water Temp C"
+    },
+    "wind_kmh": {
+      "anyOf": [
+        {
+          "maximum": 250,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Wind Kmh"
+    },
+    "wind_range_kmh": {
+      "anyOf": [
+        {
+          "maximum": 250,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Wind Range Kmh"
+    },
+    "gust_kmh": {
+      "anyOf": [
+        {
+          "maximum": 350,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Gust Kmh"
+    },
+    "wind_direction_deg": {
+      "anyOf": [
+        {
+          "maximum": 360,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Wind Direction Deg"
+    },
+    "cloud_pct": {
+      "anyOf": [
+        {
+          "maximum": 100,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cloud Pct"
+    },
+    "precip_mm": {
+      "anyOf": [
+        {
+          "maximum": 5000,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Precip Mm"
+    },
+    "pressure_hpa": {
+      "anyOf": [
+        {
+          "maximum": 1100,
+          "minimum": 850,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pressure Hpa"
+    },
+    "pressure_range_hpa": {
+      "anyOf": [
+        {
+          "maximum": 250,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pressure Range Hpa"
+    },
+    "pressure_change_3h_hpa": {
+      "anyOf": [
+        {
+          "maximum": 100,
+          "minimum": -100,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pressure Change 3H Hpa"
+    },
+    "solar_elevation_deg": {
+      "anyOf": [
+        {
+          "maximum": 90,
+          "minimum": -90,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Solar Elevation Deg"
+    },
+    "minutes_from_sunrise": {
+      "anyOf": [
+        {
+          "maximum": 1440,
+          "minimum": -1440,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Minutes From Sunrise"
+    },
+    "minutes_from_sunset": {
+      "anyOf": [
+        {
+          "maximum": 1440,
+          "minimum": -1440,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Minutes From Sunset"
+    },
+    "moon_illumination": {
+      "anyOf": [
+        {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Moon Illumination"
+    },
+    "lake_area_km2": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lake Area Km2"
+    },
+    "lake_max_depth_m": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lake Max Depth M"
+    },
+    "source": {
+      "minLength": 1,
+      "title": "Source",
+      "type": "string"
+    },
+    "source_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source Url"
+    },
+    "source_quality": {
+      "default": 0.25,
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Source Quality",
+      "type": "number"
+    },
+    "training_authorized": {
+      "default": true,
+      "title": "Training Authorized",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "observation_id",
+    "trip_id",
+    "lake_id",
+    "latitude",
+    "longitude",
+    "period_start",
+    "period_end",
+    "time_precision",
+    "caught",
+    "season_mode",
+    "source"
+  ],
+  "title": "BroadTrainingRow",
+  "type": "object"
+}

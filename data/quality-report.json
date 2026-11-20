@@ -1,0 +1,58 @@
+{
+  "generated_at": "2026-11-16T19:03:48.774330+00:00",
+  "decision": "NO_GO_FOR_CHALLENGER_TRAINING",
+  "eligible_outcome_rows": 0,
+  "hourly_eligible_outcome_rows": 0,
+  "broad_authorized_candidate_rows": 3,
+  "broad_catch_rows": 3,
+  "broad_no_catch_rows": 0,
+  "broad_training_ready_rows": 0,
+  "catch_rows": 0,
+  "no_catch_rows": 0,
+  "outcome_source_concentration": "not_measurable_without_eligible_outcomes",
+  "outcome_rows_by_lake_month_and_season": {},
+  "open_water_outcome_rows": 0,
+  "ice_season_outcome_rows": 0,
+  "aggregate_outcome_reference_rows": 9,
+  "historical_weather_rows": 157824,
+  "weather_rows_by_lake": {
+    "bay-of-quinte": 52608,
+    "lake-erie": 52608,
+    "lake-ontario": 52608
+  },
+  "weather_missing_values": {
+    "air_temp_c": 0,
+    "precip_mm": 0,
+    "cloud_pct": 0,
+    "pressure_hpa": 0,
+    "wind_kmh": 0,
+    "wind_direction_deg": 0
+  },
+  "weather_duplicate_lake_hours": 0,
+  "clarity_candidate_rows": 235,
+  "clarity_rows": 229,
+  "clarity_rows_by_lake": {
+    "bay-of-quinte": 17,
+    "lake-erie": 59,
+    "lake-ontario": 153
+  },
+  "clarity_duplicate_observations": 5,
+  "clarity_invalid_observations": 1,
+  "clarity_rejected_rows": 6,
+  "water_temperature_rows": 22646,
+  "water_temperature_rows_by_lake": {
+    "lake-erie": 11323,
+    "lake-ontario": 11323
+  },
+  "nearby_glos_platforms": 221,
+  "manifest_sources": 21,
+  "production_approved_sources": 2,
+  "geographic_and_temporal_gaps": [
+    "No eligible angler-hour outcomes with effort and exact outcome timestamps.",
+    "Broad forum candidates are too few, all catches, and lack period-matched 2026 weather.",
+    "No public outcome coverage for Bay of Quinte was acquired.",
+    "Open-Meteo evaluation snapshot is not approved for commercial production use.",
+    "NOAA and GLOS usage terms require final production review.",
+    "Lake-wide water temperature is not local site temperature."
+  ]
+}

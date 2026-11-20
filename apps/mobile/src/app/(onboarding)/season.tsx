@@ -6,22 +6,21 @@ import { Button, IceSafetyNotice, PageHeader, Reveal, Row, Screen, T } from '@/c
 import { colors, elevation, radius, spacing } from '@/constants/theme';
 import { haptic } from '@/lib/haptics';
 import { useAppStore } from '@/store/use-app-store';
-import type { AppSettings } from '@/types/app';
 
-const options: { value: AppSettings['season']; icon: IconName; title: string; body: string; details: string[] }[] = [
-  { value: 'open_water', icon: 'open-water', title: 'Open water', body: 'Boat or shore', details: ['Jig, troll or cast tactics', 'Wind chop counts as light cover'] },
-  { value: 'ice', icon: 'ice', title: 'Ice season', body: 'Through the ice', details: ['Vertical jigging and tip-up tactics', 'Wind chop is ignored under ice'] },
+const options: { value: boolean; icon: IconName; title: string; body: string; details: string[] }[] = [
+  { value: false, icon: 'open-water', title: 'Open water only', body: 'Boat or shore, all year', details: ['Jig, troll or cast tactics', 'Every lake uses open-water conditions'] },
+  { value: true, icon: 'ice', title: 'Open water and ice', body: 'I also fish through the ice', details: ['Lakes switch to ice mode when they typically freeze', 'Change any lake by hand from its forecast'] },
 ];
 
 export default function SeasonScreen() {
-  const season = useAppStore((state) => state.settings.season);
-  const setSeason = useAppStore((state) => state.setSeason);
+  const iceFishing = useAppStore((state) => state.settings.iceFishing);
+  const setIceFishing = useAppStore((state) => state.setIceFishing);
   return (
     <Screen
       footer={
         <>
           {/* Pinned in the footer so it is always on screen, even on the smallest phones. */}
-          {season === 'ice' ? (
+          {iceFishing ? (
             <Reveal>
               <IceSafetyNotice />
             </Reveal>
@@ -31,19 +30,19 @@ export default function SeasonScreen() {
       }
     >
       <StepHeader step={1} />
-      <PageHeader title="How are you fishing right now?" lede="This tunes tactics and how conditions are weighed. You can switch any time from Today." />
-      <View style={{ gap: spacing.md }} accessibilityRole="radiogroup" accessibilityLabel="Season">
+      <PageHeader title="Do you fish through the ice?" lede="Each lake is forecast for its own conditions — open water or ice. This sets how lakes start out; you can change any lake later." />
+      <View style={{ gap: spacing.md }} accessibilityRole="radiogroup" accessibilityLabel="Ice fishing">
         {options.map((option) => {
-          const active = season === option.value;
+          const active = iceFishing === option.value;
           return (
             <Pressable
-              key={option.value}
+              key={String(option.value)}
               accessibilityRole="radio"
               accessibilityState={{ checked: active }}
               accessibilityLabel={`${option.title}. ${option.body}. ${option.details.join('. ')}`}
               onPress={() => {
                 if (!active) haptic.select();
-                setSeason(option.value);
+                setIceFishing(option.value);
               }}
               style={({ pressed }) => [styles.option, active && styles.optionActive, pressed && { opacity: 0.9 }]}
             >

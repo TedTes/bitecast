@@ -1,0 +1,12 @@
+{
+  "snapshot_date": "2026-11-17",
+  "target_species_interviews": 2,
+  "complete_trips": 1,
+  "incomplete_trips": 1,
+  "walleye_catch_rows": 0,
+  "walleye_no_catch_rows": 2,
+  "known_effort_rows": 2,
+  "broad_transfer_candidates": 1,
+  "training_eligible_rows": 0,
+  "decision": "reference_only_pending_reuse_review_and_transfer-family_design"
+}

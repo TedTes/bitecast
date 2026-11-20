@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>F1 Strategy System and BiteCast Model</title>
+  <style>
+    :root {
+      --background: #f5f1e7;
+      --foreground: #082630;
+      --surface: #fbf9f3;
+      --muted: #5c7279;
+      --border: #ced8d4;
+      --section: #e1ece9;
+      --accent: #087d83;
+      --accent-soft: #d6ebe7;
+      --warning: #c26a32;
+      --dark: #06232c;
+      --dark-text: #eef7f4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--foreground);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.35;
+    }
+    main {
+      width: min(1080px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+    h1 {
+      margin: 0 0 18px;
+      font-size: clamp(1.45rem, 4vw, 2.2rem);
+      font-weight: 650;
+      letter-spacing: -0.035em;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--surface);
+    }
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    col.category { width: 14%; }
+    col.name { width: 19%; }
+    col.f1 { width: 33.5%; }
+    col.bitecast { width: 33.5%; }
+    th, td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+      font-size: 0.9rem;
+    }
+    thead th {
+      background: var(--dark);
+      color: var(--dark-text);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    tbody tr:last-child td { border-bottom: 0; }
+    td.category {
+      background: var(--section);
+      color: var(--accent);
+      font-size: 0.72rem;
+      font-weight: 750;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    td.name { font-weight: 700; }
+    tbody tr:nth-child(even) td:not(.category) {
+      background: color-mix(in srgb, var(--accent-soft) 25%, var(--surface));
+    }
+    .diagram-title {
+      margin: 30px 0 12px;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .diagram-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--surface);
+    }
+    .diagram {
+      display: block;
+      width: 100%;
+      min-width: 900px;
+      height: auto;
+    }
+    .diagram .node {
+      fill: var(--surface);
+      stroke: var(--border);
+      stroke-width: 1.5;
+    }
+    .diagram .node-accent {
+      fill: var(--accent-soft);
+      stroke: var(--accent);
+      stroke-width: 1.5;
+    }
+    .diagram .governance {
+      fill: var(--dark);
+      stroke: var(--dark);
+    }
+    .diagram .edge {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 2;
+      marker-end: url(#arrow-head);
+    }
+    .diagram .edge-secondary {
+      fill: none;
+      stroke: var(--muted);
+      stroke-width: 1.5;
+      stroke-dasharray: 6 6;
+      marker-end: url(#arrow-head-muted);
+    }
+    .diagram .label {
+      fill: var(--foreground);
+      font-size: 14px;
+      font-weight: 700;
+      text-anchor: middle;
+    }
+    .diagram .sub-label {
+      fill: var(--muted);
+      font-size: 11px;
+      text-anchor: middle;
+    }
+    .diagram .governance-label {
+      fill: var(--dark-text);
+      font-size: 14px;
+      font-weight: 700;
+      text-anchor: middle;
+    }
+    .diagram .connector-label {
+      fill: var(--muted);
+      font-size: 11px;
+      text-anchor: middle;
+    }
+    .architecture {
+      display: block;
+      width: 100%;
+      min-width: 1000px;
+      height: auto;
+    }
+    .architecture .zone {
+      fill: color-mix(in srgb, var(--section) 35%, var(--surface));
+      stroke: var(--border);
+      stroke-width: 1.5;
+    }
+    .architecture .service {
+      fill: var(--surface);
+      stroke: var(--border);
+      stroke-width: 1.5;
+    }
+    .architecture .service-accent {
+      fill: var(--accent-soft);
+      stroke: var(--accent);
+      stroke-width: 1.5;
+    }
+    .architecture .external {
+      fill: var(--surface);
+      stroke: var(--muted);
+      stroke-width: 1.5;
+      stroke-dasharray: 7 5;
+    }
+    .architecture .store {
+      fill: var(--dark);
+      stroke: var(--dark);
+      stroke-width: 1.5;
+    }
+    .architecture .edge {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 2;
+      marker-end: url(#arch-arrow);
+    }
+    .architecture .edge-both {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 2;
+      marker-start: url(#arch-arrow-start);
+      marker-end: url(#arch-arrow);
+    }
+    .architecture .edge-external {
+      fill: none;
+      stroke: var(--muted);
+      stroke-width: 1.5;
+      stroke-dasharray: 7 5;
+      marker-end: url(#arch-arrow-muted);
+    }
+    .architecture .zone-label {
+      fill: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+    }
+    .architecture .service-label {
+      fill: var(--foreground);
+      font-size: 14px;
+      font-weight: 700;
+      text-anchor: middle;
+    }
+    .architecture .service-sub {
+      fill: var(--muted);
+      font-size: 11px;
+      text-anchor: middle;
+    }
+    .architecture .store-label {
+      fill: var(--dark-text);
+      font-size: 14px;
+      font-weight: 700;
+      text-anchor: middle;
+    }
+    .architecture .store-sub {
+      fill: #bfd0d1;
+      font-size: 11px;
+      text-anchor: middle;
+    }
+    .architecture .edge-label {
+      fill: var(--muted);
+      font-size: 10px;
+      text-anchor: middle;
+    }
+    .architecture .legend-label {
+      fill: var(--muted);
+      font-size: 11px;
+    }
+    .math-note {
+      margin: 0 0 14px;
+      padding: 14px 18px;
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--warning);
+      border-radius: 14px;
+      background: var(--surface);
+      font-size: 0.9rem;
+      font-weight: 650;
+    }
+    .math-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .math-card {
+      position: relative;
+      min-height: 154px;
+      padding: 17px 18px 16px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+    .math-card.output {
+      color: var(--dark-text);
+      background: var(--dark);
+      border-color: var(--dark);
+    }
+    .math-step {
+      margin: 0 0 6px;
+      color: var(--accent);
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    .math-card.output .math-step { color: #80d7c3; }
+    .math-card h3 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+    .formula {
+      margin: 0 0 9px;
+      overflow-x: auto;
+      color: var(--foreground);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.88rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .math-card.output .formula { color: var(--dark-text); }
+    .math-card .meaning {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+    .math-card.output .meaning { color: #bfd0d1; }
+    .variable-help {
+      margin-top: 13px;
+      padding-top: 11px;
+      border-top: 1px solid var(--border);
+    }
+    .math-card.output .variable-help { border-color: #38545b; }
+    .variable-help summary {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      list-style: none;
+      user-select: none;
+    }
+    .variable-help summary::-webkit-details-marker { display: none; }
+    .math-card.output .variable-help summary { color: #80d7c3; }
+    .expand-icon {
+      display: inline-grid;
+      width: 22px;
+      height: 22px;
+      flex: 0 0 22px;
+      place-items: center;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      font-size: 1rem;
+      line-height: 1;
+      transition: transform 140ms ease;
+    }
+    .variable-help[open] .expand-icon { transform: rotate(45deg); }
+    .variable-help dl {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 7px 12px;
+      margin: 13px 0 2px;
+      font-size: 0.76rem;
+      line-height: 1.4;
+    }
+    .variable-help dt {
+      color: var(--foreground);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-weight: 800;
+    }
+    .variable-help dd {
+      margin: 0;
+      color: var(--muted);
+    }
+    .math-card.output .variable-help dt { color: var(--dark-text); }
+    .math-card.output .variable-help dd { color: #bfd0d1; }
+    .math-key {
+      margin-top: 12px;
+      padding: 14px 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--accent-soft) 35%, var(--surface));
+      font-size: 0.78rem;
+      line-height: 1.55;
+    }
+    .math-key b { color: var(--foreground); }
+    @media (max-width: 620px) {
+      main { width: min(100% - 16px, 1080px); padding-top: 18px; }
+      h1 { margin-left: 4px; }
+      th, td { padding: 10px 12px; }
+      .math-grid { grid-template-columns: 1fr; }
+    }
+    @media print {
+      body { background: #fff; }
+      main { width: 100%; padding: 0; }
+      .table-wrap { overflow: visible; border-radius: 0; }
+      table { min-width: 0; }
+      tr { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>F1 strategy system ↔ BiteCast model</h1>
+    <div class="table-wrap">
+      <table>
+        <colgroup>
+          <col class="category" />
+          <col class="name" />
+          <col class="f1" />
+          <col class="bitecast" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th scope="col">Category</th>
+            <th scope="col">Part</th>
+            <th scope="col">F1 strategy operation</th>
+            <th scope="col">BiteCast model</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="category">Purpose</td><td class="name">Goal</td><td>Choose the strongest race strategy</td><td>Rank the strongest bite conditions</td></tr>
+          <tr><td class="category">Evidence</td><td class="name">Historical data</td><td>Past races, practice sessions and lap records</td><td>Historical fishing trips and angler-hours</td></tr>
+          <tr><td class="category">Evidence</td><td class="name">Observation unit</td><td>One car completing one lap under specific conditions</td><td>One angler fishing one hour under specific conditions</td></tr>
+          <tr><td class="category">Context</td><td class="name">Location</td><td>Race circuit</td><td>Lake</td></tr>
+          <tr><td class="category">Context</td><td class="name">Location properties</td><td>Track layout, surface and corner characteristics</td><td>Lake area, depth, clarity and coordinates</td></tr>
+          <tr><td class="category">Inputs</td><td class="name">Time</td><td>Race date, session and lap time</td><td>Forecast date, season and hour</td></tr>
+          <tr><td class="category">Inputs</td><td class="name">Environment</td><td>Rain, wind, air temperature and track temperature</td><td>Wind, clouds, rain, pressure and temperature</td></tr>
+          <tr><td class="category">Inputs</td><td class="name">Configuration</td><td>Driver, car setup, tire compound and fuel</td><td>Fishing method, bait, depth and effort</td></tr>
+          <tr><td class="category">Inputs</td><td class="name">Feature row</td><td>Complete simulator input for one lap scenario</td><td>Complete model input for one lake-hour</td></tr>
+          <tr><td class="category">Learning</td><td class="name">Outcome label</td><td>Lap performance or race result</td><td>Catch or no-catch result</td></tr>
+          <tr><td class="category">Learning</td><td class="name">Training</td><td>Develop the strategy simulator from past races</td><td>Train CatBoost from historical angler-hours</td></tr>
+          <tr><td class="category">Learning</td><td class="name">Tuning controls</td><td>Simulator configuration and strategy assumptions</td><td>Depth, iterations, learning rate and ensemble size</td></tr>
+          <tr><td class="category">Learning</td><td class="name">Learned behavior</td><td>Relationships learned from previous race conditions</td><td>Relationships learned from fishing conditions and outcomes</td></tr>
+          <tr><td class="category">Testing</td><td class="name">Training set</td><td>Historical races used to build the simulator</td><td>Older trips used to fit the model</td></tr>
+          <tr><td class="category">Testing</td><td class="name">Validation set</td><td>Practice scenarios used while tuning strategy</td><td>Later trips used for early stopping and calibration</td></tr>
+          <tr><td class="category">Testing</td><td class="name">Test set</td><td>Unseen race scenarios reserved for final testing</td><td>Newest trips reserved for final evaluation</td></tr>
+          <tr><td class="category">Testing</td><td class="name">Location holdout</td><td>Test the simulator at an unfamiliar circuit</td><td>Test the model on an unseen lake</td></tr>
+          <tr><td class="category">Quality</td><td class="name">Metrics</td><td>Lap time, tire degradation and prediction error</td><td>Brier score, log loss, calibration and lift</td></tr>
+          <tr><td class="category">Quality</td><td class="name">Calibration</td><td>Correct a simulator that is consistently optimistic</td><td>Correct probabilities that are consistently high or low</td></tr>
+          <tr><td class="category">Quality</td><td class="name">Confidence</td><td>Agreement across simulations with complete circuit data</td><td>Coverage, completeness, familiarity and ensemble agreement</td></tr>
+          <tr><td class="category">Release</td><td class="name">Challenger</td><td>Proposed new strategy system</td><td>Newly trained candidate model</td></tr>
+          <tr><td class="category">Release</td><td class="name">Champion</td><td>Approved race strategy system</td><td>Approved production model for one season</td></tr>
+          <tr><td class="category">Release</td><td class="name">Rollback</td><td>Restore the previous approved strategy system</td><td>Restore the previous champion model</td></tr>
+          <tr><td class="category">Prediction</td><td class="name">Inference</td><td>Calculate race strategy from current conditions</td><td>Calculate hourly bite conditions from forecast inputs</td></tr>
+          <tr><td class="category">Prediction</td><td class="name">Score</td><td>Rank the current strategic opportunity</td><td>Rank conditions against comparable historical predictions</td></tr>
+          <tr><td class="category">Prediction</td><td class="name">Recommended window</td><td>Best pit-stop window</td><td>Best fishing-time window</td></tr>
+          <tr><td class="category">Prediction</td><td class="name">Peak</td><td>Best lap or moment inside the strategy window</td><td>Highest bite score inside the fishing window</td></tr>
+          <tr><td class="category">Explanation</td><td class="name">Reasons</td><td>Weather, tire and track factors behind the strategy</td><td>SHAP-derived weather, light and lake factors</td></tr>
+          <tr><td class="category">Audit</td><td class="name">Input snapshot</td><td>Saved race-day simulator briefing</td><td>Saved lake-hour feature snapshot</td></tr>
+          <tr><td class="category">Audit</td><td class="name">Prediction record</td><td>Recorded strategy recommendation and simulator version</td><td>Recorded probability, score, confidence and model version</td></tr>
+          <tr><td class="category">Feedback</td><td class="name">Observed result</td><td>Actual race and tire performance</td><td>Later catch or no-catch outcome</td></tr>
+          <tr><td class="category">Feedback</td><td class="name">Monitoring</td><td>Post-race strategy review</td><td>Calibration, drift and lake-level performance review</td></tr>
+          <tr><td class="category">Feedback</td><td class="name">Retraining</td><td>Update the simulator with completed races</td><td>Train challengers with new consented trips</td></tr>
+          <tr><td class="category">Governance</td><td class="name">Human approval</td><td>Race engineers approve strategy-system changes</td><td>Humans approve model promotion</td></tr>
+          <tr><td class="category">Governance</td><td class="name">Limitation</td><td>The simulator cannot guarantee a race win</td><td>BiteCast cannot guarantee a catch or assess ice safety</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="diagram-title">How the categories interact</h2>
+    <div class="diagram-wrap">
+      <svg class="diagram" viewBox="0 0 1200 620" role="img" aria-labelledby="diagram-name diagram-description">
+        <title id="diagram-name">BiteCast model category interaction</title>
+        <desc id="diagram-description">Purpose leads to evidence, learning, testing, quality review, release and prediction. Context and inputs feed learning and prediction. Prediction creates explanations and audits, observed feedback returns to evidence, and governance spans the entire lifecycle.</desc>
+        <defs>
+          <marker id="arrow-head" orient="auto" markerUnits="userSpaceOnUse" refX="9" refY="5" markerWidth="10" markerHeight="10">
+            <path d="M1 1L9 5 1 9" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </marker>
+          <marker id="arrow-head-muted" orient="auto" markerUnits="userSpaceOnUse" refX="9" refY="5" markerWidth="10" markerHeight="10">
+            <path d="M1 1L9 5 1 9" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </marker>
+        </defs>
+
+        <path class="edge" d="M166 256H194" />
+        <path class="edge" d="M326 256H374" />
+        <path class="edge" d="M506 256H534" />
+        <path class="edge" d="M666 256H694" />
+        <path class="edge" d="M826 256H854" />
+        <path class="edge" d="M986 256H1014" />
+
+        <path class="edge-secondary" d="M296 126V160H420V210" />
+        <path class="edge-secondary" d="M456 126V180H460V210" />
+        <path class="edge-secondary" d="M330 126V142H1060V210" />
+        <path class="edge-secondary" d="M490 126V160H1100V210" />
+
+        <path class="edge" d="M1080 302V348H936V380" />
+        <path class="edge" d="M1080 302V380" />
+        <path class="edge" d="M854 438H776" />
+        <path class="edge" d="M1080 496V520H710V496" />
+        <path class="edge" d="M710 496V540H260V302" />
+
+        <path class="edge-secondary" d="M260 554V302" />
+        <path class="edge-secondary" d="M920 554V302" />
+        <path class="edge-secondary" d="M1080 554V302" />
+
+        <text class="connector-label" x="365" y="145">feeds training</text>
+        <text class="connector-label" x="790" y="145">feeds live prediction</text>
+        <text class="connector-label" x="487" y="531">new outcomes return to evidence</text>
+
+        <rect class="node-accent" x="34" y="210" width="132" height="92" rx="15" />
+        <text class="label" x="100" y="249">Purpose</text>
+        <text class="sub-label" x="100" y="271">defines the goal</text>
+
+        <rect class="node" x="194" y="210" width="132" height="92" rx="15" />
+        <text class="label" x="260" y="249">Evidence</text>
+        <text class="sub-label" x="260" y="271">historical outcomes</text>
+
+        <rect class="node-accent" x="374" y="210" width="132" height="92" rx="15" />
+        <text class="label" x="440" y="249">Learning</text>
+        <text class="sub-label" x="440" y="271">fits the model</text>
+
+        <rect class="node" x="534" y="210" width="132" height="92" rx="15" />
+        <text class="label" x="600" y="249">Testing</text>
+        <text class="sub-label" x="600" y="271">unseen scenarios</text>
+
+        <rect class="node" x="694" y="210" width="132" height="92" rx="15" />
+        <text class="label" x="760" y="249">Quality</text>
+        <text class="sub-label" x="760" y="271">metrics + calibration</text>
+
+        <rect class="node-accent" x="854" y="210" width="132" height="92" rx="15" />
+        <text class="label" x="920" y="249">Release</text>
+        <text class="sub-label" x="920" y="271">champion approval</text>
+
+        <rect class="node-accent" x="1014" y="210" width="132" height="92" rx="15" />
+        <text class="label" x="1080" y="249">Prediction</text>
+        <text class="sub-label" x="1080" y="271">scores + windows</text>
+
+        <rect class="node" x="230" y="52" width="132" height="74" rx="15" />
+        <text class="label" x="296" y="84">Context</text>
+        <text class="sub-label" x="296" y="104">lake + season</text>
+
+        <rect class="node" x="390" y="52" width="132" height="74" rx="15" />
+        <text class="label" x="456" y="84">Inputs</text>
+        <text class="sub-label" x="456" y="104">weather + time</text>
+
+        <rect class="node" x="854" y="380" width="132" height="116" rx="15" />
+        <text class="label" x="920" y="423">Explanation</text>
+        <text class="sub-label" x="920" y="446">SHAP reasons</text>
+        <text class="sub-label" x="920" y="464">+ confidence</text>
+
+        <rect class="node" x="1014" y="380" width="132" height="116" rx="15" />
+        <text class="label" x="1080" y="423">Audit</text>
+        <text class="sub-label" x="1080" y="446">input snapshot</text>
+        <text class="sub-label" x="1080" y="464">+ prediction record</text>
+
+        <rect class="node-accent" x="644" y="380" width="132" height="116" rx="15" />
+        <text class="label" x="710" y="423">Feedback</text>
+        <text class="sub-label" x="710" y="446">observed results</text>
+        <text class="sub-label" x="710" y="464">+ retraining</text>
+
+        <rect class="governance" x="34" y="554" width="1112" height="44" rx="14" />
+        <text class="governance-label" x="590" y="582">Governance · consent · security · human approval · rollback · no guarantees</text>
+      </svg>
+    </div>
+
+    <h2 class="diagram-title">Technical architecture</h2>
+    <div class="diagram-wrap">
+      <svg class="architecture" viewBox="0 0 1400 900" role="img" aria-labelledby="architecture-name architecture-description">
+        <title id="architecture-name">BiteCast technical architecture</title>
+        <desc id="architecture-description">The Expo mobile app stores logs in local SQLite and communicates with Supabase authentication, API, database and Edge Functions. External identity, payments, push, maps, weather and monitoring providers connect at the boundaries. GitHub Actions starts CatBoost training using licensed data and consented logs, publishes champion artifacts, and a forecast worker writes model forecasts back to Supabase for the app.</desc>
+        <defs>
+          <marker id="arch-arrow" orient="auto" markerUnits="userSpaceOnUse" refX="9" refY="5" markerWidth="10" markerHeight="10">
+            <path d="M1 1L9 5 1 9" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </marker>
+          <marker id="arch-arrow-start" orient="auto-start-reverse" markerUnits="userSpaceOnUse" refX="9" refY="5" markerWidth="10" markerHeight="10">
+            <path d="M1 1L9 5 1 9" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </marker>
+          <marker id="arch-arrow-muted" orient="auto" markerUnits="userSpaceOnUse" refX="9" refY="5" markerWidth="10" markerHeight="10">
+            <path d="M1 1L9 5 1 9" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </marker>
+        </defs>
+
+        <rect class="zone" x="28" y="42" width="264" height="438" rx="22" />
+        <text class="zone-label" x="52" y="73">CLIENT DEVICE</text>
+
+        <rect class="zone" x="330" y="42" width="532" height="438" rx="22" />
+        <text class="zone-label" x="354" y="73">SUPABASE MANAGED BACKEND</text>
+
+        <rect class="zone" x="900" y="42" width="470" height="438" rx="22" />
+        <text class="zone-label" x="924" y="73">EXTERNAL SERVICE PROVIDERS</text>
+
+        <rect class="zone" x="28" y="530" width="1342" height="332" rx="22" />
+        <text class="zone-label" x="52" y="561">MODEL SERVICES · DEPLOYMENT VIEW</text>
+
+        <path class="edge-both" d="M250 154H370" />
+        <path class="edge-both" d="M250 190H500V140H530" />
+        <path class="edge-both" d="M596 180V264" />
+        <path class="edge" d="M160 220V278" />
+
+        <path class="edge-external" d="M500 135H928" />
+        <path class="edge-external" d="M250 128H928" />
+        <path class="edge-external" d="M928 237H840V170H798" />
+        <path class="edge-external" d="M798 154H1040V334" />
+        <path class="edge-external" d="M928 350H270V190H250" />
+        <path class="edge-external" d="M250 180H1170V135" />
+
+        <path class="edge" d="M424 674H478" />
+        <path class="edge" d="M212 674H440V650H478" />
+        <path class="edge" d="M664 674H718" />
+        <path class="edge" d="M882 674H938" />
+        <path class="edge-external" d="M1228 260V592H1030V620" />
+
+        <path class="edge" d="M596 416V508H570V620" />
+        <path class="edge" d="M570 620V508H690V416" />
+        <path class="edge" d="M690 416V500H900V650H938" />
+        <path class="edge" d="M1030 620V510H720V416" />
+
+        <path class="edge-external" d="M1180 670H1122" />
+        <path class="edge-external" d="M1122 700H1280V374" />
+
+        <text class="edge-label" x="310" y="145">auth</text>
+        <text class="edge-label" x="382" y="197">data</text>
+        <text class="edge-label" x="172" y="255">offline first</text>
+        <text class="edge-label" x="744" y="126">Apple / Google sign-in</text>
+        <text class="edge-label" x="846" y="218">webhook</text>
+        <text class="edge-label" x="868" y="326">push</text>
+        <text class="edge-label" x="1090" y="166">maps</text>
+        <text class="edge-label" x="452" y="698">triggers</text>
+        <text class="edge-label" x="330" y="662">training data</text>
+        <text class="edge-label" x="690" y="662">artifacts</text>
+        <text class="edge-label" x="910" y="662">champion</text>
+        <text class="edge-label" x="1104" y="578">forecast weather</text>
+        <text class="edge-label" x="486" y="502">consented logs</text>
+        <text class="edge-label" x="852" y="436">lakes</text>
+        <text class="edge-label" x="880" y="496">forecasts</text>
+        <text class="edge-label" x="1150" y="660">schedule</text>
+
+        <rect class="service-accent" x="60" y="100" width="190" height="120" rx="18" />
+        <text class="service-label" x="155" y="143">Expo mobile app</text>
+        <text class="service-sub" x="155" y="166">iOS · Android</text>
+        <text class="service-sub" x="155" y="184">TanStack Query · Zustand</text>
+
+        <rect class="store" x="82" y="278" width="156" height="82" rx="18" />
+        <text class="store-label" x="160" y="311">Local SQLite</text>
+        <text class="store-sub" x="160" y="334">logs + offline state</text>
+
+        <rect class="service" x="370" y="100" width="130" height="80" rx="16" />
+        <text class="service-label" x="435" y="134">Auth</text>
+        <text class="service-sub" x="435" y="155">anonymous sessions</text>
+
+        <rect class="service" x="530" y="100" width="132" height="80" rx="16" />
+        <text class="service-label" x="596" y="134">Data API</text>
+        <text class="service-sub" x="596" y="155">PostgREST + RLS</text>
+
+        <rect class="service-accent" x="690" y="100" width="108" height="108" rx="16" />
+        <text class="service-label" x="744" y="136">Edge</text>
+        <text class="service-label" x="744" y="155">Functions</text>
+        <text class="service-sub" x="744" y="178">delete · webhook</text>
+        <text class="service-sub" x="744" y="194">alerts</text>
+
+        <rect class="store" x="454" y="264" width="284" height="152" rx="20" />
+        <text class="store-label" x="596" y="304">PostgreSQL · bitecast schema</text>
+        <text class="store-sub" x="596" y="334">users · follows · catch logs</text>
+        <text class="store-sub" x="596" y="357">lakes · forecasts · windows</text>
+        <text class="store-sub" x="596" y="380">model versions · audits</text>
+
+        <rect class="external" x="928" y="100" width="224" height="70" rx="15" />
+        <text class="service-label" x="1040" y="129">Apple + Google</text>
+        <text class="service-sub" x="1040" y="150">identity providers</text>
+
+        <rect class="external" x="928" y="202" width="224" height="70" rx="15" />
+        <text class="service-label" x="1040" y="231">RevenueCat</text>
+        <text class="service-sub" x="1040" y="252">subscriptions</text>
+
+        <rect class="external" x="928" y="304" width="224" height="70" rx="15" />
+        <text class="service-label" x="1040" y="333">Expo Push</text>
+        <text class="service-sub" x="1040" y="354">notifications</text>
+
+        <rect class="external" x="1170" y="100" width="170" height="70" rx="15" />
+        <text class="service-label" x="1255" y="129">Map provider</text>
+        <text class="service-sub" x="1255" y="150">Apple / Google</text>
+
+        <rect class="external" x="1170" y="202" width="170" height="70" rx="15" />
+        <text class="service-label" x="1255" y="231">Weather API</text>
+        <text class="service-sub" x="1255" y="252">licensed provider</text>
+
+        <rect class="external" x="1170" y="304" width="170" height="70" rx="15" />
+        <text class="service-label" x="1255" y="333">Monitoring</text>
+        <text class="service-sub" x="1255" y="354">errors + analytics</text>
+
+        <rect class="external" x="56" y="620" width="156" height="94" rx="17" />
+        <text class="service-label" x="134" y="656">Licensed data</text>
+        <text class="service-sub" x="134" y="678">fishing outcomes</text>
+        <text class="service-sub" x="134" y="696">historical weather</text>
+
+        <rect class="service" x="282" y="628" width="142" height="86" rx="17" />
+        <text class="service-label" x="353" y="661">GitHub Actions</text>
+        <text class="service-sub" x="353" y="683">monthly / manual</text>
+
+        <rect class="service-accent" x="478" y="610" width="186" height="118" rx="18" />
+        <text class="service-label" x="571" y="649">Training compute</text>
+        <text class="service-sub" x="571" y="672">Python · CatBoost</text>
+        <text class="service-sub" x="571" y="693">validate · train · evaluate</text>
+
+        <rect class="external" x="718" y="620" width="164" height="94" rx="17" />
+        <text class="service-label" x="800" y="656">Artifact store</text>
+        <text class="service-sub" x="800" y="678">versioned model files</text>
+        <text class="service-sub" x="800" y="696">provider not selected</text>
+
+        <rect class="service-accent" x="938" y="610" width="184" height="118" rx="18" />
+        <text class="service-label" x="1030" y="649">Forecast worker</text>
+        <text class="service-sub" x="1030" y="672">scheduled Python service</text>
+        <text class="service-sub" x="1030" y="693">inference · audit · publish</text>
+
+        <rect class="external" x="1180" y="620" width="146" height="94" rx="17" />
+        <text class="service-label" x="1253" y="656">Ops scheduler</text>
+        <text class="service-sub" x="1253" y="678">forecast cadence</text>
+
+        <line x1="58" y1="806" x2="102" y2="806" stroke="var(--accent)" stroke-width="2" />
+        <text class="legend-label" x="112" y="810">implemented code boundary</text>
+        <line x1="270" y1="806" x2="314" y2="806" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="7 5" />
+        <text class="legend-label" x="324" y="810">external provider or deployment still required</text>
+      </svg>
+    </div>
+
+    <h2 class="diagram-title">Prediction math · implemented pipeline</h2>
+    <p class="math-note">This is the implemented Python custom-model path. The displayed 0–100 bite score is a relative ranking of conditions—not a percentage chance of catching a fish. The precise family uses one lake-hour; the separate broad fallback uses weather aggregated across an honest trip/time block and never fabricates hourly catch labels. Production serving still requires approved champions, a weather provider, and a deployed forecast worker.</p>
+    <section class="math-grid" aria-label="Mathematics used to produce a BiteCast prediction">
+      <article class="math-card">
+        <p class="math-step">Training · observation influence</p>
+        <h3>Row weight</h3>
+        <p class="formula">wᵢ = qualityᵢ × √min(effortᵢ / 60, 1) × contributorᵢ</p>
+        <p class="meaning">Higher-quality observations carry more influence. Effort is capped at 60 minutes, and repeated contributors are reduced by inverse square-root frequency.</p>
+        <details class="variable-help">
+          <summary>Variables &amp; parameters <span class="expand-icon" aria-hidden="true">+</span></summary>
+          <dl>
+            <dt>i</dt><dd>One accepted angler-hour training row.</dd>
+            <dt>wᵢ</dt><dd>Final influence assigned to row i during training.</dd>
+            <dt>qualityᵢ</dt><dd>Source-quality value for row i, constrained to 0.05–1.00.</dd>
+            <dt>effortᵢ</dt><dd>Fishing minutes represented by row i, constrained to 1–60 for weighting.</dd>
+            <dt>60</dt><dd>Fixed effort cap; longer trips do not keep increasing one row’s weight.</dd>
+            <dt>contributorᵢ</dt><dd>Normalized inverse-square-root frequency weight for that pseudonymous angler; 1 when unavailable.</dd>
+          </dl>
+        </details>
+      </article>
+
+      <article class="math-card">
+        <p class="math-step">Training · objective</p>
+        <h3>Weighted binary log loss</h3>
+        <p class="formula">L = −Σwᵢ[yᵢ ln(pᵢ) + (1−yᵢ)ln(1−pᵢ)] / Σwᵢ</p>
+        <p class="meaning">Each label is catch = 1 or no-catch = 0. CatBoost changes its trees to reduce confident wrong predictions, using the row weights above.</p>
+        <details class="variable-help">
+          <summary>Variables &amp; parameters <span class="expand-icon" aria-hidden="true">+</span></summary>
+          <dl>
+            <dt>L</dt><dd>Weighted average training error CatBoost minimizes.</dd>
+            <dt>Σ</dt><dd>Sum over all training rows.</dd>
+            <dt>i</dt><dd>Current training row.</dd>
+            <dt>wᵢ</dt><dd>Training influence of row i from the row-weight calculation.</dd>
+            <dt>yᵢ</dt><dd>Observed label: 1 for catch, 0 for no-catch.</dd>
+            <dt>pᵢ</dt><dd>Model-estimated probability for the observed label in row i.</dd>
+            <dt>ln</dt><dd>Natural logarithm; makes confident wrong answers especially costly.</dd>
+          </dl>
+        </details>
+      </article>
+
+      <article class="math-card">
+        <p class="math-step">1 · one future lake-hour</p>
+        <h3>Feature transformation</h3>
+        <p class="formula">hour → [sin(2πh/24), cos(2πh/24)]</p>
+        <p class="formula">direction → [sin(θ), cos(θ)]</p>
+        <p class="meaning">Circular values stay close across their wrap point: 23:00 remains near 00:00, and 359° remains near 0°. Day-of-year is encoded the same way.</p>
+        <details class="variable-help">
+          <summary>Variables &amp; parameters <span class="expand-icon" aria-hidden="true">+</span></summary>
+          <dl>
+            <dt>h</dt><dd>UTC hour as a decimal from 0 up to 24.</dd>
+            <dt>24</dt><dd>Fixed number of hours in one daily cycle.</dd>
+            <dt>π</dt><dd>Pi; converts one complete cycle into radians.</dd>
+            <dt>θ</dt><dd>Wind direction converted from degrees to radians.</dd>
+            <dt>sin, cos</dt><dd>Paired coordinates that preserve position around a circle.</dd>
+            <dt>365.25</dt><dd>Cycle length used by the equivalent day-of-year transformation.</dd>
+          </dl>
+        </details>
+      </article>
+
+      <article class="math-card">
+        <p class="math-step">2 · CatBoost inference</p>
+        <h3>Three nonlinear tree models</h3>
+        <p class="formula">pₘ = sigmoid(bₘ + Σₜ treeₘₜ(x)), &nbsp; m = 1,2,3</p>
+        <p class="meaning">Each tree routes the feature row through learned condition splits. Its leaf value adjusts the model log-odds; the sigmoid converts the total to 0–1.</p>
+        <details class="variable-help">
+          <summary>Variables &amp; parameters <span class="expand-icon" aria-hidden="true">+</span></summary>
+          <dl>
+            <dt>x</dt><dd>Exact feature row for one future lake-hour.</dd>
+            <dt>m</dt><dd>Model index; BiteCast trains three models with different random seeds.</dd>
+            <dt>t</dt><dd>Tree index inside model m.</dd>
+            <dt>bₘ</dt><dd>Learned baseline log-odds for model m.</dd>
+            <dt>treeₘₜ(x)</dt><dd>Learned leaf adjustment returned by tree t after evaluating x.</dd>
+            <dt>sigmoid</dt><dd>Function 1 / (1 + e⁻ᶻ), converting log-odds to 0–1.</dd>
+            <dt>pₘ</dt><dd>Uncalibrated probability output from model m.</dd>
+          </dl>
+        </details>
+      </article>
+
+      <article class="math-card">
+        <p class="math-step">3 · ensemble</p>
+        <h3>Average independent seeds</h3>
+        <p class="formula">p̄ = (p₁ + p₂ + p₃) / 3</p>
+        <p class="meaning">Averaging makes the prediction less dependent on one random training path. The spread σ(p₁,p₂,p₃) later reduces confidence when models disagree.</p>
+        <details class="variable-help">
+          <summary>Variables &amp; parameters <span class="expand-icon" aria-hidden="true">+</span></summary>
+          <dl>
+            <dt>p₁,p₂,p₃</dt><dd>Uncalibrated predictions from the three CatBoost seeds.</dd>
+            <dt>3</dt><dd>Configured ensemble size in the current implementation.</dd>
+            <dt>p̄</dt><dd>Arithmetic mean sent to calibration.</dd>
+            <dt>σ</dt><dd>Standard deviation across model predictions; larger means more disagreement.</dd>
+          </dl>
+        </details>
+      </article>
+
+      <article class="math-card">
+        <p class="math-step">4 · calibration</p>
+        <h3>Correct the probability scale</h3>
+        <p class="formula">p = clip(g<sub>isotonic</sub>(p̄), 0, 1)</p>
+        <p class="meaning">A monotonic function learned on validation data maps ensemble output to observed outcome frequency. It can correct overconfidence without reversing rank order.</p>
+        <details class="variable-help">
+          <summary>Variables &amp; parameters <span class="expand-icon" aria-hidden="true">+</span></summary>
+          <dl>
+            <dt>p̄</dt><dd>Mean output from the three-model ensemble.</dd>
+            <dt>g<sub>isotonic</sub></dt><dd>Monotonic piecewise mapping learned from validation predictions and outcomes.</dd>
+            <dt>clip</dt><dd>Restricts the result to the inclusive interval 0–1.</dd>
+            <dt>p</dt><dd>Calibrated probability used for ranking and evaluation.</dd>
+            <dt>0,1</dt><dd>Minimum and maximum valid probability.</dd>
+          </dl>
+        </details>
+      </article>
+
+      <article class="math-card output">
+        <p class="math-step">5 · product score</p>
+        <h3>Convert probability to relative rank</h3>
+        <p class="formula">score = round(100 × #{r ∈ R : r ≤ p} / |R|)</p>
+        <p class="meaning">R is the stored lake + season probability distribution, falling back to season and then global history. A score of 92 means conditions rank near the 92nd percentile of that reference—not a 92% catch promise.</p>
+        <details class="variable-help">
+          <summary>Variables &amp; parameters <span class="expand-icon" aria-hidden="true">+</span></summary>
+          <dl>
+            <dt>p</dt><dd>Calibrated probability for the future lake-hour.</dd>
+            <dt>R</dt><dd>Sorted training-probability reference for lake + season, then season, then global fallback.</dd>
+            <dt>r</dt><dd>One historical probability stored in R.</dd>
+            <dt>#{…}</dt><dd>Count of reference probabilities less than or equal to p.</dd>
+            <dt>|R|</dt><dd>Total number of probabilities in the selected reference.</dd>
+            <dt>100</dt><dd>Converts the resulting percentile fraction to the 0–100 display scale.</dd>
+            <dt>round</dt><dd>Rounds the score to the nearest whole number.</dd>
+          </dl>
+        </details>
+      </article>
+
+      <article class="math-card">
+        <p class="math-step">6 · evidence confidence</p>
+        <h3>Coverage + completeness + agreement</h3>
+        <p class="formula">C = clip(.45V + .30M + .25A − .08U, 0, 1)</p>
+        <p class="meaning">V = clipped ln(1 + lake rows) / ln(501); M = 1 − missing numeric fraction; A = clipped 1 − σ(pₘ)/0.15; U = count of unfamiliar categorical values.</p>
+        <details class="variable-help">
+          <summary>Variables &amp; parameters <span class="expand-icon" aria-hidden="true">+</span></summary>
+          <dl>
+            <dt>C</dt><dd>Final evidence-confidence score from 0 to 1.</dd>
+            <dt>V</dt><dd>Lake coverage: clip[ln(1 + training rows for lake) / ln(501), 0, 1].</dd>
+            <dt>M</dt><dd>Numeric completeness: 1 minus the fraction of missing base numeric features.</dd>
+            <dt>A</dt><dd>Ensemble agreement: clip[1 − σ(pₘ) / 0.15, 0, 1].</dd>
+            <dt>U</dt><dd>Number of categorical values not observed during training.</dd>
+            <dt>.45,.30,.25</dt><dd>Fixed weights for coverage, completeness and agreement.</dd>
+            <dt>.08</dt><dd>Fixed confidence penalty per unfamiliar category.</dd>
+            <dt>500</dt><dd>Lake-row count at which the coverage component reaches its cap.</dd>
+            <dt>0.15</dt><dd>Model-disagreement scale at which the agreement component reaches zero.</dd>
+          </dl>
+        </details>
+      </article>
+
+      <article class="math-card output">
+        <p class="math-step">7 · publication + windows</p>
+        <h3>Decide what the app receives</h3>
+        <p class="formula">publish ⇔ C ≥ 0.25 &nbsp; · &nbsp; window hour ⇔ score ≥ 65</p>
+        <p class="meaning">Confidence labels are High at C ≥ 0.72, Medium at C ≥ 0.45, otherwise Low. Qualifying hours separated by no more than one hour become a forecast window; its maximum is the peak.</p>
+        <details class="variable-help">
+          <summary>Variables &amp; parameters <span class="expand-icon" aria-hidden="true">+</span></summary>
+          <dl>
+            <dt>C</dt><dd>Evidence-confidence score calculated in the preceding card.</dd>
+            <dt>0.25</dt><dd>Minimum confidence required to publish; otherwise the prediction is audit-only.</dd>
+            <dt>score</dt><dd>Relative 0–100 conditions rank.</dd>
+            <dt>65</dt><dd>Minimum score for an hour to qualify for a forecast window.</dd>
+            <dt>0.72</dt><dd>Minimum C for the High confidence label.</dd>
+            <dt>0.45</dt><dd>Minimum C for Medium; lower published values are Low.</dd>
+            <dt>1 hour</dt><dd>Maximum spacing between qualifying hours in the same window.</dd>
+            <dt>peak</dt><dd>Highest-scoring qualifying hour inside the completed window.</dd>
+          </dl>
+        </details>
+      </article>
+
+      <article class="math-card">
+        <p class="math-step">8 · reasons</p>
+        <h3>SHAP feature contribution</h3>
+        <p class="formula">model output = baseline + Σⱼ φⱼ</p>
+        <p class="meaning">The current implementation takes SHAP values from the first ensemble model. The largest reviewed |φⱼ| values become up to three plain-language reasons; their signs show whether each feature pushed the outlook up or down.</p>
+        <details class="variable-help">
+          <summary>Variables &amp; parameters <span class="expand-icon" aria-hidden="true">+</span></summary>
+          <dl>
+            <dt>baseline</dt><dd>Model output expected before this lake-hour’s individual feature effects are added.</dd>
+            <dt>j</dt><dd>Feature index, such as wind, pressure, light or water temperature.</dd>
+            <dt>φⱼ</dt><dd>SHAP contribution assigned to feature j for this prediction.</dd>
+            <dt>Σⱼ</dt><dd>Sum across all feature contributions.</dd>
+            <dt>sign(φⱼ)</dt><dd>Positive pushes the model outlook up; negative pushes it down.</dd>
+            <dt>|φⱼ|</dt><dd>Contribution magnitude used to rank potential explanations.</dd>
+            <dt>3</dt><dd>Maximum number of reviewed plain-language reasons shown.</dd>
+          </dl>
+        </details>
+      </article>
+
+      <article class="math-card">
+        <p class="math-step">Reality check</p>
+        <h3>Measure prediction error</h3>
+        <p class="formula">Brier = (1/N) Σᵢ(pᵢ − yᵢ)²</p>
+        <p class="meaning">Lower is better. Log loss, calibration error, top-20% lift, lake holdout, and lake/month segments are also reviewed before a challenger can be promoted.</p>
+        <details class="variable-help">
+          <summary>Variables &amp; parameters <span class="expand-icon" aria-hidden="true">+</span></summary>
+          <dl>
+            <dt>N</dt><dd>Number of evaluated observations.</dd>
+            <dt>i</dt><dd>Current evaluated observation.</dd>
+            <dt>pᵢ</dt><dd>Calibrated prediction for observation i.</dd>
+            <dt>yᵢ</dt><dd>Observed outcome for observation i: catch = 1, no-catch = 0.</dd>
+            <dt>(…)²</dt><dd>Squared error, making larger probability mistakes cost more.</dd>
+            <dt>Brier</dt><dd>Mean squared probability error; 0 is perfect and lower is better.</dd>
+            <dt>20%</dt><dd>Highest-scored fraction used by the separate top-20% lift metric.</dd>
+          </dl>
+        </details>
+      </article>
+    </section>
+    <div class="math-key"><b>Symbols:</b> x = one lake-hour feature row · y = observed catch/no-catch · p = calibrated model probability · R = comparison distribution · C = confidence score · φ = SHAP contribution. Prediction uses the approved seasonal champion; feedback only affects a later challenger after retraining and review.</div>
+
+  </main>
+</body>
+</html>

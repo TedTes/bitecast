@@ -1,6 +1,8 @@
 export type Clarity = 'clear' | 'stained' | 'murky';
 export type Season = 'open_water' | 'ice';
 export type Confidence = 'High' | 'Medium' | 'Low';
+export type PredictionGranularity = 'hour' | 'time_block';
+export type TimePrecision = 'exact' | 'time_block' | 'day' | 'unknown';
 
 export type SpeciesProfile = {
   id: 'walleye';
@@ -44,6 +46,8 @@ export type ForecastHour = WeatherHour & {
   transition: number;
   reasons: string[];
   confidence: Confidence;
+  predictionGranularity?: PredictionGranularity;
+  timePrecision?: TimePrecision;
 };
 
 export type ForecastWindow = {
@@ -56,12 +60,16 @@ export type ForecastWindow = {
   depth: 'shallow' | 'mid' | 'deep';
   tactics: string;
   hours: ForecastHour[];
+  predictionGranularity?: PredictionGranularity;
+  timePrecision?: TimePrecision;
 };
 
 export type LakeForecast = {
   lakeId: string;
   engineVersion: string;
   computedAt: string;
+  modelFamily?: 'hourly' | 'trip_broad';
+  predictionGranularity?: PredictionGranularity;
   hours: ForecastHour[];
   windows: ForecastWindow[];
 };

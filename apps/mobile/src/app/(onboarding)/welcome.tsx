@@ -3,14 +3,14 @@ import { router, useFocusEffect } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { BrandLockup, ChartTexture } from '@/components/brand';
-import { ConfidenceMeter, ReasonChips, ScoreReadout, bestWindowWithin, formatWindow } from '@/components/forecast';
+import { ConfidenceMeter, ReasonChips, ScoreReadout, bestWindowWithin, windowEnd } from '@/components/forecast';
 import { Icon, type IconName } from '@/components/icon';
 import { Button, Reveal, Row, Screen, T } from '@/components/ui';
 import { colors, radius, spacing } from '@/constants/theme';
 import { SwimmingWalleye } from '@/components/walleye';
 import { getForecast } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
-import { formatDay } from '@/lib/format';
+import { formatDay, shortRange } from '@/lib/format';
 
 const promises: { icon: IconName; title: string; body: string }[] = [
   { icon: 'clock', title: 'Hourly bite scores', body: 'Built around underwater light, weather and your lake’s clarity.' },
@@ -59,7 +59,7 @@ export default function WelcomeScreen() {
               <View style={{ flex: 1, gap: 2 }}>
                 <T variant="label" color={colors.onDarkMuted}>Sample · {lake.name}</T>
                 <T variant="caption" weight="700" color={colors.sunrise}>{formatDay(window.start)}’s best window</T>
-                <T variant="title" color={colors.onDark} style={{ marginTop: spacing.xs }}>{formatWindow(window)}</T>
+                <T variant="numeralL" color={colors.onDark} style={{ marginTop: spacing.xs }}>{shortRange(window.start, windowEnd(window))}</T>
               </View>
               <ScoreReadout score={window.peakScore} tone="dark" caption="Peak" />
             </Row>

@@ -3,7 +3,7 @@ import type { Confidence as ConfidenceLevel, ForecastHour, ForecastWindow } from
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, Keyframe } from 'react-native-reanimated';
 import { colors, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
-import { capitalize, formatDay, formatHour, formatTime, reasonIcon, reasonIsNegative } from '@/lib/format';
+import { capitalize, formatDay, formatHour, formatTime, reasonIcon, reasonIsNegative, shortClock, shortRange } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { Icon } from './icon';
 import { Card, Chip, Divider, Row, T } from './ui';
@@ -14,7 +14,8 @@ type Tone = 'light' | 'dark';
 
 /** Engine `end` is the start of the last hour; the window runs until the end of that hour. */
 export const windowEnd = (window: ForecastWindow) => new Date(new Date(window.end).getTime() + 3_600_000).toISOString();
-export const formatWindow = (window: ForecastWindow) => `${formatTime(window.start)} – ${formatTime(windowEnd(window))}`;
+/** Compact field format: “7–10 am”, “11 am–2 pm”. */
+export const formatWindow = (window: ForecastWindow) => shortRange(window.start, windowEnd(window));
 export const windowPeak = (window: ForecastWindow) => [...window.hours].sort((a, b) => b.score - a.score)[0];
 export const conditionLabel = (score: number) => `${scoreBands[scoreBand(score)].label} conditions`;
 export const scoreColor = (score: number) => scoreBands[scoreBand(score)].color;
@@ -118,6 +119,21 @@ export function ReasonChips({ reasons, limit = 3, tone = 'light' }: { reasons: s
   );
 }
 
+/** Light inline reasons (icon + text), for dense cards where pills would stack. */
+export function ReasonLine({ reasons, limit = 2 }: { reasons: string[]; limit?: number }) {
+  const shown = reasons.length ? reasons.slice(0, limit) : ['Mixed conditions'];
+  return (
+    <View style={styles.reasonLine} accessible accessibilityLabel={`Reasons: ${shown.join(', ')}`}>
+      {shown.map((reason) => (
+        <Row key={reason} gap={5}>
+          <Icon name={reasonIcon(reason)} size={13} color={reasonIsNegative(reason) ? colors.sunriseInk : colors.teal} />
+          <T variant="caption" color={colors.inkSoft}>{reason}</T>
+        </Row>
+      ))}
+    </View>
+  );
+}
+
 /** Numbered reason list for detail screens. */
 export function ReasonList({ reasons }: { reasons: string[] }) {
   return (
@@ -145,21 +161,24 @@ export function ReasonList({ reasons }: { reasons: string[] }) {
 export function WindowCard({ window, onPress, label }: { window: ForecastWindow; onPress?: () => void; label?: string }) {
   const peak = windowPeak(window);
   const heading = label ?? formatDay(window.start);
+  const broad = window.predictionGranularity === 'time_block';
   return (
     <Card
       onPress={onPress}
-      accessibilityLabel={`${heading}, ${formatWindow(window)}. Peak bite score ${window.peakScore}, ${scoreBands[scoreBand(window.peakScore)].label}. ${window.reasons.slice(0, 3).join(', ')}. ${window.confidence} confidence.`}
+      accessibilityLabel={`${heading}, ${formatWindow(window)}. ${broad ? 'Broad time-block' : 'Peak'} bite score ${window.peakScore}, ${scoreBands[scoreBand(window.peakScore)].label}. ${window.reasons.slice(0, 3).join(', ')}. ${window.confidence} confidence.`}
       accessibilityHint={onPress ? 'Opens light curve, contributors and tactics' : undefined}
     >
       <Row gap={spacing.lg} align="center">
-        <ScoreReadout score={window.peakScore} caption="Peak" />
+        <ScoreReadout score={window.peakScore} caption={broad ? 'Block' : 'Peak'} />
         <View style={{ flex: 1, gap: 2 }}>
           <T variant="label" color={colors.sunriseInk}>{heading}</T>
           <T variant="headline">{formatWindow(window)}</T>
-          <T variant="caption" color={colors.inkMuted}>Peaks near {formatHour(peak.ts)} · {window.hours.length} h above 60</T>
+          <T variant="caption" color={colors.inkMuted}>
+            {broad ? `Broad outlook · ${window.hours.length} h block` : `Peaks near ${formatHour(peak.ts)} · ${window.hours.length} h above 60`}
+          </T>
         </View>
       </Row>
-      <ReasonChips reasons={window.reasons} />
+      <ReasonLine reasons={window.reasons} limit={3} />
       <ConfidenceMeter value={window.confidence} />
       <Divider />
       <Row gap={spacing.md} align="flex-start">
@@ -188,6 +207,7 @@ const THRESHOLD = 60;
 
 export function HourlyChart({ hours, windows }: { hours: ForecastHour[]; windows: ForecastWindow[] }) {
   const data = hours.slice(0, 24);
+  const broad = data.some((item) => item.predictionGranularity === 'time_block');
   const [selected, setSelected] = useState(0);
   const windowHours = useMemo(() => new Set(windows.flatMap((w) => w.hours.map((h) => h.ts))), [windows]);
   const hour = data[selected] ?? data[0];
@@ -199,7 +219,9 @@ export function HourlyChart({ hours, windows }: { hours: ForecastHour[]; windows
       <View style={{ paddingHorizontal: spacing.lg, gap: spacing.sm }} accessibilityLiveRegion="polite">
         <Row justify="space-between" align="flex-end">
           <View>
-            <T variant="label" color={colors.inkMuted}>{selected === 0 ? 'Now' : `${formatDay(hour.ts)} · ${formatTime(hour.ts)}`}</T>
+            <T variant="label" color={colors.inkMuted}>
+              {broad ? `Broad block · ${shortClock(hour.ts)}` : selected === 0 ? 'Now' : `${formatDay(hour.ts)} · ${shortClock(hour.ts)}`}
+            </T>
             <Row gap={spacing.sm} align="flex-end">
               <T variant="numeralL">{hour.score}</T>
               <T variant="subhead" color={band.color} style={{ marginBottom: 5 }}>{band.label}</T>
@@ -207,9 +229,9 @@ export function HourlyChart({ hours, windows }: { hours: ForecastHour[]; windows
           </View>
           <ConfidenceMeter value={hour.confidence} />
         </Row>
-        <ReasonChips reasons={hour.reasons} limit={2} />
+        <ReasonLine reasons={hour.reasons} />
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chart} accessibilityLabel="Hourly bite scores for the next 24 hours">
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chart} accessibilityLabel={broad ? 'Broad time-block bite outlook for the next 24 hours' : 'Hourly bite scores for the next 24 hours'}>
         {data.map((item, index) => {
           const b = scoreBands[scoreBand(item.score)];
           const active = index === selected;
@@ -258,7 +280,7 @@ export function HourlyChart({ hours, windows }: { hours: ForecastHour[]; windows
 /* ───────────── 24-hour strip (compact comparison) ───────────── */
 
 /** One row of 24 cells shaded by band; window hours carry a sunrise underline. */
-export function DayStrip({ hours, windows }: { hours: ForecastHour[]; windows: ForecastWindow[] }) {
+export function DayStrip({ hours, windows, axis = true }: { hours: ForecastHour[]; windows: ForecastWindow[]; axis?: boolean }) {
   const data = hours.slice(0, 24);
   const inWindow = new Set(windows.flatMap((w) => w.hours.map((h) => h.ts)));
   const label = (index: number) => (index === 0 ? 'Now' : formatHour(data[index].ts));
@@ -275,9 +297,11 @@ export function DayStrip({ hours, windows }: { hours: ForecastHour[]; windows: F
           );
         })}
       </View>
-      <Row justify="space-between">
-        {[0, 6, 12, 18, 23].map((index) => data[index] ? <T key={index} variant="caption" color={colors.inkMuted} style={{ fontSize: 10.5 }} maxFontSizeMultiplier={1.3}>{label(index)}</T> : null)}
-      </Row>
+      {axis ? (
+        <Row justify="space-between">
+          {[0, 6, 12, 18, 23].map((index) => data[index] ? <T key={index} variant="caption" color={colors.inkMuted} style={{ fontSize: 10.5 }} maxFontSizeMultiplier={1.3}>{label(index)}</T> : null)}
+        </Row>
+      ) : null}
     </View>
   );
 }
@@ -299,17 +323,18 @@ export function SevenDayOutlook({ hours }: { hours: ForecastHour[] }) {
       {days.map((best, index) => {
         const band = scoreBands[scoreBand(best.score)];
         const day = formatDay(best.ts);
+        const broad = best.predictionGranularity === 'time_block';
         return (
           <View key={best.ts}>
             {index > 0 ? <Divider /> : null}
             <View
               style={styles.dayRow}
               accessible
-              accessibilityLabel={`${day}. Best near ${formatTime(best.ts)}, bite score ${best.score}, ${band.label}. ${best.reasons[0] ?? ''}. ${best.confidence} confidence.`}
+              accessibilityLabel={`${day}. ${broad ? 'Broad time block starting' : 'Best near'} ${formatTime(best.ts)}, bite score ${best.score}, ${band.label}. ${best.reasons[0] ?? ''}. ${best.confidence} confidence.`}
             >
               <View style={{ width: 92 }}>
                 <T variant="subhead">{day.split(',')[0]}</T>
-                <T variant="caption" color={colors.inkMuted}>Best {formatHour(best.ts)}</T>
+                <T variant="caption" color={colors.inkMuted}>{broad ? 'Block' : 'Best'} {formatHour(best.ts)}</T>
               </View>
               <View style={{ flex: 1, gap: 3 }}>
                 <Row gap={6}>
@@ -400,10 +425,19 @@ export function ScoreScale() {
 
 /* ───────────── Footnotes ───────────── */
 
-export function ForecastFootnote({ engineVersion }: { engineVersion?: string }) {
+export function ForecastFootnote({
+  engineVersion,
+  predictionGranularity,
+}: {
+  engineVersion?: string;
+  predictionGranularity?: 'hour' | 'time_block';
+}) {
+  const broad = predictionGranularity === 'time_block'
+    ? ' Broad time-block outlook; it does not identify an exact peak hour.'
+    : '';
   return (
     <T variant="caption" color={colors.inkMuted} align="center" style={{ paddingHorizontal: spacing.lg }}>
-      Bite scores describe conditions, not a guarantee of fish.{engineVersion ? ` Engine ${engineVersion}.` : ''}
+      Bite scores describe conditions, not a guarantee of fish.{broad}{engineVersion ? ` Engine ${engineVersion}.` : ''}
     </T>
   );
 }
@@ -419,6 +453,7 @@ const styles = StyleSheet.create({
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   bar: { width: 4, borderRadius: 1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  reasonLine: { flexDirection: 'row', flexWrap: 'wrap', columnGap: spacing.lg, rowGap: 4 },
   darkChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: colors.deepRaised, borderWidth: 1, borderColor: colors.deepLine },
   reasonIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
   chart: { paddingHorizontal: spacing.md, gap: 2 },

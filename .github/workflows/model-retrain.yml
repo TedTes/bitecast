@@ -1,0 +1,60 @@
+name: BiteCast model retraining
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "20 8 1 * *"
+
+permissions:
+  contents: read
+
+jobs:
+  train-challenger:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ml
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      TRAINING_PSEUDONYM_KEY: ${{ secrets.TRAINING_PSEUDONYM_KEY }}
+      BASE_TRAINING_DATA_URL: ${{ secrets.BASE_TRAINING_DATA_URL }}
+      BASE_TRAINING_DATA_TOKEN: ${{ secrets.BASE_TRAINING_DATA_TOKEN }}
+      HISTORICAL_WEATHER_URL: ${{ secrets.HISTORICAL_WEATHER_URL }}
+      HISTORICAL_WEATHER_API_KEY: ${{ secrets.HISTORICAL_WEATHER_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ml/retraining-state.json
+            ml/retraining-state-broad.json
+          key: bitecast-retraining-state-${{ github.run_id }}
+          restore-keys: bitecast-retraining-state-
+      - run: uv run bitecast-ml fetch-base-data data/base.parquet
+      - run: uv run bitecast-ml export-supabase data/user-logs.parquet
+      - run: uv run bitecast-ml enrich-provider data/user-logs.parquet data/user-logs-enriched.parquet
+      - run: uv run bitecast-ml aggregate-user-logs-broad data/user-logs-enriched.parquet data/user-trips-broad.parquet
+      - run: uv run bitecast-ml prepare-longpoint-broad ../data/extracted/longpoint-forum-reports.csv data/forum-broad.parquet data/forum-broad-rejected.csv --authorize-source
+      - run: uv run bitecast-ml enrich-broad-provider data/forum-broad.parquet data/forum-broad-enriched.parquet
+      - run: uv run bitecast-ml combine-datasets data/forum-broad-enriched.parquet data/user-trips-broad.parquet data/combined-broad.parquet
+      - run: uv run bitecast-ml validate-broad data/combined-broad.parquet data/validated-broad
+      - run: uv run bitecast-ml snapshot-broad-training-data data/validated-broad/valid.parquet data/snapshots-broad
+      - run: uv run bitecast-ml scheduled-retrain-broad data/validated-broad/valid.parquet artifacts registry retraining-state-broad.json --minimum-new-rows 100
+      - run: uv run bitecast-ml combine-datasets data/base.parquet data/user-logs-enriched.parquet data/combined.parquet
+      - run: uv run bitecast-ml validate data/combined.parquet data/validated
+      - run: uv run bitecast-ml snapshot-training-data data/validated/valid.parquet data/snapshots
+      - run: uv run bitecast-ml scheduled-retrain data/validated/valid.parquet artifacts registry retraining-state.json --minimum-new-rows 1000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bitecast-model-challengers-${{ github.run_id }}
+          path: |
+            ml/artifacts
+            ml/registry
+            ml/data/snapshots
+            ml/data/snapshots-broad
+            ml/retraining-state.json
+            ml/retraining-state-broad.json
+          retention-days: 30

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeForecast, createDemoWeather, type LakeProfile } from '../src';
+import { computeForecast, createDemoWeather, type ForecastHour, type LakeProfile } from '../src';
 
 const lake: LakeProfile = { id: 'test', name: 'Test Lake', region: 'Ontario', provinceState: 'ON', latitude: 45, longitude: -79, clarity: 'clear' };
 
@@ -22,5 +22,21 @@ describe('walleye forecast engine', () => {
     const open = computeForecast(lake, weather, 'open_water', now);
     const ice = computeForecast(lake, weather, 'ice', now);
     expect(open.hours.some((hour) => hour.light !== ice.hours[0].light)).toBe(true);
+  });
+
+  it('preserves explicit broad-forecast lineage without treating it as an exact hour', () => {
+    const broad: ForecastHour = {
+      ...createDemoWeather(lake, new Date('2026-07-10T12:00:00.000Z'))[0],
+      score: 72,
+      light: 0.5,
+      transition: 0,
+      reasons: ['Broad historical pattern'],
+      confidence: 'Low',
+      predictionGranularity: 'time_block',
+      timePrecision: 'time_block',
+    };
+    expect(broad.predictionGranularity).toBe('time_block');
+    expect(broad.timePrecision).not.toBe('exact');
+    expect(broad.confidence).toBe('Low');
   });
 });

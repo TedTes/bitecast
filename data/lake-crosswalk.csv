@@ -1,0 +1,4 @@
+lake_id,canonical_name,aliases,reference_latitude,reference_longitude,crosswalk_status
+lake-erie,Lake Erie,Lake Erie|Erie Lake|LE,42.2,-81.2,verified_against_bitecast_seed
+lake-ontario,Lake Ontario,Lake Ontario|Ontario Lake|LO,43.6,-77.9,verified_against_bitecast_seed
+bay-of-quinte,Bay of Quinte,Bay of Quinte|Quinte|BOQ,44.16,-77.18,verified_against_bitecast_seed

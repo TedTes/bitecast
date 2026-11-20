@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { ConfidenceMeter, ForecastFootnote, HourlyChart, ReasonChips, ScoreReadout, SevenDayOutlook, WindowCard, conditionLabel, upcomingWindows } from '@/components/forecast';
+import { ConfidenceMeter, ForecastFootnote, HourlyChart, ReasonLine, ScoreReadout, SevenDayOutlook, WindowCard, conditionLabel, upcomingWindows } from '@/components/forecast';
 import { Icon } from '@/components/icon';
-import { Banner, Button, Card, EmptyState, IceSafetyNotice, ListRow, OfflineBanner, Reveal, Row, Screen, SectionHeader, T } from '@/components/ui';
+import { Banner, Button, Card, EmptyState, IceSafetyNotice, LinkButton, ListRow, OfflineBanner, Reveal, Row, Screen, SectionHeader, Segmented, T } from '@/components/ui';
 import { colors, hitSlop, radius, spacing, touch } from '@/constants/theme';
-import { DATA_SOURCE_LABEL, freshness, useForecast } from '@/data/forecasts';
+import { forecastSource, freshness, useForecast } from '@/data/forecasts';
 import { lakes } from '@/data/lakes';
 import { capitalize } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { useNow } from '@/lib/use-now';
+import { seasonLabel, sourceLabel, useLakeCondition } from '@/features/lake-season';
 import { useAppStore } from '@/store/use-app-store';
 
 const INITIAL_WINDOWS = 3;
@@ -17,7 +18,9 @@ const INITIAL_WINDOWS = 3;
 export default function LakeForecastScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
   const lake = lakes.find((item) => item.id === id);
-  const season = useAppStore((state) => state.settings.season);
+  const condition = useLakeCondition(lake?.id ?? '');
+  const season = condition.season;
+  const setLakeSeason = useAppStore((state) => state.setLakeSeason);
   const followed = useAppStore((state) => state.followedLakeIds);
   const toggle = useAppStore((state) => state.toggleLake);
   const isPro = useAppStore((state) => state.isPro);
@@ -47,10 +50,10 @@ export default function LakeForecastScreen() {
       <Row gap={spacing.md} align="flex-end">
         <View style={{ flex: 1, gap: 2 }}>
           <T variant="label" color={colors.teal}>{lake.region} · {capitalize(lake.clarity)} water</T>
-          <T variant="display" accessibilityRole="header">{lake.name}</T>
+          <T variant="title" accessibilityRole="header">{lake.name}</T>
           <Row gap={6}>
             <Icon name={fresh.state === 'stale' ? 'warning' : 'clock'} size={13} color={fresh.state === 'stale' ? colors.warning : colors.inkMuted} />
-            <T variant="caption" color={fresh.state === 'stale' ? colors.warning : colors.inkMuted}>{fresh.label} · {DATA_SOURCE_LABEL}</T>
+            <T variant="caption" color={fresh.state === 'stale' ? colors.warning : colors.inkMuted}>{fresh.label} · {forecastSource(query.data)}</T>
           </Row>
         </View>
         <Pressable
@@ -71,13 +74,33 @@ export default function LakeForecastScreen() {
         </Pressable>
       </Row>
 
+      <Card style={{ gap: spacing.sm, paddingVertical: spacing.md }}>
+        <Row justify="space-between" align="center">
+          <T variant="callout" weight="700">Fishing this lake on</T>
+          {condition.source === 'manual' ? (
+            <LinkButton onPress={() => setLakeSeason(lake.id, null)}>Use typical</LinkButton>
+          ) : null}
+        </Row>
+        <Segmented
+          label={`Fishing ${lake.name} on`}
+          value={season}
+          onChange={(next) => setLakeSeason(lake.id, next)}
+          options={[
+            { label: 'Open water', value: 'open_water', icon: 'open-water' },
+            { label: 'Ice', value: 'ice', icon: 'ice' },
+          ]}
+        />
+        <T variant="caption" color={colors.inkMuted} accessibilityLiveRegion="polite">
+          {sourceLabel(condition)} · scores and tactics use {seasonLabel(season).toLowerCase()} conditions.
+        </T>
+      </Card>
       {season === 'ice' ? <IceSafetyNotice /> : null}
       <OfflineBanner />
       {query.isRefetchError ? <Banner tone="warning" title="Couldn’t refresh" body="Showing the forecast saved on this device." action={{ label: 'Try again', onPress: () => query.refetch() }} live /> : null}
       {!query.isRefetchError && fresh.state === 'stale' ? <Banner tone="warning" icon="clock" title={fresh.label} body="Conditions may have changed since this forecast was saved." action={{ label: 'Refresh', onPress: () => query.refetch() }} /> : null}
 
       <Reveal index={0}>
-        <Card variant="tint" style={{ gap: spacing.md }}>
+        <Card style={{ gap: spacing.md, backgroundColor: colors.white }}>
           <Row gap={spacing.lg} align="center">
             <ScoreReadout score={current.score} size="lg" caption="Now" />
             <View style={{ flex: 1, gap: spacing.xs }}>
@@ -86,7 +109,7 @@ export default function LakeForecastScreen() {
               <ConfidenceMeter value={current.confidence} />
             </View>
           </Row>
-          <ReasonChips reasons={current.reasons} />
+          <ReasonLine reasons={current.reasons} limit={3} />
         </Card>
       </Reveal>
 
@@ -125,7 +148,10 @@ export default function LakeForecastScreen() {
         </Card>
       ) : null}
 
-      <SectionHeader title="7-day outlook" caption="Best hour each day" />
+      <SectionHeader
+        title="7-day outlook"
+        caption={forecast.predictionGranularity === 'time_block' ? 'Best broad block each day' : 'Best hour each day'}
+      />
       <SevenDayOutlook hours={forecast.hours} />
 
       <Card style={{ gap: 0, paddingVertical: spacing.xs }}>
@@ -133,7 +159,10 @@ export default function LakeForecastScreen() {
       </Card>
       <Button icon="plus" variant="secondary" onPress={() => router.push({ pathname: '/log/new', params: { lakeId: lake.id } })}>{`Log a trip on ${lake.name}`}</Button>
 
-      <ForecastFootnote engineVersion={forecast.engineVersion} />
+      <ForecastFootnote
+        engineVersion={forecast.engineVersion}
+        predictionGranularity={forecast.predictionGranularity}
+      />
     </Screen>
   );
 }

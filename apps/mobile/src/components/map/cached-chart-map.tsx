@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { colors, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
+import { shortLakeName } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { Icon } from '../icon';
 import { T } from '../ui';
 import type { LakeMapProps, MapLakePin } from './types';
 
-const PIN_W = 54;
+const PIN_W = 66;
 const PIN_H = 44;
-const PAD = 36;
+const PAD = 52;
 /** Space hidden under the overlapping bottom sheet. */
 const BOTTOM_RESERVE = 24;
 
@@ -130,7 +131,7 @@ export function CachedChartMap({ pins, selectedId, onSelect }: LakeMapProps) {
             <View style={[styles.pinStripe, { backgroundColor: active ? band.onDark : band.color }]} />
             <View style={{ alignItems: 'center', flex: 1 }}>
               <T variant="numeralS" color={active ? colors.onDark : colors.ink} maxFontSizeMultiplier={1.1}>{pin.score}</T>
-              <T variant="caption" weight="700" color={active ? band.onDark : band.color} style={{ fontSize: 9, lineHeight: 11 }} maxFontSizeMultiplier={1.1}>{band.label.toUpperCase()}</T>
+              <T variant="caption" weight="700" color={active ? colors.onDarkMuted : colors.inkSoft} style={{ fontSize: 10, lineHeight: 12 }} numberOfLines={1} maxFontSizeMultiplier={1.1}>{shortLakeName(pin.name)}</T>
             </View>
             {pin.followed ? <View style={styles.followDot} /> : null}
           </Pressable>

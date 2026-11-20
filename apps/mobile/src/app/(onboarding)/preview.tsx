@@ -9,17 +9,21 @@ import { colors, radius, spacing } from '@/constants/theme';
 import { getForecast } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { capitalize, formatDay, formatHour } from '@/lib/format';
+import { resolveLakeCondition } from '@/features/lake-season';
 import { useAppStore } from '@/store/use-app-store';
 
 export default function PreviewScreen() {
   const ids = useAppStore((state) => state.followedLakeIds);
-  const season = useAppStore((state) => state.settings.season);
+  const iceFishing = useAppStore((state) => state.settings.iceFishing);
+  const lakeSeasons = useAppStore((state) => state.lakeSeasons);
+  const seasonOf = (id: string) => resolveLakeCondition(id, { iceFishing }, lakeSeasons).season;
   const complete = useAppStore((state) => state.completeOnboarding);
   const lake = lakeById(ids[0]);
+  const season = seasonOf(lake.id);
   const forecast = getForecast(lake.id, season);
   const window = bestWindowWithin(forecast.windows, 24);
   const current = forecast.hours[0];
-  const others = ids.slice(1).map((id) => ({ lake: lakeById(id), forecast: getForecast(id, season) }));
+  const others = ids.slice(1).map((id) => ({ lake: lakeById(id), forecast: getForecast(id, seasonOf(id)) }));
 
   return (
     <Screen
@@ -86,7 +90,7 @@ export default function PreviewScreen() {
         </View>
       </Reveal>
 
-      {season === 'ice' ? <IceSafetyNotice /> : null}
+      {[lake.id, ...others.map((o) => o.lake.id)].some((id) => seasonOf(id) === 'ice') ? <IceSafetyNotice /> : null}
 
       {others.length ? (
         <Reveal index={1} style={{ gap: spacing.md }}>

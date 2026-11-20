@@ -1,0 +1,5 @@
+source_id,candidate_rows,eligible_outcome_rows,reason
+mi-dnr-creel-summary-2025,aggregate tables,0,No independent trip/hour records and no exact outcome timestamps.
+mi-dnr-charter-summary-2025,9,0,Monthly fleet harvest and effort totals cannot be treated as independent observations.
+ny-dec-lake-ontario-report-2024,report tables,0,Annual report does not provide a normalized individual trip outcome dataset.
+on-lake-erie-creel-catalogue,0,0,Catalogue dataset is under review and has no downloadable resource.

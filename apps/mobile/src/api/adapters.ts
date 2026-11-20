@@ -4,6 +4,7 @@ import * as Network from 'expo-network';
 import * as Notifications from 'expo-notifications';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
+import { validateCatchLog } from '@/features/catch-log-validation';
 import type { Account, AlertPreference, AppSettings, CatchLog, LakeRequest } from '@/types/app';
 import { externalConfig, integrationsReady } from './config';
 import { ensureAnonymousSession, getSupabase } from './supabase';
@@ -16,41 +17,56 @@ import { ensureAnonymousSession, getSupabase } from './supabase';
 export const analytics = { capture: (_event: string, _properties?: Record<string, unknown>) => undefined };
 
 /* ── Sync (Supabase) ── Called only AFTER a SQLite write has succeeded. */
-export async function syncCatchLogs(logs: CatchLog[]): Promise<{ syncedIds: string[] }> {
+export async function syncCatchLogs(logs: CatchLog[]): Promise<{ syncedIds: string[]; rejectedIds: string[] }> {
   const supabase = getSupabase();
-  if (!supabase || !logs.length) return { syncedIds: [] };
+  if (!supabase || !logs.length) return { syncedIds: [], rejectedIds: [] };
   const session = await ensureAnonymousSession();
-  if (!session) return { syncedIds: [] };
+  if (!session) return { syncedIds: [], rejectedIds: [] };
 
   const lakeSlugs = [...new Set(logs.map((log) => log.lakeId))];
   const { data: lakes, error: lakeError } = await supabase.from('lakes').select('id, slug').in('slug', lakeSlugs);
   if (lakeError) throw lakeError;
   const lakeIds = new Map((lakes ?? []).map((lake) => [lake.slug as string, lake.id as string]));
-  const syncable = logs.filter((log) => lakeIds.has(log.lakeId) && /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(log.id));
-  if (!syncable.length) return { syncedIds: [] };
+  const rejectedIds = logs
+    .filter((log) => !lakeIds.has(log.lakeId) || !validateCatchLog(log).validForSync)
+    .map((log) => log.id);
+  const syncable = logs.filter((log) => lakeIds.has(log.lakeId) && validateCatchLog(log).validForSync);
+  if (!syncable.length) return { syncedIds: [], rejectedIds };
 
   const rows = syncable.map((log) => ({
     id: log.id,
     user_id: session.user.id,
     lake_id: lakeIds.get(log.lakeId),
     caught_at: log.caughtAt,
+    trip_started_at: log.tripStartedAt,
+    trip_ended_at: log.tripEndedAt,
+    effort_minutes: log.effortMinutes,
+    species: log.species,
+    season_mode: log.seasonMode,
     caught: log.caught,
     count: log.count,
     length_cm: log.lengthCm ?? null,
     depth_m: log.depthM ?? null,
+    water_depth_m: log.waterDepthM ?? null,
     bait: log.bait,
+    bait_category: log.baitCategory,
     method: log.method,
     clarity: log.clarity,
     notes: log.notes,
     conditions: { ...log.conditions, lightCondition: log.lightCondition },
     score_at_time: log.scoreAtTime,
     engine_version: '1.0.0',
+    training_consent: log.trainingConsent,
+    training_consent_version: log.trainingConsentVersion,
+    training_consent_updated_at: log.trainingConsentUpdatedAt,
+    model_version_shown: log.modelVersionShown,
+    feature_snapshot: log.conditions,
     client_updated_at: log.clientUpdatedAt,
     updated_at: new Date().toISOString(),
   }));
   const { error } = await supabase.from('catch_logs').upsert(rows, { onConflict: 'id' });
   if (error) throw error;
-  return { syncedIds: syncable.map((log) => log.id) };
+  return { syncedIds: syncable.map((log) => log.id), rejectedIds };
 }
 
 export async function syncPreferences(input: {
@@ -58,6 +74,7 @@ export async function syncPreferences(input: {
   followedLakeIds: string[];
   alerts: AlertPreference[];
   region: string;
+  lakeSeasons: Record<string, 'open_water' | 'ice'>;
 }): Promise<void> {
   const supabase = getSupabase();
   if (!supabase) return;
@@ -66,7 +83,8 @@ export async function syncPreferences(input: {
   const { error: profileError } = await supabase.from('profiles').upsert({
     user_id: session.user.id,
     units: input.settings.units,
-    season_mode: input.settings.season,
+    // Account default: whether this angler uses ice mode at all. Per-lake choices live on follows.
+    season_mode: input.settings.iceFishing ? 'ice' : 'open_water',
     region: input.region,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Toronto',
     updated_at: new Date().toISOString(),
@@ -88,6 +106,7 @@ export async function syncPreferences(input: {
         lead_minutes: alert?.leadMinutes ?? 120,
         quiet_start: input.settings.quietStart,
         quiet_end: input.settings.quietEnd,
+        season_mode: input.lakeSeasons[lake.slug as string] ?? null,
       };
     });
     const { error } = await supabase.from('follows').upsert(rows, { onConflict: 'user_id,lake_id' });
@@ -237,5 +256,5 @@ export const integrationStatus = [
   { name: 'RevenueCat purchases', ready: purchasesConfigured },
   { name: 'PostHog analytics', ready: Boolean(externalConfig.posthogKey) },
   { name: 'Sentry crash reporting', ready: Boolean(externalConfig.sentryDsn) },
-  { name: 'Map tiles', ready: Boolean(externalConfig.mapStyleUrl) },
+  { name: 'Map tiles', ready: externalConfig.mapProvider !== 'cached' },
 ];

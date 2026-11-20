@@ -4,6 +4,9 @@ project_id = "bitecast"
 schemas = ["public", "graphql_public", "bitecast"]
 extra_search_path = ["public", "extensions", "bitecast"]
 
+[auth]
+enable_anonymous_sign_ins = true
+
 [functions.bitecast-delete-account]
 verify_jwt = false
 

@@ -1,0 +1,19 @@
+{
+  "sources": [
+    {
+      "id": "development-synthetic",
+      "owner": "BiteCast",
+      "license": "Development fixture only; never use for production claims",
+      "commercial_use_allowed": true,
+      "redistribution_allowed": true,
+      "geographic_coverage": "Synthetic Ontario-like lakes",
+      "date_range": "2024-2026",
+      "contains_no_catch": true,
+      "contains_effort": true,
+      "timestamp_precision": "hour",
+      "location_precision": "lake",
+      "known_biases": ["Entirely synthetic", "Encodes generated correlations"],
+      "quality_weight": 0.1
+    }
+  ]
+}

@@ -8,15 +8,16 @@ import { colors, radius, spacing } from '@/constants/theme';
 import { useForecast } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { capitalize, durationLabel, formatDay, formatHour, formatWind } from '@/lib/format';
+import { useLakeCondition } from '@/features/lake-season';
 import { useAppStore } from '@/store/use-app-store';
 
 type Contributor = { icon: IconName; name: string; role: 'Primary' | 'Supporting' | 'Minor'; weight: number; observed: string };
 
 export default function WindowDetailScreen() {
   const { id = '', start = '' } = useLocalSearchParams<{ id: string; start: string }>();
-  const season = useAppStore((state) => state.settings.season);
   const units = useAppStore((state) => state.settings.units);
   const lake = lakeById(id);
+  const season = useLakeCondition(lake.id).season;
   const { data: forecast } = useForecast(lake.id, season);
   const window = forecast.windows.find((item) => item.start === start);
 
@@ -34,6 +35,7 @@ export default function WindowDetailScreen() {
   }
 
   const band = walleyeProfile.idealLightBand[lake.clarity];
+  const broad = window.predictionGranularity === 'time_block';
   const inBand = window.hours.filter((hour) => hour.light >= band[0] && hour.light <= band[1]).length;
   const fastest = [...window.hours].sort((a, b) => b.transition - a.transition)[0];
   const hours = window.hours;
@@ -57,10 +59,14 @@ export default function WindowDetailScreen() {
         <T variant="label" color={colors.teal}>{lake.name} · {formatDay(window.start)}</T>
         <Row gap={spacing.md} align="flex-start">
           <View style={{ flex: 1, gap: spacing.xs }}>
-            <T variant="display" accessibilityRole="header">{formatWindow(window)}</T>
-            <T variant="callout" color={colors.inkMuted}>{durationLabel(window.start, windowEnd(window))} · peaks near {formatHour(windowPeak(window).ts)}</T>
+            <T variant="title" accessibilityRole="header">{formatWindow(window)}</T>
+            <T variant="callout" color={colors.inkMuted}>
+              {broad
+                ? `${durationLabel(window.start, windowEnd(window))} · broad time-block outlook · no exact peak hour`
+                : `${durationLabel(window.start, windowEnd(window))} · peaks near ${formatHour(windowPeak(window).ts)}`}
+            </T>
           </View>
-          <ScoreReadout score={window.peakScore} size="lg" caption="Peak" />
+          <ScoreReadout score={window.peakScore} size="lg" caption={broad ? 'Block' : 'Peak'} />
         </Row>
       </View>
 
@@ -68,19 +74,31 @@ export default function WindowDetailScreen() {
         <ConfidenceMeter value={window.confidence} explain />
         <Divider color={colors.tealTint} />
         <T variant="callout" color={colors.inkSoft}>
-          Underwater light moves into the range walleye tend to feed in. That makes conditions favourable — it doesn’t mean fish will bite.
+          {broad
+            ? 'This is a lower-precision pattern learned from complete fishing trips. It ranks the block, not an exact hour, and does not mean fish will bite.'
+            : 'Underwater light moves into the range walleye tend to feed in. That makes conditions favourable — it doesn’t mean fish will bite.'}
         </T>
       </Card>
 
       {season === 'ice' ? <IceSafetyNotice compact /> : null}
 
-      <SectionHeader title="Light through the window" caption="Effective underwater light each hour, with bite score above" />
-      <Card>
-        <LightCurve hours={window.hours} band={band} />
-      </Card>
+      {broad ? (
+        <Card variant="tint">
+          <T variant="callout" color={colors.inkSoft}>
+            This score was inferred once for the complete time block from trip-level evidence. The repeated hours are for scheduling and do not represent separate hourly predictions.
+          </T>
+        </Card>
+      ) : (
+        <>
+          <SectionHeader title="Light through the window" caption="Effective underwater light each hour, with bite score above" />
+          <Card>
+            <LightCurve hours={window.hours} band={band} />
+          </Card>
+        </>
+      )}
 
-      <SectionHeader title="What’s driving the score" caption="Light matters most; pressure and moon only nudge it" />
-      <Card style={{ gap: spacing.lg }}>
+      {!broad ? <SectionHeader title="What’s driving the score" caption="Light matters most; pressure and moon only nudge it" /> : null}
+      {!broad ? <Card style={{ gap: spacing.lg }}>
         {contributors.map((item) => (
           <View key={item.name} style={{ gap: spacing.sm }} accessible accessibilityLabel={`${item.name}, ${item.role.toLowerCase()} factor, about ${Math.round(item.weight * 100)} percent of the score. ${item.observed}.`}>
             <Row gap={spacing.md}>
@@ -100,7 +118,7 @@ export default function WindowDetailScreen() {
           <Stat label="Wind" value={season === 'ice' ? 'n/a under ice' : formatWind(avg((h) => h.windKmh), units)} />
           <Stat label="Pressure" value={`${Math.round(avg((h) => h.pressureHpa))} hPa`} />
         </Row>
-      </Card>
+      </Card> : null}
 
       <SectionHeader title="Why this window" />
       <Card>

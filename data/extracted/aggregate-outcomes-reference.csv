@@ -1,0 +1,10 @@
+lake_id,month,mode,target_species,reported_hours,reported_harvest,harvest_per_hour,source_id,training_eligible,exclusion_reason
+lake-erie,2025-03-01,charter,walleye,484.0,357.0,0.737603305785124,mi-dnr-charter-summary-2025,False,Monthly fleet aggregate is not an independent trip or angler-hour outcome.
+lake-erie,2025-04-01,charter,walleye,1029.0,908.0,0.8824101068999028,mi-dnr-charter-summary-2025,False,Monthly fleet aggregate is not an independent trip or angler-hour outcome.
+lake-erie,2025-05-01,charter,walleye,3579.0,3707.0,1.0357641799385302,mi-dnr-charter-summary-2025,False,Monthly fleet aggregate is not an independent trip or angler-hour outcome.
+lake-erie,2025-06-01,charter,walleye,4766.5,5618.0,1.1786426098814644,mi-dnr-charter-summary-2025,False,Monthly fleet aggregate is not an independent trip or angler-hour outcome.
+lake-erie,2025-07-01,charter,walleye,1347.0,1382.0,1.0259836674090572,mi-dnr-charter-summary-2025,False,Monthly fleet aggregate is not an independent trip or angler-hour outcome.
+lake-erie,2025-08-01,charter,walleye,515.0,84.0,0.16310679611650486,mi-dnr-charter-summary-2025,False,Monthly fleet aggregate is not an independent trip or angler-hour outcome.
+lake-erie,2025-09-01,charter,walleye,915.0,16.0,0.017486338797814208,mi-dnr-charter-summary-2025,False,Monthly fleet aggregate is not an independent trip or angler-hour outcome.
+lake-erie,2025-10-01,charter,walleye,834.0,22.0,0.026378896882494004,mi-dnr-charter-summary-2025,False,Monthly fleet aggregate is not an independent trip or angler-hour outcome.
+lake-erie,2025-11-01,charter,walleye,142.0,27.0,0.19014084507042253,mi-dnr-charter-summary-2025,False,Monthly fleet aggregate is not an independent trip or angler-hour outcome.

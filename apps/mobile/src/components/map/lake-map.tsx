@@ -2,24 +2,20 @@ import type { ComponentType } from 'react';
 import { externalConfig } from '@/api/config';
 import { useAppStore } from '@/store/use-app-store';
 import { CachedChartMap } from './cached-chart-map';
+import { loadNativeTileMap } from './native-tile-map';
 import type { LakeMapProps, MapMode } from './types';
 
 /**
- * Map provider boundary.
- *
- * To add production tiles:
- * 1. `npx expo install @maplibre/maplibre-react-native` (or `react-native-maps`) and
- *    add its config plugin in app.json.
- * 2. Create `native-tile-map.tsx` implementing `LakeMapProps` (render `pins` as
- *    markers, call `onSelect`, highlight `selectedId`).
- * 3. Return it from `resolveTileProvider` below.
- *
- * The cached chart always remains the fallback when offline or unconfigured, so pins
- * render on a blank chart background with no network.
+ * Map provider boundary. Screens render <LakeMap>; the provider is chosen here:
+ * - `react-native-maps` (default): Apple Maps on iOS, Google Maps on Android (needs
+ *   GOOGLE_MAPS_ANDROID_API_KEY at build time, see app.config.js).
+ * - `cached`: the code-native offline chart only.
+ * The cached chart is always the fallback when offline, on web, or when the native map
+ * module isn't in this build — pins still render on a plain chart with no network.
  */
 function resolveTileProvider(): ComponentType<LakeMapProps> | null {
-  if (externalConfig.mapProvider === 'cached' || !externalConfig.mapStyleUrl) return null;
-  return null; // No tile SDK bundled yet.
+  if (externalConfig.mapProvider === 'cached') return null;
+  return loadNativeTileMap();
 }
 
 const TileProvider = resolveTileProvider();
