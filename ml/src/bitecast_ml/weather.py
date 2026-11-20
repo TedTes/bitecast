@@ -253,7 +253,10 @@ class EcccRdpsForecastProvider(HistoricalWeatherProvider):
                     request=response.request,
                     response=response,
                 )
-            except (httpx.TimeoutException, httpx.NetworkError) as error:
+            # Protocol failures (for example, the upstream closing an HTTP/2
+            # response early) are transient transport errors too. Catch the
+            # common base class so they receive the same bounded retry policy.
+            except httpx.TransportError as error:
                 last_error = error
             if attempt + 1 < self.retries:
                 self.sleep(min(2**attempt, 4))

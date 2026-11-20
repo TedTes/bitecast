@@ -102,6 +102,34 @@ def test_eccc_retries_transient_failures() -> None:
     assert attempts == 3
 
 
+def test_eccc_retries_disconnected_responses() -> None:
+    attempts = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        if request.url.params.get("REQUEST") == "GetCapabilities":
+            attempts += 1
+            if attempts < 3:
+                raise httpx.RemoteProtocolError(
+                    "Server disconnected without sending a response",
+                    request=request,
+                )
+        return _eccc_response(request)
+
+    provider = EcccRdpsForecastProvider(
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        max_concurrency=1,
+        sleep=lambda _: None,
+    )
+    provider.hourly(
+        42.2,
+        -81.2,
+        datetime(2026, 11, 16, 12, tzinfo=UTC),
+        datetime(2026, 11, 16, 12, 1, tzinfo=UTC),
+    )
+    assert attempts == 3
+
+
 def test_eccc_rejects_missing_core_weather() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.params.get("REQUEST") == "GetCapabilities":
