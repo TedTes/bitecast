@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from bitecast_ml.broad import enrich_broad_observations, forecast_time_blocks
 from bitecast_ml.broad_ingestion import aggregate_hourly_logs_to_broad, longpoint_reports_to_broad
@@ -154,3 +156,78 @@ def test_train_register_and_serve_broad_fallback(tmp_path) -> None:
     assert set(predictions["prediction_granularity"]) == {"time_block"}
     assert set(predictions["confidence"]) == {"Low"}
     assert predictions["bite_score"].between(0, 100).all()
+
+
+def test_canary_training_is_capped_and_cannot_be_promoted(tmp_path) -> None:
+    data = generate_synthetic_broad_training_data(12)
+    data["season_mode"] = "open_water"
+    data["caught"] = [False] + [True] * 11
+    data["catch_count"] = [0] + [1] * 11
+    result = train_broad_model(
+        data,
+        tmp_path / "artifacts",
+        BroadTrainingConfig(
+            season_mode="open_water",
+            iterations=5,
+            depth=3,
+            ensemble_size=2,
+            minimum_rows=4,
+            minimum_positive_rows=1,
+            canary_only=True,
+        ),
+    )
+    metadata = json.loads((result.artifact_dir / "metadata.json").read_text())
+    assert metadata["canary_only"] is True
+    assert metadata["score_cap"] == 69
+    assert metadata["score_basis"] == "forecast_horizon_relative_percentile"
+    assert metadata["validation_rows"] == 0
+    assert result.metrics["evaluation_protocol"] == "training-fit-diagnostic-only-no-holdout"
+
+    registry = ModelRegistry(tmp_path / "registry")
+    registry.register(
+        result.artifact_dir,
+        artifact_reference=Path("/models/artifacts") / result.version,
+    )
+    with pytest.raises(ValueError, match="cannot be promoted"):
+        registry.promote(result.version, require_improvement=False)
+    registry.activate_canary(result.version)
+    with pytest.raises(ValueError, match="No hourly or trip_broad champion"):
+        registry.available_champion_path("open_water")
+    canary_path, family = registry.available_champion_path("open_water", allow_canary=True)
+    assert canary_path == Path("/models/artifacts") / result.version
+    assert family == "trip_broad"
+
+    predictions = ModelBundle(result.artifact_dir).predict(data)
+    assert set(predictions["confidence"]) == {"Low"}
+    assert predictions["confidence_score"].max() <= 0.44
+    assert predictions["bite_score"].max() <= 69
+
+    start = datetime(2026, 7, 1, tzinfo=UTC)
+    hours = np.arange(72)
+    weather = pd.DataFrame(
+        {
+            "hour_start": pd.date_range(start, periods=72, freq="h"),
+            "air_temp_c": 15 + 7 * np.sin(hours / 12),
+            "wind_kmh": 5 + (hours % 24),
+            "gust_kmh": 10 + (hours % 30),
+            "wind_direction_deg": hours * 17 % 360,
+            "cloud_pct": hours * 13 % 100,
+            "precip_mm": np.where(hours % 17 == 0, 2, 0),
+            "pressure_hpa": 1005 + 10 * np.sin(hours / 9),
+            "pressure_change_3h_hpa": np.sin(hours / 4),
+        }
+    )
+    lake = {
+        "id": "lake-uuid",
+        "slug": "lake-erie",
+        "region": "Great Lakes",
+        "lat": 42.2,
+        "lon": -81.2,
+        "clarity_class": "stained",
+        "area_km2": 25700,
+        "max_depth_m": 64,
+        "timezone": "America/Toronto",
+    }
+    _, horizon_predictions = _prediction_plan(lake, weather, "open_water", ModelBundle(result.artifact_dir))
+    assert horizon_predictions["bite_score"].nunique() > 1
+    assert horizon_predictions["bite_score"].max() == 69

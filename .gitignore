@@ -7,4 +7,7 @@ coverage/
 *.log
 .DS_Store
 supabase/.temp/
+data/snapshots/
+ml/artifacts-canary/
+ml/registry-canary/
 

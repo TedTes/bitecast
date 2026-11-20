@@ -57,6 +57,10 @@ class ModelBundle:
             self.metadata["lake_counts"],
             self.metadata["known_categories"],
         )
+        confidence_cap = float(self.metadata.get("confidence_cap", 1.0))
+        confidence_scores = np.minimum(confidence_scores, confidence_cap)
+        if self.metadata.get("canary_only"):
+            confidence_labels = ["Low"] * len(confidence_labels)
         identity_columns = ["lake_id", "season_mode"]
         if broad:
             identity_columns += ["period_start", "period_end", "time_block", "time_precision"]
@@ -70,10 +74,14 @@ class ModelBundle:
         outputs["model_version"] = self.version
         outputs["model_family"] = self.model_family
         outputs["prediction_granularity"] = self.prediction_granularity
+        score_cap = int(self.metadata.get("score_cap", 100))
         outputs["bite_score"] = [
-            percentile_score(
-                probability,
-                self._reference(str(row["lake_id"]), str(row["season_mode"])),
+            min(
+                score_cap,
+                percentile_score(
+                    probability,
+                    self._reference(str(row["lake_id"]), str(row["season_mode"])),
+                ),
             )
             for probability, (_, row) in zip(probabilities, raw_rows.iterrows(), strict=True)
         ]

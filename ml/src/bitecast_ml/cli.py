@@ -196,6 +196,31 @@ def train_broad(
     )
 
 
+@app.command("train-broad-canary")
+def train_broad_canary(input_path: Path, artifact_root: Path, season: str) -> None:
+    frame = _validated_broad(_read_frame(input_path))
+    result = train_broad_model(
+        frame,
+        artifact_root,
+        BroadTrainingConfig(
+            season_mode=season,
+            iterations=80,
+            depth=3,
+            learning_rate=0.03,
+            ensemble_size=3,
+            minimum_rows=4,
+            minimum_positive_rows=1,
+            canary_only=True,
+        ),
+    )
+    typer.echo(
+        json.dumps(
+            {"version": result.version, "artifact_dir": str(result.artifact_dir), "metrics": result.metrics},
+            indent=2,
+        )
+    )
+
+
 @app.command()
 def infer(input_path: Path, artifact_dir: Path, output: Path) -> None:
     predictions = ModelBundle(artifact_dir).predict(_read_frame(input_path))
@@ -204,8 +229,12 @@ def infer(input_path: Path, artifact_dir: Path, output: Path) -> None:
 
 
 @app.command()
-def register(artifact_dir: Path, registry_dir: Path) -> None:
-    entry = ModelRegistry(registry_dir).register(artifact_dir)
+def register(
+    artifact_dir: Path,
+    registry_dir: Path,
+    artifact_reference: Path | None = None,
+) -> None:
+    entry = ModelRegistry(registry_dir).register(artifact_dir, artifact_reference)
     typer.echo(json.dumps(entry, indent=2))
 
 
@@ -213,6 +242,12 @@ def register(artifact_dir: Path, registry_dir: Path) -> None:
 def promote(version: str, registry_dir: Path, force: bool = False) -> None:
     ModelRegistry(registry_dir).promote(version, require_improvement=not force)
     typer.echo(f"Promoted {version}")
+
+
+@app.command("activate-canary")
+def activate_canary(version: str, registry_dir: Path) -> None:
+    ModelRegistry(registry_dir).activate_canary(version)
+    typer.echo(f"Activated early-access canary {version}")
 
 
 @app.command("publish-model")

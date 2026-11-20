@@ -30,8 +30,9 @@ def run_forecast_worker(horizon_days: int = 7) -> dict[str, int]:
     db = SupabaseRest(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"])
     weather = forecast_weather_provider_from_env()
     registry = ModelRegistry(Path(os.environ["MODEL_REGISTRY_PATH"]))
+    allow_canary = os.getenv("ALLOW_EARLY_ACCESS_MODE", "false").strip().lower() == "true"
     models = {
-        season: ModelBundle(registry.available_champion_path(season)[0])
+        season: ModelBundle(registry.available_champion_path(season, allow_canary=allow_canary)[0])
         for season in ("open_water", "ice")
     }
     lakes = db.select(
@@ -113,6 +114,12 @@ def run_forecast_worker(horizon_days: int = 7) -> dict[str, int]:
                             "moon_illumination": _optional_float(raw.get("moon_illumination")),
                             "solar_elevation_deg": _optional_float(raw.get("solar_elevation_deg")),
                             "time_block": prediction.get("time_block"),
+                            "score_basis": bundle.metadata.get(
+                                "score_basis", "historical_reference_percentile"
+                            ),
+                            "deployment_stage": bundle.metadata.get(
+                                "deployment_stage", "production_candidate"
+                            ),
                         },
                         "reasons": prediction["reasons"],
                         "confidence": prediction["confidence"],
@@ -140,7 +147,10 @@ def run_forecast_worker(horizon_days: int = 7) -> dict[str, int]:
                         "peak_score": window.peak_score,
                         "reasons": peak["reasons"],
                         "confidence": peak["confidence"],
-                        "tactics_text": _tactics_text(bundle.model_family),
+                        "tactics_text": _tactics_text(
+                            bundle.model_family,
+                            bool(bundle.metadata.get("canary_only")),
+                        ),
                         "engine_version": bundle.version,
                         "computed_at": run_started_at,
                     }
@@ -191,6 +201,11 @@ def _prediction_plan(
         raise ValueError(f"Unsupported model family: {bundle.model_family}")
     blocks = forecast_time_blocks(lake, weather, season).reset_index(drop=True)
     block_predictions = bundle.predict(blocks).reset_index(drop=True)
+    if bundle.metadata.get("canary_only"):
+        score_cap = int(bundle.metadata.get("score_cap", 69))
+        block_predictions["bite_score"] = (
+            block_predictions["raw_probability"].rank(method="average", pct=True) * score_cap
+        ).round().astype(int)
     predictions = expand_block_predictions(block_predictions, weather).reset_index(drop=True)
     input_rows: list[dict] = []
     for prediction in predictions.to_dict(orient="records"):
@@ -248,7 +263,12 @@ def _optional_float(value: object) -> float | None:
     return float(value)
 
 
-def _tactics_text(model_family: str) -> str:
+def _tactics_text(model_family: str, canary_only: bool = False) -> str:
+    if canary_only:
+        return (
+            "Early-access relative outlook for the next three days. Confidence is Low; scores are not "
+            "validated catch probabilities and do not promise fish or assess ice safety."
+        )
     if model_family == "trip_broad":
         return (
             "Broad time-block outlook from trip-level evidence; confidence is Low and the model does not "
