@@ -24,8 +24,8 @@ export function getForecast(lakeId: string, season: Season): LakeForecast {
 }
 
 /**
- * Network refresh boundary. In development this recomputes from demo weather; in
- * production it should read `bitecast-forecast` from Supabase and write the cache.
+ * Network refresh boundary. Configured builds read published BiteCast forecasts
+ * from Supabase; unconfigured development builds retain deterministic demo data.
  */
 async function fetchForecast(lakeId: string, season: Season): Promise<LakeForecast> {
   if (!integrationsReady) return getForecast(lakeId, season);
@@ -99,7 +99,11 @@ export const forecastQuery = (lakeId: string, season: Season) =>
     queryKey: ['forecast', lakeId, season],
     queryFn: () => fetchForecast(lakeId, season),
     initialData: () => getForecast(lakeId, season),
-    initialDataUpdatedAt: () => new Date(getForecast(lakeId, season).computedAt).getTime(),
+    // Bundled demo data lets the screen render offline, but must be stale immediately
+    // when cloud integrations exist so it cannot suppress the first real refresh.
+    initialDataUpdatedAt: () => integrationsReady
+      ? 0
+      : new Date(getForecast(lakeId, season).computedAt).getTime(),
     staleTime: 15 * 60_000,
   });
 
