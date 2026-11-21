@@ -102,6 +102,20 @@ export default function TodayScreen() {
             </Reveal>
             {seasons.includes('ice') ? <IceSafetyNotice compact /> : null}
             <OfflineBanner />
+            <Reveal index={1} style={styles.buoys}>
+              {others.map((entry) => <Buoy key={entry.lake.id} entry={entry} now={now} />)}
+              {ids.length < MAX_LAKES ? (
+                <Pressable
+                  onPress={() => router.push('/(tabs)/map')}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Follow another lake. ${ids.length} of ${MAX_LAKES} followed.`}
+                  style={({ pressed }) => [styles.followBuoy, pressed && { opacity: 0.6 }]}
+                >
+                  <Icon name="plus" size={14} color={colors.teal} />
+                  <T variant="caption" weight="700" color={colors.teal}>Follow</T>
+                </Pressable>
+              ) : null}
+            </Reveal>
 
           </>
         ) : (
@@ -126,28 +140,8 @@ export default function TodayScreen() {
           </View>
         )}
 
-        {/* Open water between the answer and the dock below: the fish live here. */}
+        {/* Open water: the lake scene lives here; the footer rests on the lake bed. */}
         <View style={{ flexGrow: 1, minHeight: spacing.lg }} />
-
-        {best ? (
-          <View style={styles.dock}>
-            <Reveal index={1} style={styles.buoys}>
-              {others.map((entry) => <Buoy key={entry.lake.id} entry={entry} now={now} />)}
-              {ids.length < MAX_LAKES ? (
-                <Pressable
-                  onPress={() => router.push('/(tabs)/map')}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Follow another lake. ${ids.length} of ${MAX_LAKES} followed.`}
-                  style={({ pressed }) => [styles.followBuoy, pressed && { opacity: 0.6 }]}
-                >
-                  <Icon name="plus" size={14} color={colors.teal} />
-                  <T variant="caption" weight="700" color={colors.teal}>Follow</T>
-                </Pressable>
-              ) : null}
-            </Reveal>
-            <LogPill lakeId={best.lake.id} />
-          </View>
-        ) : null}
 
         <View style={styles.footer}>
           <Row gap={6} justify="center">
@@ -210,6 +204,8 @@ function LakeBackground({ night, score, ice, waterTop }: { night: boolean; score
           <LakeBed width={width} height={height} />
         </Svg>
       ) : null}
+      {width ? <LightShafts width={width} top={waterTop} height={lakeH} /> : null}
+      {width ? <Bubbles width={width} bottom={BED * 0.6} rise={lakeH * 0.55} /> : null}
       {width ? <Weeds width={width} bottom={BED * 0.55} /> : null}
       {width ? (
         <View style={{ position: 'absolute', top: waterTop, left: 0, width, height: lakeH }}>
@@ -278,7 +274,66 @@ function Weed({ left, bottom, height, period, delay }: { left: number; bottom: n
     sway.set(withDelay(delay, withRepeat(withSequence(withTiming(1, { duration: period, easing: Easing.inOut(Easing.sin) }), withTiming(-1, { duration: period, easing: Easing.inOut(Easing.sin) })), -1, true)));
   }, [reduced, sway, period, delay]);
   const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${sway.get() * 7}deg` }] }));
-  return <Animated.View style={[styles.weed, { left, bottom, height }, style]} />;
+  const w = 18;
+  return (
+    <Animated.View style={[styles.weed, { left: left - w / 2, bottom, width: w, height }, style]}>
+      <Svg width={w} height={height}>
+        <Path d={`M${w / 2} ${height} C${w * 0.1} ${height * 0.7} ${w * 0.9} ${height * 0.4} ${w / 2} 0`} stroke="#5E8F86" strokeWidth={3} strokeLinecap="round" fill="none" opacity={0.7} />
+        <Path d={`M${w / 2} ${height * 0.62} q${-w * 0.45} ${-height * 0.06} ${-w * 0.4} ${-height * 0.2}`} stroke="#6E9C92" strokeWidth={2.5} strokeLinecap="round" fill="none" opacity={0.6} />
+        <Path d={`M${w / 2} ${height * 0.38} q${w * 0.45} ${-height * 0.05} ${w * 0.38} ${-height * 0.18}`} stroke="#6E9C92" strokeWidth={2.5} strokeLinecap="round" fill="none" opacity={0.6} />
+      </Svg>
+    </Animated.View>
+  );
+}
+
+/** Soft sunlight shafts slanting down from the surface, with a slow shimmer. */
+function LightShafts({ width, top, height }: { width: number; top: number; height: number }) {
+  const reduced = useReducedMotion();
+  const shimmer = useSharedValue(0.5);
+  useEffect(() => {
+    if (!reduced) shimmer.set(withRepeat(withSequence(withTiming(1, { duration: 4200, easing: Easing.inOut(Easing.sin) }), withTiming(0.35, { duration: 4200, easing: Easing.inOut(Easing.sin) })), -1, true));
+  }, [reduced, shimmer]);
+  const style = useAnimatedStyle(() => ({ opacity: shimmer.get() }));
+  const shafts = [0.18, 0.46, 0.78].map((x, i) => ({ x: x * width, w: 46 + i * 14, lean: 70 + i * 20 }));
+  return (
+    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, style]}>
+      <Svg width={width} height={top + height}>
+        <Defs>
+          <LinearGradient id="shaft" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={colors.white} stopOpacity={0.32} />
+            <Stop offset="1" stopColor={colors.white} stopOpacity={0} />
+          </LinearGradient>
+        </Defs>
+        {shafts.map((shaft) => (
+          <Path key={shaft.x} d={`M${shaft.x} ${top} L${shaft.x + shaft.w} ${top} L${shaft.x + shaft.w + shaft.lean} ${top + height * 0.75} L${shaft.x + shaft.lean - 10} ${top + height * 0.75} Z`} fill="url(#shaft)" />
+        ))}
+      </Svg>
+    </Animated.View>
+  );
+}
+
+/** A few bubbles drifting up from the weeds (none under reduce motion). */
+function Bubbles({ width, bottom, rise }: { width: number; bottom: number; rise: number }) {
+  const reduced = useReducedMotion();
+  const [bubbles] = useState(() => [0.08, 0.3, 0.5, 0.75, 0.94].map((x, i) => ({ x, size: 4 + (i % 3) * 2, duration: 6000 + i * 1300, delay: i * 1700 })));
+  if (reduced) return null;
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {bubbles.map((bubble) => <Bubble key={bubble.x} left={bubble.x * width} bottom={bottom} rise={rise} {...bubble} />)}
+    </View>
+  );
+}
+
+function Bubble({ left, bottom, rise, size, duration, delay }: { left: number; bottom: number; rise: number; size: number; duration: number; delay: number }) {
+  const t = useSharedValue(0);
+  useEffect(() => {
+    t.set(withDelay(delay, withRepeat(withTiming(1, { duration, easing: Easing.linear }), -1, false)));
+  }, [t, duration, delay]);
+  const style = useAnimatedStyle(() => ({
+    opacity: t.get() < 0.1 ? t.get() * 6 : 0.6 * (1 - t.get()),
+    transform: [{ translateY: -t.get() * rise }, { translateX: Math.sin(t.get() * 12) * 4 }],
+  }));
+  return <Animated.View style={[styles.bubble, { left, bottom, width: size, height: size, borderRadius: size / 2 }, style]} />;
 }
 
 function Header({ now, fresh, refreshing, onRefresh, top }: { now: number; fresh: { state: 'fresh' | 'aging' | 'stale'; label: string }; refreshing: boolean; onRefresh: () => void; top: number }) {
@@ -518,29 +573,6 @@ function Buoy({ entry, now }: { entry: LakeData; now: number }) {
   );
 }
 
-/* ───────────── Log a trip: centred, labelled, resting on the lake bed ───────────── */
-
-function LogPill({ lakeId }: { lakeId: string }) {
-  const last = useAppStore((state) => state.catchLogs[0]);
-  return (
-    <View style={{ alignItems: 'center', gap: spacing.xs }}>
-      <Pressable
-        onPress={() => router.push({ pathname: '/log/new', params: { lakeId } })}
-        accessibilityRole="button"
-        accessibilityLabel="Log a trip"
-        accessibilityHint="Catch and no-catch trips both count"
-        style={({ pressed }) => [styles.logPill, pressed && { transform: [{ scale: 0.97 }] }]}
-      >
-        <Icon name="plus" size={18} color={colors.onDark} />
-        <T variant="subhead" color={colors.onDark}>Log a trip</T>
-      </Pressable>
-      <T variant="caption" color={colors.inkSoft} style={styles.lastTrip}>
-        {last ? `Last trip · ${lakeById(last.lakeId).name}, ${formatDay(last.caughtAt)}` : 'No-catch trips count too'}
-      </T>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   freshness: { flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1, marginLeft: spacing.md },
   card: { gap: spacing.md, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.white, overflow: 'hidden', ...elevation.raised },
@@ -560,14 +592,12 @@ const styles = StyleSheet.create({
   chipWarn: { backgroundColor: colors.warningTint },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   bar: { width: 3, borderRadius: 1 },
-  dock: { gap: spacing.lg },
-  logPill: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 52, paddingHorizontal: spacing.xxl, borderRadius: radius.pill, backgroundColor: colors.deep, ...elevation.raised },
-  lastTrip: { paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: 'rgba(251,250,245,0.6)' },
-  buoys: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
+  buoys: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   buoy: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, maxWidth: '100%', paddingVertical: 6, paddingLeft: 6, paddingRight: spacing.md, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.94)', ...elevation.low },
   buoyScore: { width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   followBuoy: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 46, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.teal, backgroundColor: 'rgba(255,255,255,0.55)' },
   plainBlock: { gap: spacing.lg, marginTop: spacing.xxl, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.paper },
   footer: { gap: spacing.xs, alignItems: 'center', alignSelf: 'center', marginBottom: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: 'rgba(251,250,245,0.7)' },
-  weed: { position: 'absolute', width: 4, borderRadius: 2, backgroundColor: '#5E8F86', opacity: 0.55, transformOrigin: 'bottom' },
+  weed: { position: 'absolute', transformOrigin: 'bottom' },
+  bubble: { position: 'absolute', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(255,255,255,0.25)' },
 });
