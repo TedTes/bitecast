@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { ForecastHour, ForecastWindow } from '@bitecast/engine';
 import { StyleSheet, View, type AccessibilityActionEvent, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
+import * as SunCalc from 'suncalc';
 import Svg, { Defs, Line, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { colors, scoreBand, scoreBands } from '@/constants/theme';
 import { formatTime, shortClock } from '@/lib/format';
@@ -61,16 +62,21 @@ type Props = {
   tagScore?: boolean;
   fishCount?: number;
   fishScale?: number;
+  /** When given, the curve is the true sun path for this location (smooth), not model data. */
+  latitude?: number;
+  longitude?: number;
 };
 
-const IMMERSIVE_H = 262;
-const FADE = 56;
+const IMMERSIVE_H = 214;
+const FADE = 44;
+/** Approximate half-width of the time tag, used to keep it inside the screen. */
+const TAG_HALF = 44;
 
 /**
  * Sky arc: the next 24 hours of sun elevation over a lake horizon. Daylight rises above the
  * waterline, night dips under it; window hours glow. Drag to scrub hours.
  */
-export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = false, overlayLeft, overlayRight, tagScore = false, fishCount, fishScale }: Props) {
+export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = false, overlayLeft, overlayRight, tagScore = false, fishCount, fishScale, latitude, longitude }: Props) {
   const height = immersive ? IMMERSIVE_H : H;
   const lakeH = immersive ? height - HORIZON : AXIS_Y - HORIZON - 6;
   const fishBottom = immersive ? height - FADE - 18 : AXIS_Y - 8;
@@ -78,8 +84,13 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = 
   const [width, setWidth] = useState(0);
   const reduced = useReducedMotion();
   const step = width ? (width - PAD * 2) / Math.max(1, data.length - 1) : 0;
-  const peak = Math.min(MAX_ELEVATION, Math.max(12, ...data.map((hour) => hour.sunElevation)));
-  const points = useMemo(() => data.map((hour, i) => ({ x: PAD + i * step, y: yFor(hour.sunElevation, peak) })), [data, step, peak]);
+  // True sun elevation for the lake when we know where it is; model data otherwise.
+  const elev = useMemo(
+    () => data.map((hour) => (latitude !== undefined && longitude !== undefined ? (SunCalc.getPosition(new Date(hour.ts), latitude, longitude).altitude * 180) / Math.PI : hour.sunElevation)),
+    [data, latitude, longitude],
+  );
+  const peak = Math.min(MAX_ELEVATION, Math.max(12, ...elev));
+  const points = useMemo(() => elev.map((e, i) => ({ x: PAD + i * step, y: yFor(e, peak) })), [elev, step, peak]);
   const windowSet = useMemo(() => new Set(windows.flatMap((w) => w.hours.map((h) => h.ts))), [windows]);
 
   // Window segments drawn over the curve.
@@ -114,6 +125,12 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = 
   }, [point, mx, my, reduced, index, step]);
   const markerStyle = useAnimatedStyle(() => ({ transform: [{ translateX: mx.get() - MARKER_W / 2 }, { translateY: my.get() - GLYPH_CENTER_Y }] }));
   const guideStyle = useAnimatedStyle(() => ({ transform: [{ translateX: mx.get() }] }));
+  // Keep the time tag on screen when the marker is near either edge.
+  const tagStyle = useAnimatedStyle(() => {
+    const x = mx.get();
+    const shift = Math.max(0, TAG_HALF + 4 - x) - Math.max(0, x + TAG_HALF + 4 - width);
+    return { transform: [{ translateX: shift }] };
+  });
 
   const pick = (x: number) => {
     if (!step) return;
@@ -123,13 +140,13 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = 
   const onTouch = (event: GestureResponderEvent) => pick(event.nativeEvent.locationX);
 
   const hour = data[index] ?? data[0];
-  const daylight = (hour?.sunElevation ?? 0) > 0;
+  const daylight = (elev[index] ?? 0) > 0;
   const band = hour ? scoreBands[scoreBand(hour.score)] : scoreBands.fair;
-  const crossings = data.flatMap((h, i): { i: number; label: "rise" | "set" }[] => {
-    const prev = data[i - 1];
-    if (!prev) return [];
-    if (prev.sunElevation < 0 && h.sunElevation >= 0) return [{ i: i - 1 + prev.sunElevation / (prev.sunElevation - h.sunElevation), label: 'rise' as const }];
-    if (prev.sunElevation >= 0 && h.sunElevation < 0) return [{ i: i - 1 + prev.sunElevation / (prev.sunElevation - h.sunElevation), label: 'set' as const }];
+  const crossings = elev.flatMap((e, i): { i: number; label: 'rise' | 'set' }[] => {
+    const prev = elev[i - 1];
+    if (prev === undefined) return [];
+    if (prev < 0 && e >= 0) return [{ i: i - 1 + prev / (prev - e), label: 'rise' }];
+    if (prev >= 0 && e < 0) return [{ i: i - 1 + prev / (prev - e), label: 'set' }];
     return [];
   });
   const clockAt = (fraction: number) => shortClock(new Date(new Date(data[0].ts).getTime() + fraction * 3_600_000));
@@ -190,11 +207,11 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = 
         <>
           <Animated.View pointerEvents="none" style={[styles.guide, guideStyle]} />
           <Animated.View pointerEvents="none" style={[styles.marker, markerStyle]}>
-            <View style={styles.tag}>
+            <Animated.View style={[styles.tag, tagStyle]}>
               <T variant="caption" weight="700" color={colors.onDark} style={{ fontSize: 10.5, lineHeight: 13 }} maxFontSizeMultiplier={1.1}>
                 {index === 0 ? 'Now' : shortClock(hour.ts)}{tagScore ? ` · ${hour.score}` : ''}
               </T>
-            </View>
+            </Animated.View>
             {daylight ? <SunGlyph /> : <MoonGlyph />}
           </Animated.View>
         </>

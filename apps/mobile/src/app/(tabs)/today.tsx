@@ -5,6 +5,7 @@ import type { ForecastHour, ForecastWindow, LakeForecast, Season } from '@biteca
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import * as SunCalc from 'suncalc';
 import { conditionLabel, upcomingWindows, windowEnd } from '@/components/forecast';
 import { Icon } from '@/components/icon';
 import { SkyArc } from '@/components/sky-arc';
@@ -81,7 +82,7 @@ export default function TodayScreen() {
   return (
     <View style={{ flex: 1 }}>
       <Screen tab header refreshing={refreshing} onRefresh={refresh}>
-        <Scene night={focusHour ? focusHour.sunElevation <= 0 : false} hasLake={Boolean(focus)}>
+        <Scene night={focus && focusHour ? SunCalc.getPosition(new Date(focusHour.ts), focus.lake.latitude, focus.lake.longitude).altitude <= 0 : false} hasLake={Boolean(focus)}>
           <Header now={now} fresh={fresh} refreshing={refreshing} onRefresh={refresh} />
           {focus && focusHour ? (
             <>
@@ -98,6 +99,8 @@ export default function TodayScreen() {
                 ice={focus.season === 'ice'}
                 index={hourIndex}
                 onIndexChange={setHourIndex}
+                latitude={focus.lake.latitude}
+                longitude={focus.lake.longitude}
               />
             </>
           ) : null}
@@ -146,6 +149,13 @@ export default function TodayScreen() {
             ) : null}
           </>
         )}
+
+        {focus ? (
+          <Reveal index={1} style={{ gap: spacing.md }}>
+            <WeekStrip key={focus.lake.id} entry={focus} />
+            <LogPrompt lakeId={focus.lake.id} />
+          </Reveal>
+        ) : null}
 
         <View style={{ gap: spacing.xs, alignItems: 'center' }}>
           <Row gap={6} justify="center">
@@ -246,10 +256,10 @@ function Readout({ entry, hour, index, onReset }: { entry: LakeData; hour: Forec
       </View>
       <View style={{ flex: 1, gap: 3 }}>
         <T variant="label" color={colors.inkMuted} numberOfLines={1}>{timeLabel}</T>
-        <T variant="callout" color={colors.ink} numberOfLines={2}>
-          {reason}
-          <T variant="callout" color={colors.inkMuted}> · {hour.confidence.toLowerCase()} confidence</T>
-        </T>
+        <Row gap={spacing.sm} accessible accessibilityLabel={`${reason}. ${hour.confidence} confidence.`}>
+          <T variant="callout" color={colors.ink} numberOfLines={2} style={{ flexShrink: 1 }}>{reason}</T>
+          <Bars level={hour.confidence} />
+        </Row>
       </View>
       {index !== 0 ? (
         <Pressable onPress={onReset} hitSlop={hitSlop} accessibilityRole="button" accessibilityLabel="Back to now" style={({ pressed }) => [styles.nowPill, pressed && { opacity: 0.6 }]}>
@@ -346,6 +356,90 @@ function LakeRow({ entry, now, onPress }: { entry: LakeData; now: number; onPres
   );
 }
 
+/* ───────────── This week: best hour per day for the lake in the sky ───────────── */
+
+function WeekStrip({ entry }: { entry: LakeData }) {
+  const { lake, forecast } = entry;
+  const days = (() => {
+    const groups = new Map<string, ForecastHour[]>();
+    forecast.hours.forEach((hour) => {
+      const d = new Date(hour.ts);
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      groups.set(key, [...(groups.get(key) ?? []), hour]);
+    });
+    return [...groups.values()].slice(0, 7).map((hours) => [...hours].sort((a, b) => b.score - a.score)[0]);
+  })();
+  const bestIndex = days.reduce((best, day, i) => (day.score > days[best].score ? i : best), 0);
+  const [selected, setSelected] = useState<number | null>(null);
+  const pick = days[selected ?? bestIndex];
+  if (!pick) return null;
+  const pickBand = scoreBands[scoreBand(pick.score)];
+
+  return (
+    <View style={styles.week}>
+      <Row justify="space-between" align="center">
+        <T variant="subhead">This week · {lake.name}</T>
+        <LinkButton icon="chevron-right" onPress={() => router.push({ pathname: '/lake/[id]', params: { id: lake.id } })}>7 days</LinkButton>
+      </Row>
+      <Row gap={6} align="flex-end" accessibilityRole="tablist">
+        {days.map((day, i) => {
+          const band = scoreBands[scoreBand(day.score)];
+          const active = i === (selected ?? bestIndex);
+          return (
+            <Pressable
+              key={day.ts}
+              onPress={() => { haptic.select(); setSelected(i); }}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={`${formatDay(day.ts)}, best near ${shortClock(day.ts)}, bite score ${day.score}, ${band.label}. ${day.reasons[0] ?? ''}. ${day.confidence} confidence.`}
+              style={[styles.dayCol, active && styles.dayColActive]}
+            >
+              <T variant="caption" weight="700" color={active ? colors.ink : colors.inkMuted} style={{ fontSize: 11 }} maxFontSizeMultiplier={1.2}>{day.score}</T>
+              <View style={styles.dayTrack}>
+                <View style={[styles.dayBar, { height: `${Math.max(8, day.score)}%`, backgroundColor: band.color, opacity: active ? 1 : 0.55 }]} />
+              </View>
+              <T variant="caption" weight={i === bestIndex ? '800' : '600'} color={active ? colors.ink : colors.inkMuted} style={{ fontSize: 11 }} maxFontSizeMultiplier={1.2}>
+                {i === 0 ? 'Today' : new Date(day.ts).toLocaleDateString([], { weekday: 'short' })}
+              </T>
+            </Pressable>
+          );
+        })}
+      </Row>
+      <Row gap={spacing.sm} style={styles.weekDetail} accessibilityLiveRegion="polite">
+        <Icon name={reasonIcon(pick.reasons[0] ?? '')} size={14} color={colors.teal} />
+        <T variant="caption" color={colors.inkSoft} numberOfLines={1} style={{ flex: 1 }}>
+          <T variant="caption" weight="700" color={colors.ink}>{shortDay(pick.ts)} · best {shortClock(pick.ts)} · </T>
+          <T variant="caption" weight="700" color={pickBand.color}>{pick.score} {pickBand.label}</T>
+          {` · ${pick.reasons[0] ?? 'Mixed conditions'}`}
+        </T>
+        <Bars level={pick.confidence} />
+      </Row>
+    </View>
+  );
+}
+
+/* ───────────── Quick log: the free core action ───────────── */
+
+function LogPrompt({ lakeId }: { lakeId: string }) {
+  const last = useAppStore((state) => state.catchLogs[0]);
+  const lastLine = last ? `Last trip · ${lakeById(last.lakeId).name}, ${formatDay(last.caughtAt).toLowerCase()}` : 'No-catch trips count too';
+  return (
+    <Pressable
+      onPress={() => router.push({ pathname: '/log/new', params: { lakeId } })}
+      accessibilityRole="button"
+      accessibilityLabel={`Log a trip. ${lastLine}`}
+      style={({ pressed }) => [styles.logRow, pressed && { opacity: 0.8 }]}
+    >
+      <View style={styles.logIcon}><Icon name="plus" size={18} color={colors.onDark} /></View>
+      <View style={{ flex: 1, gap: 1 }}>
+        <T variant="subhead">Log a trip</T>
+        <T variant="caption" color={colors.inkMuted} numberOfLines={1}>{lastLine}</T>
+      </View>
+      <Icon name="chevron-right" size={16} color={colors.inkFaint} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   scene: { marginHorizontal: -spacing.xl, marginTop: -spacing.lg, overflow: 'hidden' },
   pad: { paddingHorizontal: spacing.xl },
@@ -357,6 +451,14 @@ const styles = StyleSheet.create({
   swatch: { width: 14, height: 4, borderRadius: 2, backgroundColor: colors.sunrise },
   lakeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.white, ...elevation.low },
   scorePill: { minWidth: 56, minHeight: 44, paddingHorizontal: spacing.md, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  week: { gap: spacing.md, padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.white, ...elevation.low },
+  dayCol: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 6, borderRadius: radius.sm, minHeight: touch.min },
+  dayColActive: { backgroundColor: colors.tealMist },
+  dayTrack: { width: 12, height: 48, justifyContent: 'flex-end', borderRadius: 4, backgroundColor: colors.fog, overflow: 'hidden' },
+  dayBar: { width: '100%', borderRadius: 4 },
+  weekDetail: { paddingTop: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth * 2, borderTopColor: colors.line },
+  logRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, paddingRight: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.tealMist, borderWidth: 1, borderColor: colors.tealTint },
+  logIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.deep, alignItems: 'center', justifyContent: 'center' },
   rows: { gap: spacing.sm, marginTop: -spacing.xxxl },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   bar: { width: 3, borderRadius: 1 },

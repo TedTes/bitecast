@@ -98,7 +98,7 @@ export function LakeSchool({ width, top, bottom, mood, count = 10, sizeScale = 1
     const dt = Math.min(0.05, (frame.timeSincePreviousFrame ?? 16) / 1000);
     const a = activity.get(); // 0 sleepy … 2 active
     const pace = 0.2 + a * 0.55;
-    const preferred = 1 - a / 2; // active → upper water, sleepy → lower water
+    const preferred = 0.7 - a * 0.3; // active → upper water, sleepy → lower (still in view)
     school.modify((fish) => {
       'worklet';
       for (const f of fish) {
@@ -181,7 +181,7 @@ function SwimmingFish({ index, size, width, school }: { index: number; size: num
     const fadeZone = f.size * 1.4;
     const centre = f.x + f.size / 2;
     const edge = Math.max(0, Math.min(1, Math.min(centre, width - centre) / fadeZone));
-    const base = 0.22 + (1 - f.depth) * 0.38; // subtle: 0.22 far … 0.6 near
+    const base = 0.38 + (1 - f.depth) * 0.42; // 0.38 far … 0.8 near: visible even when lazy
     const facing = Math.abs(f.facing) < 0.12 ? (f.facing < 0 ? -0.12 : 0.12) : f.facing;
     return {
       opacity: base * edge * f.alpha,
