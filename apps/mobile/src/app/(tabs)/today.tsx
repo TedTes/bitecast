@@ -29,7 +29,6 @@ import type { AppSettings, Lake } from '@/types/app';
  * mood only (livelier vs lazy) — their number never encodes the forecast.
  */
 
-const MAX_LAKES = 5;
 /** Where the waterline sits below the header. */
 const WATERLINE = 64;
 
@@ -110,24 +109,12 @@ export default function TodayScreen() {
             </Reveal>
             {seasons.includes('ice') ? <IceSafetyNotice compact /> : null}
             <OfflineBanner />
-            <Reveal index={2} style={{ gap: spacing.sm }}>
-              <Row justify="space-between" align="center">
-                <T variant="label" color={colors.inkSoft} accessibilityRole="header">{others.length ? 'Other lakes' : 'Compare lakes'}</T>
-                {ids.length < MAX_LAKES ? (
-                  <Pressable
-                    onPress={() => router.push('/(tabs)/map')}
-                    hitSlop={hitSlop}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Follow another lake. ${ids.length} of ${MAX_LAKES} followed.`}
-                    style={({ pressed }) => [styles.followButton, pressed && { opacity: 0.7 }]}
-                  >
-                    <Icon name="plus" size={14} color={colors.teal} />
-                    <T variant="caption" weight="700" color={colors.teal}>Follow</T>
-                  </Pressable>
-                ) : null}
-              </Row>
-              {others.map((entry) => <LakeCard key={entry.lake.id} entry={entry} now={now} />)}
-            </Reveal>
+            {others.length ? (
+              <Reveal index={2} style={{ gap: spacing.sm }}>
+                <T variant="label" color={colors.inkSoft} accessibilityRole="header">Other lakes</T>
+                {others.map((entry) => <LakeCard key={entry.lake.id} entry={entry} now={now} />)}
+              </Reveal>
+            ) : null}
           </>
         ) : (
           <View style={styles.plainBlock}>
@@ -484,7 +471,10 @@ function WindowTrack({ window, now, live }: { window: ForecastWindow; now: numbe
   const at = (t: number) => Math.min(1, Math.max(0, (t - now) / spanMs));
   const s = at(start);
   const e = Math.max(s + 0.03, at(end));
-  const close = e - s < 0.22;
+  // Label positions after clamping; merge into one label when they'd overlap.
+  const startAt = Math.min(0.8, Math.max(0.2, s));
+  const endAt = Math.min(0.86, e);
+  const close = endAt - startAt < 0.26;
   return (
     <View style={{ gap: 4 }} importantForAccessibility="no-hide-descendants">
       <View style={styles.track}>
@@ -494,13 +484,13 @@ function WindowTrack({ window, now, live }: { window: ForecastWindow; now: numbe
       <View style={{ height: 15 }}>
         <T variant="caption" color={colors.inkMuted} style={[styles.trackLabel, styles.trackLabelNow]}>Now</T>
         {close || live ? (
-          <T variant="caption" weight="700" color={colors.sunriseInk} style={[styles.trackLabel, { left: `${Math.min(0.72, Math.max(0.2, s)) * 100}%` }]} numberOfLines={1}>
+          <T variant="caption" weight="700" color={colors.sunriseInk} style={[styles.trackLabel, styles.trackLabelWide, { left: `${Math.min(0.68, Math.max(0.24, (startAt + endAt) / 2)) * 100}%` }]} numberOfLines={1}>
             {live ? `until ${shortClock(windowEnd(window))}` : shortRange(window.start, windowEnd(window))}
           </T>
         ) : (
           <>
-            <T variant="caption" weight="700" color={colors.sunriseInk} style={[styles.trackLabel, { left: `${Math.min(0.8, Math.max(0.2, s)) * 100}%` }]} numberOfLines={1}>{shortClock(window.start)}</T>
-            <T variant="caption" weight="700" color={colors.sunriseInk} style={[styles.trackLabel, { left: `${Math.min(0.86, e) * 100}%` }]} numberOfLines={1}>{shortClock(windowEnd(window))}</T>
+            <T variant="caption" weight="700" color={colors.sunriseInk} style={[styles.trackLabel, { left: `${startAt * 100}%` }]} numberOfLines={1}>{shortClock(window.start)}</T>
+            <T variant="caption" weight="700" color={colors.sunriseInk} style={[styles.trackLabel, { left: `${endAt * 100}%` }]} numberOfLines={1}>{shortClock(windowEnd(window))}</T>
           </>
         )}
       </View>
@@ -592,6 +582,7 @@ const styles = StyleSheet.create({
   trackWindow: { position: 'absolute', top: 0, bottom: 0, borderRadius: 4, backgroundColor: colors.sunrise, shadowColor: colors.sunrise, shadowOpacity: 0.6, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } },
   trackNow: { position: 'absolute', left: -2, width: 12, height: 12, borderRadius: 6, backgroundColor: colors.ink, borderWidth: 2, borderColor: colors.white },
   trackLabel: { position: 'absolute', top: 0, width: 72, marginLeft: -36, textAlign: 'center', fontSize: 11 },
+  trackLabelWide: { width: 120, marginLeft: -60 },
   trackLabelNow: { left: 0, marginLeft: 0, textAlign: 'left' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: colors.tealMist },
@@ -599,7 +590,6 @@ const styles = StyleSheet.create({
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   bar: { width: 3, borderRadius: 1 },
   conditionsCard: { gap: spacing.md, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.white, ...elevation.low },
-  followButton: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 34, paddingHorizontal: spacing.md, borderRadius: radius.pill, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.tealTint },
   lakeCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.white, ...elevation.low },
   lakeScore: { width: 58, height: 58, borderRadius: radius.md, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   about: { padding: spacing.md, borderRadius: radius.md, backgroundColor: 'rgba(251,250,245,0.92)' },
