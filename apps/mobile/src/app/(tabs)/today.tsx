@@ -2,16 +2,16 @@ import { useState, type ReactNode } from 'react';
 import { router } from 'expo-router';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import type { ForecastWindow, LakeForecast, Season } from '@bitecast/engine';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
-import { ConfidenceMeter, DayStrip, ForecastFootnote, ReasonLine, ScoreReadout, conditionLabel, upcomingWindows, windowEnd } from '@/components/forecast';
+import { ConfidenceMeter, DayStrip, ForecastFootnote, ReasonLine, conditionLabel, upcomingWindows, windowEnd } from '@/components/forecast';
 import { Icon } from '@/components/icon';
 import { SkyArc } from '@/components/sky-arc';
 import { Toast } from '@/components/toast';
-import { Button, Card, Divider, EmptyState, ErrorState, IceSafetyNotice, LinkButton, OfflineBanner, Reveal, Row, Screen, SkeletonCard, T } from '@/components/ui';
+import { Button, Card, EmptyState, ErrorState, IceSafetyNotice, LinkButton, OfflineBanner, Reveal, Row, Screen, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
-import { colors, elevation, hitSlop, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
+import { colors, elevation, hitSlop, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
 import { forecastQuery, forecastSource, freshness } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { seasonLabel, useConditionResolver } from '@/features/lake-season';
@@ -175,159 +175,168 @@ function Hero({ now, source, fresh, refreshing, onRefresh, night, children }: { 
   );
 }
 
-/* ───────────── Floating readout: lake → scrubbed hour → score → reasons → confidence → window ───────────── */
+/* ───────────── Floating readout: score tile → lake → reasons → confidence → window ───────────── */
+
+function ScoreTile({ score, caption, size = 'lg' }: { score: number; caption: string; size?: 'lg' | 'sm' }) {
+  const band = scoreBands[scoreBand(score)];
+  return (
+    <View
+      accessible
+      accessibilityLabel={`${caption} bite score ${score} out of 100, ${band.label}`}
+      style={[styles.tile, size === 'sm' && styles.tileSm, { backgroundColor: band.tint, borderColor: band.color }]}
+    >
+      <T variant="label" color={band.color} style={{ fontSize: size === 'sm' ? 8.5 : 9.5 }}>{caption}</T>
+      <T variant={size === 'sm' ? 'numeralM' : 'numeralL'} color={colors.ink}>{score}</T>
+      <T variant="caption" weight="800" color={band.color} style={size === 'sm' ? { fontSize: 11, lineHeight: 13 } : undefined}>{band.label}</T>
+    </View>
+  );
+}
 
 function ReadoutCard({ entry, isTop, index, onIndexChange, now }: { entry: LakeData; isTop: boolean; index: number; onIndexChange: (i: number) => void; now: number }) {
   const { lake, forecast, season } = entry;
   const hour = forecast.hours[Math.min(index, forecast.hours.length - 1)];
   const broad = forecast.predictionGranularity === 'time_block';
-  const band = scoreBands[scoreBand(hour.score)];
   const hourMs = new Date(hour.ts).getTime();
   const containing = forecast.windows.find((w) => w.hours.some((h) => h.ts === hour.ts));
   const next = containing ? undefined : upcomingWindows(forecast.windows, Math.max(now, hourMs)).find((w) => new Date(w.start).getTime() > hourMs);
-  const timeLabel = broad
-    ? `Broad block · ${formatDay(hour.ts)} ${shortClock(hour.ts)}`
-    : index === 0 ? 'Now' : `${formatDay(hour.ts)} · ${shortClock(hour.ts)}`;
+  const timeLabel = index === 0 ? 'Now' : `${formatDay(hour.ts)} · ${shortClock(hour.ts)}`;
 
   return (
     <Card style={styles.readout}>
-      {/* Header: lake + link */}
-      <Row gap={spacing.sm} style={styles.skyHeader}>
-        <Icon name={season === 'ice' ? 'ice' : 'open-water'} size={14} color={colors.teal} />
-        <T variant="subhead" style={{ flexShrink: 1 }} numberOfLines={1}>{lake.name}</T>
-        {isTop ? <View style={styles.topTag}><T variant="label" color={colors.sunriseInk} style={{ fontSize: 9 }}>Top pick</T></View> : null}
-        <View style={{ flex: 1 }} />
+      <Row gap={spacing.lg} align="flex-start" accessibilityLiveRegion="polite">
+        <ScoreTile score={hour.score} caption={broad ? 'Block' : index === 0 ? 'Now' : 'Hour'} />
+        <View style={{ flex: 1, gap: spacing.xs + 2 }}>
+          <Row gap={spacing.sm} style={{ minHeight: 22 }}>
+            <Icon name={season === 'ice' ? 'ice' : 'open-water'} size={12} color={colors.teal} />
+            <T variant="label" color={colors.inkMuted} numberOfLines={1} style={{ flexShrink: 1 }}>{timeLabel}</T>
+            {isTop && index === 0 ? <View style={styles.topTag}><T variant="label" color={colors.sunriseInk} style={{ fontSize: 9 }}>Top pick</T></View> : null}
+            <View style={{ flex: 1 }} />
+            {index !== 0 ? (
+              <Pressable onPress={() => onIndexChange(0)} hitSlop={hitSlop} accessibilityRole="button" accessibilityLabel="Back to now" style={({ pressed }) => [styles.nowPill, pressed && { opacity: 0.6 }]}>
+                <Icon name="restore" size={12} color={colors.teal} />
+                <T variant="caption" weight="700" color={colors.teal}>Now</T>
+              </Pressable>
+            ) : null}
+          </Row>
+          <T variant="title" numberOfLines={1} style={{ fontSize: 22, lineHeight: 27 }}>{lake.name}</T>
+          <ReasonLine reasons={hour.reasons} />
+          <ConfidenceMeter value={hour.confidence} />
+        </View>
+      </Row>
+
+      <Row gap={spacing.sm} style={[styles.statusBar, containing && styles.statusBarLive]}>
+        {containing ? <View style={styles.windowSwatch} /> : <Icon name="clock" size={14} color={colors.inkMuted} />}
+        <T variant="callout" color={containing ? colors.sunriseInk : colors.inkSoft} weight={containing ? '700' : '400'} style={{ flex: 1 }} numberOfLines={2}>
+          {containing
+            ? `${broad ? 'In a broad block' : 'In a window'} · ${shortRange(containing.start, windowEnd(containing))}${index === 0 ? ` · ${formatDuration(new Date(windowEnd(containing)).getTime() - now)} left` : ''}`
+            : next
+              ? <>Next {broad ? 'block' : 'window'} <T variant="callout" weight="700">{formatDay(next.start).toLowerCase()} {shortRange(next.start, windowEnd(next))}</T>{broad ? '' : ` · peak ${next.peakScore}`}</>
+              : 'No window above 60 in this forecast'}
+        </T>
         <LinkButton icon="chevron-right" onPress={() => router.push({ pathname: '/lake/[id]', params: { id: lake.id } })}>Forecast</LinkButton>
       </Row>
 
-      {/* Readout for the scrubbed hour: score → reasons → confidence → window status */}
-      <View style={{ gap: spacing.md }} accessibilityLiveRegion="polite">
-        <Row justify="space-between" align="center" style={{ minHeight: 20 }}>
-          <T variant="label" color={colors.inkMuted} style={{ flexShrink: 1 }} numberOfLines={1}>{timeLabel}</T>
-          {index !== 0 ? (
-            <Pressable onPress={() => onIndexChange(0)} hitSlop={hitSlop} accessibilityRole="button" accessibilityLabel="Back to now" style={({ pressed }) => [styles.nowPill, pressed && { opacity: 0.6 }]}>
-              <Icon name="restore" size={12} color={colors.teal} />
-              <T variant="caption" weight="700" color={colors.teal}>Now</T>
-            </Pressable>
-          ) : null}
-        </Row>
-        <Row gap={spacing.lg} align="center" style={{ marginTop: -spacing.sm }}>
-          <View>
-            <T variant="numeralL">{hour.score}</T>
-            <T variant="caption" weight="700" color={band.color}>{band.label}</T>
-          </View>
-          <View style={{ flex: 1, gap: spacing.sm }}>
-            <ReasonLine reasons={hour.reasons} />
-            <ConfidenceMeter value={hour.confidence} />
-          </View>
-        </Row>
-        {containing ? (
-          <Row gap={spacing.sm} style={[styles.status, styles.statusLive]}>
-            <View style={styles.windowSwatch} />
-            <T variant="callout" weight="700" color={colors.sunriseInk} style={{ flex: 1 }}>
-              {broad ? 'In a broad block' : 'In a window'} · {shortRange(containing.start, windowEnd(containing))}
-              {index === 0 ? ` · ${formatDuration(new Date(windowEnd(containing)).getTime() - now)} left` : ''}
-            </T>
-          </Row>
-        ) : next ? (
-          <Row gap={spacing.sm} style={styles.status}>
-            <Icon name="clock" size={14} color={colors.inkMuted} />
-            <T variant="callout" color={colors.inkSoft} style={{ flex: 1 }}>
-              Next {broad ? 'broad block' : 'window'} <T variant="callout" weight="700">{formatDay(next.start).toLowerCase()} {shortRange(next.start, windowEnd(next))}</T>{broad ? '' : ` · peak ${next.peakScore}`}
-            </T>
-          </Row>
-        ) : (
-          <T variant="callout" color={colors.inkMuted}>No window above 60 in this forecast.</T>
-        )}
-      </View>
-
       {broad ? (
-        <T variant="caption" color={colors.inkMuted} align="center">
-          Broad time-block outlooks repeat across the day; they are not exact hourly predictions.
-        </T>
+        <Row gap={6} accessible accessibilityLabel="Broad time-block outlooks repeat across the day; they are not exact hourly predictions.">
+          <Icon name="info" size={12} color={colors.inkMuted} />
+          <T variant="caption" color={colors.inkMuted}>Broad time blocks, not exact hourly predictions</T>
+        </Row>
       ) : null}
     </Card>
   );
 }
 
-/* ───────────── Compact lake list ───────────── */
+/* ───────────── Lake carousel: one compact card per lake; tap to put it in the sky ───────────── */
+
+const TILE_W = 172;
 
 function LakeList({ entries, focusId, onFocus, now, canAdd, count }: { entries: LakeData[]; focusId: string; onFocus: (id: string) => void; now: number; canAdd: boolean; count: number }) {
   return (
-    <Card style={{ gap: 0, paddingVertical: spacing.xs }}>
-      {entries.map((entry, index) => {
-        const { lake, next, live, forecast, season } = entry;
-        const broad = forecast.predictionGranularity === 'time_block';
-        const current = forecast.hours[0];
-        const score = next?.peakScore ?? current.score;
-        const when = next
-          ? live
-            ? `On now · ${formatDuration(new Date(windowEnd(next)).getTime() - now)} left`
-            : `${formatDay(next.start)} ${shortRange(next.start, windowEnd(next))}`
-          : 'No window this week';
-        const reason = (next?.reasons ?? current.reasons)[0] ?? 'Mixed conditions';
-        const confidence = next?.confidence ?? current.confidence;
-        return (
-          <View key={lake.id}>
-            {index > 0 ? <Divider /> : null}
+    <View style={{ gap: spacing.sm }}>
+      <Row justify="space-between">
+        <T variant="label" color={colors.inkMuted} accessibilityRole="header">Your lakes</T>
+        <T variant="caption" color={colors.inkMuted}>Tap to show in the sky</T>
+      </Row>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={TILE_W + spacing.md}
+        decelerationRate="fast"
+        style={{ marginHorizontal: -spacing.xl }}
+        contentContainerStyle={{ paddingHorizontal: spacing.xl, gap: spacing.md }}
+      >
+        {entries.map((entry) => {
+          const { lake, next, live, forecast, season } = entry;
+          const broad = forecast.predictionGranularity === 'time_block';
+          const current = forecast.hours[0];
+          const score = next?.peakScore ?? current.score;
+          const active = lake.id === focusId;
+          const when = next
+            ? live
+              ? `On now · ${formatDuration(new Date(windowEnd(next)).getTime() - now)} left`
+              : `${formatDay(next.start)} ${shortRange(next.start, windowEnd(next))}`
+            : 'No window this week';
+          const reason = (next?.reasons ?? current.reasons)[0] ?? 'Mixed conditions';
+          const confidence = next?.confidence ?? current.confidence;
+          return (
             <Pressable
+              key={lake.id}
               onPress={() => onFocus(lake.id)}
               accessibilityRole="button"
-              accessibilityState={{ selected: lake.id === focusId }}
+              accessibilityState={{ selected: active }}
               accessibilityLabel={`${lake.name}, ${seasonLabel(season).toLowerCase()}. ${when}. ${broad ? 'Broad block' : next ? 'Peak' : 'Now'} bite score ${score}, ${conditionLabel(score)}. ${reason}. ${confidence} confidence.`}
-              accessibilityHint="Shows this lake in the sky chart above"
-              style={({ pressed }) => [styles.lakeRow, lake.id === focusId && styles.lakeRowFocus, pressed && { opacity: 0.7 }]}
+              accessibilityHint="Shows this lake in the sky above"
+              style={({ pressed }) => [styles.lakeTile, active && styles.lakeTileActive, pressed && { opacity: 0.8 }]}
             >
-              <Row gap={spacing.md} align="center">
+              <Row gap={6}>
+                <Icon name={season === 'ice' ? 'ice' : 'open-water'} size={12} color={colors.teal} />
+                <T variant="subhead" numberOfLines={1} style={{ flex: 1 }}>{lake.name}</T>
+              </Row>
+              <Row gap={spacing.sm} align="center">
+                <ScoreTile score={score} caption={broad ? 'Block' : next ? 'Peak' : 'Now'} size="sm" />
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Row gap={6}>
-                    <T variant="subhead" numberOfLines={1} style={{ flexShrink: 1 }}>{lake.name}</T>
-                    {lake.id === focusId ? <T variant="caption" weight="700" color={colors.teal}>· in the sky</T> : null}
-                  </Row>
-                  <T variant="caption" weight="700" color={live ? colors.sunriseInk : colors.inkSoft}>{when}</T>
-                  <T variant="caption" color={colors.inkMuted} numberOfLines={1}>{reason} · {confidence} confidence</T>
+                  <T variant="caption" weight="700" color={live ? colors.sunriseInk : colors.ink} numberOfLines={2}>{when}</T>
+                  <T variant="caption" color={colors.inkMuted} numberOfLines={1}>{confidence} confidence</T>
                 </View>
-                <ScoreReadout score={score} size="sm" caption={broad ? 'Block' : next ? 'Peak' : 'Now'} />
               </Row>
               <DayStrip hours={forecast.hours} windows={forecast.windows} axis={false} />
+              <T variant="caption" color={colors.inkSoft} numberOfLines={1}>{reason}</T>
             </Pressable>
-          </View>
-        );
-      })}
-      {canAdd ? (
-        <>
-          <Divider />
+          );
+        })}
+        {canAdd ? (
           <Pressable
             onPress={() => router.push('/(tabs)/map')}
             accessibilityRole="button"
             accessibilityLabel={`Follow another lake. ${count} of ${MAX_LAKES} followed.`}
-            style={({ pressed }) => [styles.addRow, pressed && { opacity: 0.6 }]}
+            style={({ pressed }) => [styles.lakeTile, styles.addTile, pressed && { opacity: 0.6 }]}
           >
-            <View style={styles.addIcon}><Icon name="plus" size={16} color={colors.teal} /></View>
-            <T variant="callout" weight="700" color={colors.teal} style={{ flex: 1 }}>Follow another lake</T>
+            <View style={styles.addIcon}><Icon name="plus" size={18} color={colors.teal} /></View>
+            <T variant="callout" weight="700" color={colors.teal} align="center">Follow a lake</T>
             <T variant="caption" color={colors.inkMuted}>{count} of {MAX_LAKES}</T>
           </Pressable>
-        </>
-      ) : null}
-    </Card>
+        ) : null}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  skyHeader: { paddingBottom: spacing.sm, marginBottom: -spacing.xs, borderBottomWidth: StyleSheet.hairlineWidth * 2, borderBottomColor: colors.line, marginHorizontal: -spacing.lg, paddingHorizontal: spacing.lg },
-  status: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radius.sm, backgroundColor: colors.fog },
-  statusLive: { backgroundColor: colors.sunriseTint },
   hero: { marginHorizontal: -spacing.xl, marginTop: -spacing.lg, overflow: 'hidden' },
   heroHeader: { paddingHorizontal: spacing.xl, paddingBottom: spacing.sm },
   freshPill: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: 190, paddingHorizontal: spacing.sm + 2, paddingVertical: 6, marginBottom: 4, borderRadius: radius.pill, backgroundColor: 'rgba(251,250,245,0.72)', borderWidth: 1, borderColor: 'rgba(191,200,194,0.6)' },
   freshPillStale: { backgroundColor: colors.warningTint, borderColor: colors.warningLine },
   float: { marginTop: -FLOAT_OVERLAP },
+  tile: { width: 78, alignItems: 'center', paddingVertical: spacing.sm, borderRadius: radius.md, borderWidth: 1 },
+  tileSm: { width: 60, paddingVertical: 6 },
+  statusBar: { alignItems: 'center', paddingLeft: spacing.md, paddingRight: spacing.xs, minHeight: 48, borderRadius: radius.md, backgroundColor: colors.fog },
+  statusBarLive: { backgroundColor: colors.sunriseTint },
+  lakeTile: { width: TILE_W, gap: spacing.sm, padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
+  lakeTileActive: { backgroundColor: colors.white, borderColor: colors.teal, borderWidth: 2, ...elevation.low },
+  addTile: { alignItems: 'center', justifyContent: 'center', borderStyle: 'dashed', borderColor: colors.lineStrong, backgroundColor: 'transparent', width: 132 },
   readout: { gap: spacing.md + 2, borderRadius: radius.xl, backgroundColor: colors.white, borderWidth: 0, ...elevation.raised },
   nowPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.sm + 2, paddingVertical: 4, borderRadius: radius.pill, backgroundColor: colors.tealMist },
   topTag: { backgroundColor: colors.sunriseTint, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.xs },
-  lakeRowFocus: { borderLeftWidth: 3, borderLeftColor: colors.teal, paddingLeft: spacing.md, marginLeft: -spacing.lg + 3, paddingRight: 0 },
   windowSwatch: { width: 14, height: 5, borderRadius: 3, backgroundColor: colors.sunrise },
-  lakeRow: { gap: spacing.sm, paddingVertical: spacing.md },
-  addRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: touch.comfortable, paddingTop: spacing.xs },
-  addIcon: { width: 28, height: 28, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.teal, alignItems: 'center', justifyContent: 'center' },
+  addIcon: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.teal, alignItems: 'center', justifyContent: 'center' },
 });

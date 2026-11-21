@@ -21,9 +21,13 @@ const HORIZON_LABEL_W = 98;
 const MAX_ELEVATION = 45;
 const MIN_ELEVATION = -12;
 
-const yFor = (elevation: number) =>
+/**
+ * `peak` is the day's highest sun elevation, so the arc always uses the sky: a low winter
+ * sun still reads lower via its flatter shape, but no longer hugs the horizon.
+ */
+const yFor = (elevation: number, peak = MAX_ELEVATION) =>
   elevation >= 0
-    ? HORIZON - (Math.min(elevation, MAX_ELEVATION) / MAX_ELEVATION) * (HORIZON - SKY_TOP)
+    ? HORIZON - (Math.min(elevation, peak) / peak) * (HORIZON - SKY_TOP) * 0.92
     : HORIZON + (Math.min(-elevation, -MIN_ELEVATION) / -MIN_ELEVATION) * NIGHT_DIP;
 
 /** Smooth path through points (Catmull-Rom → cubic Bézier). */
@@ -67,7 +71,8 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = 
   const [width, setWidth] = useState(0);
   const reduced = useReducedMotion();
   const step = width ? (width - PAD * 2) / Math.max(1, data.length - 1) : 0;
-  const points = useMemo(() => data.map((hour, i) => ({ x: PAD + i * step, y: yFor(hour.sunElevation) })), [data, step]);
+  const peak = Math.min(MAX_ELEVATION, Math.max(12, ...data.map((hour) => hour.sunElevation)));
+  const points = useMemo(() => data.map((hour, i) => ({ x: PAD + i * step, y: yFor(hour.sunElevation, peak) })), [data, step, peak]);
   const windowSet = useMemo(() => new Set(windows.flatMap((w) => w.hours.map((h) => h.ts))), [windows]);
 
   // Window segments drawn over the curve.
