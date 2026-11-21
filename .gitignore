@@ -10,4 +10,5 @@ supabase/.temp/
 data/snapshots/
 ml/artifacts-canary/
 ml/registry-canary/
+sites/bitecast-support/
 
