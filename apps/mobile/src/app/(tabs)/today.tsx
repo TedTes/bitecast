@@ -10,9 +10,9 @@ import { conditionLabel, upcomingWindows, windowEnd } from '@/components/forecas
 import { Icon } from '@/components/icon';
 import { SkyArc } from '@/components/sky-arc';
 import { Toast } from '@/components/toast';
-import { Button, EmptyState, ErrorState, IceSafetyNotice, LinkButton, OfflineBanner, Reveal, Row, Screen, SkeletonCard, T } from '@/components/ui';
+import { Button, Divider, EmptyState, ErrorState, IceSafetyNotice, LinkButton, OfflineBanner, Reveal, Row, Screen, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
-import { colors, elevation, hitSlop, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
+import { colors, elevation, hitSlop, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
 import { forecastQuery, forecastSource, freshness } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { seasonLabel, useConditionResolver } from '@/features/lake-season';
@@ -30,6 +30,12 @@ type LakeData = { lake: Lake; season: Season; forecast: LakeForecast; updatedAt:
 const shortDay = (value: string) => {
   const day = formatDay(value);
   return day === 'Today' || day === 'Tomorrow' ? day : new Date(value).toLocaleDateString([], { weekday: 'short' });
+};
+
+/** Forecast hours from the current hour onward (cached forecasts can start earlier). */
+const fromNow = (hours: ForecastHour[], now: number) => {
+  const start = hours.findIndex((hour) => new Date(hour.ts).getTime() + 3_600_000 > now);
+  return start <= 0 ? hours : hours.slice(start);
 };
 
 /** The window to act on for a lake: one open now, else the soonest upcoming. */
@@ -75,7 +81,8 @@ export default function TodayScreen() {
     setHourIndex(0);
   };
 
-  const focusHour = focus?.forecast.hours[Math.min(hourIndex, focus.forecast.hours.length - 1)];
+  const focusHours = focus ? fromNow(focus.forecast.hours, now) : [];
+  const focusHour = focusHours[Math.min(hourIndex, focusHours.length - 1)];
   const [aboutOpen, setAboutOpen] = useState(false);
   const broad = focus?.forecast.predictionGranularity === 'time_block';
 
@@ -90,11 +97,9 @@ export default function TodayScreen() {
               <Readout entry={focus} hour={focusHour} index={hourIndex} onReset={() => setHourIndex(0)} />
               <WindowPills entry={focus} hour={focusHour} now={now} />
               <SkyArc
-                immersive
-                tagScore
                 fishCount={6}
                 fishScale={1.25}
-                hours={focus.forecast.hours}
+                hours={focusHours}
                 windows={focus.forecast.windows}
                 ice={focus.season === 'ice'}
                 index={hourIndex}
@@ -109,21 +114,24 @@ export default function TodayScreen() {
         {focus ? (
           <>
             <Reveal index={0} style={styles.rows}>
-              {others.map((entry) => (
-                <LakeRow key={entry.lake.id} entry={entry} now={now} onPress={() => chooseLake(entry.lake.id)} />
-              ))}
-              {ids.length < MAX_LAKES ? (
-                <Pressable
-                  onPress={() => router.push('/(tabs)/map')}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Follow another lake. ${ids.length} of ${MAX_LAKES} followed.`}
-                  style={({ pressed }) => [styles.addRow, pressed && { opacity: 0.6 }]}
-                >
-                  <Icon name="plus" size={16} color={colors.teal} />
-                  <T variant="callout" weight="700" color={colors.teal} style={{ flex: 1 }}>Follow another lake</T>
-                  <T variant="caption" color={colors.inkMuted}>{ids.length} of {MAX_LAKES}</T>
-                </Pressable>
-              ) : null}
+              <Row justify="space-between" align="center">
+                <T variant="label" color={colors.inkMuted} accessibilityRole="header">{others.length ? 'Your other lakes' : 'Compare lakes'}</T>
+                {ids.length < MAX_LAKES ? (
+                  <LinkButton icon="plus" onPress={() => router.push('/(tabs)/map')}>{`Follow · ${ids.length}/${MAX_LAKES}`}</LinkButton>
+                ) : null}
+              </Row>
+              {others.length ? (
+                <View style={styles.group}>
+                  {others.map((entry, i) => (
+                    <View key={entry.lake.id}>
+                      {i > 0 ? <Divider /> : null}
+                      <LakeRow entry={entry} now={now} onPress={() => chooseLake(entry.lake.id)} />
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <T variant="caption" color={colors.inkMuted}>Follow another lake to see its windows side by side.</T>
+              )}
             </Reveal>
             {focus.season === 'ice' || seasons.includes('ice') ? <IceSafetyNotice compact /> : null}
             <OfflineBanner />
@@ -151,7 +159,7 @@ export default function TodayScreen() {
         )}
 
         {focus ? (
-          <Reveal index={1} style={{ gap: spacing.md }}>
+          <Reveal index={1}>
             <LogPrompt lakeId={focus.lake.id} />
           </Reveal>
         ) : null}
@@ -316,7 +324,7 @@ function Bars({ level }: { level: 'High' | 'Medium' | 'Low' }) {
 
 function LakeRow({ entry, now, onPress }: { entry: LakeData; now: number; onPress: () => void }) {
   const { lake, next, live, forecast, season } = entry;
-  const current = forecast.hours[0];
+  const current = fromNow(forecast.hours, now)[0];
   const score = next?.peakScore ?? current.score;
   const band = scoreBands[scoreBand(score)];
   const when = next
@@ -359,21 +367,13 @@ function LakeRow({ entry, now, onPress }: { entry: LakeData; now: number; onPres
 
 function LogPrompt({ lakeId }: { lakeId: string }) {
   const last = useAppStore((state) => state.catchLogs[0]);
-  const lastLine = last ? `Last trip · ${lakeById(last.lakeId).name}, ${formatDay(last.caughtAt).toLowerCase()}` : 'No-catch trips count too';
   return (
-    <Pressable
-      onPress={() => router.push({ pathname: '/log/new', params: { lakeId } })}
-      accessibilityRole="button"
-      accessibilityLabel={`Log a trip. ${lastLine}`}
-      style={({ pressed }) => [styles.logRow, pressed && { opacity: 0.8 }]}
-    >
-      <View style={styles.logIcon}><Icon name="plus" size={18} color={colors.onDark} /></View>
-      <View style={{ flex: 1, gap: 1 }}>
-        <T variant="subhead">Log a trip</T>
-        <T variant="caption" color={colors.inkMuted} numberOfLines={1}>{lastLine}</T>
-      </View>
-      <Icon name="chevron-right" size={16} color={colors.inkFaint} />
-    </Pressable>
+    <View style={{ gap: spacing.xs }}>
+      <Button variant="secondary" size="md" icon="plus" onPress={() => router.push({ pathname: '/log/new', params: { lakeId } })}>Log a trip</Button>
+      <T variant="caption" color={colors.inkMuted} align="center">
+        {last ? `Last trip · ${lakeById(last.lakeId).name}, ${formatDay(last.caughtAt)}` : 'No-catch trips count too — they sharpen your patterns'}
+      </T>
+    </View>
   );
 }
 
@@ -386,12 +386,10 @@ const styles = StyleSheet.create({
   pillLight: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.88)' },
   pillDark: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: colors.deep },
   swatch: { width: 14, height: 4, borderRadius: 2, backgroundColor: colors.sunrise },
-  lakeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.white, ...elevation.low },
+  lakeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },
+  group: { paddingHorizontal: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.white, ...elevation.low },
   scorePill: { minWidth: 56, minHeight: 44, paddingHorizontal: spacing.md, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  logRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, paddingRight: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.tealMist, borderWidth: 1, borderColor: colors.tealTint },
-  logIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.deep, alignItems: 'center', justifyContent: 'center' },
-  rows: { gap: spacing.sm, marginTop: -spacing.xxxl },
+  rows: { gap: spacing.sm, marginTop: -spacing.xxl },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   bar: { width: 3, borderRadius: 1 },
-  addRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: touch.comfortable, paddingHorizontal: spacing.lg, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.lineStrong },
 });

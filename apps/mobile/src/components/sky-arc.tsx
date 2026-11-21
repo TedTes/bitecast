@@ -1,44 +1,34 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ForecastHour, ForecastWindow } from '@bitecast/engine';
 import { StyleSheet, View, type AccessibilityActionEvent, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
-import * as SunCalc from 'suncalc';
 import Svg, { Defs, Line, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import * as SunCalc from 'suncalc';
 import { colors, scoreBand, scoreBands } from '@/constants/theme';
 import { formatTime, shortClock } from '@/lib/format';
 import { Icon } from './icon';
-import { T } from './ui';
 import { LakeSchool, type Mood } from './lake-school';
+import { T } from './ui';
 
-/* Geometry (points). The SVG is purely visual; a transparent overlay handles touch. */
-// SKY_TOP leaves room for the time tag riding above the sun, inside the arc's own box.
-const H = 198;
-const HORIZON = 108;
-const SKY_TOP = 36;
-const NIGHT_DIP = 20;
-const AXIS_Y = H - 16;
-const PAD = 14;
-const HORIZON_LABEL_W = 98;
-/** Score threshold where a bite window starts (drawn as a faint guide). */
-const WINDOW_SCORE = 60;
-
-/**
- * The line is the hourly bite score (a “bite tide”): 0 sits just under the waterline,
- * 100 near the top of the sky. Day/night context comes from the sky tint, the sunrise/
- * sunset labels and the sun/moon marker — not from the line.
+/*
+ * Lake scene for Today. The forecast is shown as a ribbon of blocks along the waterline —
+ * honest for broad time-block forecasts (no implied hourly precision). Above it, the sun or
+ * moon rides with the scrubbed hour; below it, the lake and a school of walleye.
  */
-const yForScore = (score: number) => HORIZON + 10 - (Math.max(0, Math.min(100, score)) / 100) * (HORIZON + 10 - SKY_TOP);
 
-/** Smooth path through points (Catmull-Rom → cubic Bézier). */
-function smooth(points: { x: number; y: number }[]) {
-  if (points.length < 2) return '';
-  let d = `M${points[0].x},${points[0].y}`;
-  for (let i = 0; i < points.length - 1; i += 1) {
-    const p0 = points[i - 1] ?? points[i], p1 = points[i], p2 = points[i + 1], p3 = points[i + 2] ?? p2;
-    d += ` C${p1.x + (p2.x - p0.x) / 6},${p1.y + (p2.y - p0.y) / 6} ${p2.x - (p3.x - p1.x) / 6},${p2.y - (p3.y - p1.y) / 6} ${p2.x},${p2.y}`;
-  }
-  return d;
-}
+const H = 200;
+const HORIZON = 82;
+const RIB_H = 20;
+const FADE = 40;
+const PAD = 12;
+const TICK_LABEL_W = 92;
+const TAG_HALF = 44;
+const MARKER_W = 56;
+const TAG_H = 17;
+const GLYPH = 26;
+/** Glyph centre sits just above the ribbon. */
+const GLYPH_Y = HORIZON - GLYPH / 2 - 4;
+const MARKER_TOP = GLYPH_Y - GLYPH / 2 - 4 - TAG_H;
 
 export const moodFor = (score: number): Mood => (score >= 60 ? 'active' : score >= 40 ? 'idle' : 'sleepy');
 
@@ -48,97 +38,45 @@ type Props = {
   ice: boolean;
   index: number;
   onIndexChange: (index: number) => void;
-  /**
-   * Full-bleed scene: no sky fill (the page's sky shows through), a deeper lake that fades
-   * into the page at the bottom, and the hour axis just above the fade.
-   */
-  immersive?: boolean;
-  /** Pills drawn inside the sky, top-left and top-right (e.g. current / next window). */
-  overlayLeft?: ReactNode;
-  overlayRight?: ReactNode;
-  /** Show the scrubbed hour's score in the marker tag (“2 am · 29”). */
-  tagScore?: boolean;
-  fishCount?: number;
-  fishScale?: number;
-  /** When given, the curve is the true sun path for this location (smooth), not model data. */
+  /** Lake location, for the true sun position (day/night marker, sunrise/sunset ticks). */
   latitude?: number;
   longitude?: number;
+  fishCount?: number;
+  fishScale?: number;
 };
 
-const IMMERSIVE_H = 214;
-const FADE = 44;
-/** Approximate half-width of the time tag, used to keep it inside the screen. */
-const TAG_HALF = 44;
+type Segment = { start: number; end: number; score: number; window: boolean };
 
-/**
- * Sky arc: the next 24 hours of sun elevation over a lake horizon. Daylight rises above the
- * waterline, night dips under it; window hours glow. Drag to scrub hours.
- */
-export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = false, overlayLeft, overlayRight, tagScore = false, fishCount, fishScale, latitude, longitude }: Props) {
-  const height = immersive ? IMMERSIVE_H : H;
-  const lakeH = immersive ? height - HORIZON : AXIS_Y - HORIZON - 6;
-  const fishBottom = immersive ? height - FADE - 18 : AXIS_Y - 8;
+/** Nudge only once per app session. */
+let nudged = false;
+
+export function SkyArc({ hours, windows, ice, index, onIndexChange, latitude, longitude, fishCount, fishScale }: Props) {
   const data = hours.slice(0, 24);
   const [width, setWidth] = useState(0);
   const reduced = useReducedMotion();
-  const step = width ? (width - PAD * 2) / Math.max(1, data.length - 1) : 0;
-  // True sun elevation for the lake when we know where it is; model data otherwise.
+  const step = width ? (width - PAD * 2) / Math.max(1, data.length) : 0;
+  const xAt = (i: number) => PAD + i * step;
+  const windowSet = useMemo(() => new Set(windows.flatMap((w) => w.hours.map((h) => h.ts))), [windows]);
+
   const elev = useMemo(
     () => data.map((hour) => (latitude !== undefined && longitude !== undefined ? (SunCalc.getPosition(new Date(hour.ts), latitude, longitude).altitude * 180) / Math.PI : hour.sunElevation)),
     [data, latitude, longitude],
   );
-  const points = useMemo(() => data.map((hour, i) => ({ x: PAD + i * step, y: yForScore(hour.score) })), [data, step]);
-  const windowSet = useMemo(() => new Set(windows.flatMap((w) => w.hours.map((h) => h.ts))), [windows]);
 
-  // Window segments drawn over the curve.
+  // Consecutive hours with the same band and window state form one block.
   const segments = useMemo(() => {
-    const out: { x: number; y: number }[][] = [];
-    let run: { x: number; y: number }[] = [];
+    const out: Segment[] = [];
     data.forEach((hour, i) => {
-      if (windowSet.has(hour.ts)) run.push(points[i]);
-      else if (run.length) { out.push(run); run = []; }
+      const inWindow = windowSet.has(hour.ts);
+      const last = out[out.length - 1];
+      if (last && scoreBand(last.score) === scoreBand(hour.score) && last.window === inWindow) {
+        last.end = i;
+        last.score = Math.max(last.score, hour.score);
+      } else out.push({ start: i, end: i, score: hour.score, window: inWindow });
     });
-    if (run.length) out.push(run);
-    return out.map((seg) => (seg.length === 1 ? [{ x: seg[0].x - step / 2, y: seg[0].y }, { x: seg[0].x + step / 2, y: seg[0].y }] : seg));
-  }, [data, points, windowSet, step]);
+    return out;
+  }, [data, windowSet]);
 
-  // Marker follows the scrubbed hour with a short ease.
-  const mx = useSharedValue(0);
-  const my = useSharedValue(HORIZON);
-  const point = points[index] ?? points[0];
-  useEffect(() => {
-    if (!point) return;
-    const ease = { duration: reduced ? 0 : 140, easing: Easing.out(Easing.quad) };
-    // First appearance this session: a small nudge right and back hints that it can be dragged.
-    if (!nudged && !reduced && index === 0 && step) {
-      nudged = true;
-      mx.set(point.x);
-      my.set(point.y);
-      mx.set(withDelay(700, withSequence(withTiming(point.x + step * 1.5, { duration: 380, easing: Easing.out(Easing.quad) }), withTiming(point.x, { duration: 420, easing: Easing.inOut(Easing.quad) }))));
-      return;
-    }
-    mx.set(withTiming(point.x, ease));
-    my.set(withTiming(point.y, ease));
-  }, [point, mx, my, reduced, index, step]);
-  const markerStyle = useAnimatedStyle(() => ({ transform: [{ translateX: mx.get() - MARKER_W / 2 }, { translateY: my.get() - GLYPH_CENTER_Y }] }));
-  const guideStyle = useAnimatedStyle(() => ({ transform: [{ translateX: mx.get() }] }));
-  // Keep the time tag on screen when the marker is near either edge.
-  const tagStyle = useAnimatedStyle(() => {
-    const x = mx.get();
-    const shift = Math.max(0, TAG_HALF + 4 - x) - Math.max(0, x + TAG_HALF + 4 - width);
-    return { transform: [{ translateX: shift }] };
-  });
-
-  const pick = (x: number) => {
-    if (!step) return;
-    const next = Math.min(data.length - 1, Math.max(0, Math.round((x - PAD) / step)));
-    if (next !== index) onIndexChange(next);
-  };
-  const onTouch = (event: GestureResponderEvent) => pick(event.nativeEvent.locationX);
-
-  const hour = data[index] ?? data[0];
-  const daylight = (elev[index] ?? 0) > 0;
-  const band = hour ? scoreBands[scoreBand(hour.score)] : scoreBands.fair;
   const crossings = elev.flatMap((e, i): { i: number; label: 'rise' | 'set' }[] => {
     const prev = elev[i - 1];
     if (prev === undefined) return [];
@@ -148,66 +86,126 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = 
   });
   const clockAt = (fraction: number) => shortClock(new Date(new Date(data[0].ts).getTime() + fraction * 3_600_000));
 
-  if (!data.length) return null;
+  // Marker eases to the centre of the scrubbed hour.
+  const mx = useSharedValue(0);
+  const target = step ? xAt(index) + step / 2 : 0;
+  useEffect(() => {
+    if (!step) return;
+    if (!nudged && !reduced && index === 0) {
+      nudged = true;
+      mx.set(target);
+      mx.set(withDelay(700, withSequence(withTiming(target + step * 2, { duration: 380, easing: Easing.out(Easing.quad) }), withTiming(target, { duration: 420, easing: Easing.inOut(Easing.quad) }))));
+      return;
+    }
+    mx.set(withTiming(target, { duration: reduced ? 0 : 140, easing: Easing.out(Easing.quad) }));
+  }, [target, step, index, reduced, mx]);
+  const markerStyle = useAnimatedStyle(() => ({ transform: [{ translateX: mx.get() - MARKER_W / 2 }] }));
+  const guideStyle = useAnimatedStyle(() => ({ transform: [{ translateX: mx.get() }] }));
+  const tagStyle = useAnimatedStyle(() => {
+    const x = mx.get();
+    return { transform: [{ translateX: Math.max(0, TAG_HALF + 4 - x) - Math.max(0, x + TAG_HALF + 4 - width) }] };
+  });
+
+  const pick = (x: number) => {
+    if (!step) return;
+    const next = Math.min(data.length - 1, Math.max(0, Math.floor((x - PAD) / step)));
+    if (next !== index) onIndexChange(next);
+  };
+  const onTouch = (event: GestureResponderEvent) => pick(event.nativeEvent.locationX);
+
+  const hour = data[index] ?? data[0];
+  if (!hour) return null;
+  const daylight = (elev[index] ?? 0) > 0;
+  const band = scoreBands[scoreBand(hour.score)];
+  const lakeH = H - HORIZON;
 
   return (
     <View
-      style={{ height }}
+      style={{ height: H }}
       onLayout={(event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width)}
       accessible
       accessibilityRole="adjustable"
-      accessibilityLabel="Bite score over the next 24 hours"
-      accessibilityValue={{ text: hour ? `${index === 0 ? 'Now' : formatTime(hour.ts)}, bite score ${hour.score}, ${band.label}${windowSet.has(hour.ts) ? ', inside a window' : ''}` : undefined }}
+      accessibilityLabel="Bite outlook for the next 24 hours"
+      accessibilityValue={{ text: `${index === 0 ? 'Now' : formatTime(hour.ts)}, bite score ${hour.score}, ${band.label}${windowSet.has(hour.ts) ? ', inside a window' : ''}` }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(event: AccessibilityActionEvent) => onIndexChange(Math.min(data.length - 1, Math.max(0, index + (event.nativeEvent.actionName === 'increment' ? 1 : -1))))}
     >
       {width ? (
-        <Svg width={width} height={height} style={StyleSheet.absoluteFill} pointerEvents="none">
+        <Svg width={width} height={H} style={StyleSheet.absoluteFill} pointerEvents="none">
           <Defs>
-            <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={daylight ? '#E3EFEC' : '#D9E1E3'} />
-              <Stop offset="1" stopColor={daylight ? '#F8F3E6' : '#EEF0EC'} />
-            </LinearGradient>
             <LinearGradient id="lake" x1="0" y1="0" x2="0" y2="1">
               <Stop offset="0" stopColor={ice ? '#E6EEF0' : colors.chartWater} />
-              <Stop offset={immersive ? (lakeH - FADE) / lakeH : 1} stopColor={ice ? '#D3DFE2' : colors.chartWaterDeep} />
-              <Stop offset="1" stopColor={immersive ? colors.cream : ice ? '#D3DFE2' : colors.chartWaterDeep} />
+              <Stop offset={(lakeH - FADE) / lakeH} stopColor={ice ? '#D3DFE2' : colors.chartWaterDeep} />
+              <Stop offset="1" stopColor={colors.cream} />
             </LinearGradient>
           </Defs>
-          {immersive ? null : <Rect x={0} y={0} width={width} height={HORIZON} fill="url(#sky)" />}
           <Rect x={0} y={HORIZON} width={width} height={lakeH} fill="url(#lake)" />
-          {/* Gentle ripples / contour lines in the lake */}
-          {[0.35, 0.65].map((t) => {
-            const y = HORIZON + (immersive ? lakeH - FADE : lakeH) * t;
+          {[0.45, 0.75].map((t) => {
+            const y = HORIZON + RIB_H + (lakeH - RIB_H - FADE) * t;
             return <Path key={t} d={`M0 ${y} C${width * 0.25} ${y - 3} ${width * 0.5} ${y + 3} ${width * 0.75} ${y - 2} S${width} ${y + 2} ${width} ${y}`} stroke={colors.chartContour} strokeWidth={1} fill="none" opacity={0.6} />;
           })}
-          {ice ? (
-            <>
-              <Rect x={0} y={HORIZON} width={width} height={7} fill={colors.white} opacity={0.9} />
-              <Path d={`M${width * 0.22} ${HORIZON + 1} l8 5 l6 -3 M${width * 0.71} ${HORIZON + 2} l-7 4 l5 1`} stroke={colors.chartContour} strokeWidth={1} fill="none" />
-            </>
-          ) : null}
-          <Line x1={0} y1={HORIZON} x2={width} y2={HORIZON} stroke={colors.teal} strokeWidth={1} opacity={0.5} />
-          {/* Window threshold guide, bite-score line, then window segments on top */}
-          <Line x1={0} y1={yForScore(WINDOW_SCORE)} x2={width} y2={yForScore(WINDOW_SCORE)} stroke={colors.inkFaint} strokeWidth={1} strokeDasharray="3 5" opacity={0.45} />
-          <Path d={smooth(points)} stroke={colors.teal} strokeWidth={2.5} fill="none" strokeLinecap="round" opacity={0.9} />
-          {segments.map((seg, i) => (
-            <Path key={i} d={smooth(seg)} stroke={colors.sunrise} strokeWidth={6} fill="none" strokeLinecap="round" opacity={0.9} />
-          ))}
+          {ice ? <Rect x={0} y={HORIZON + RIB_H} width={width} height={6} fill={colors.white} opacity={0.85} /> : null}
+          {/* Sunrise / sunset ticks from the label down to the waterline */}
+          {crossings.map((c) => {
+            const x = PAD + (c.i + 0.5) * step;
+            return <Line key={c.label} x1={x} y1={22} x2={x} y2={HORIZON} stroke={colors.inkFaint} strokeWidth={1} strokeDasharray="2 4" opacity={0.6} />;
+          })}
         </Svg>
       ) : null}
 
-      {/* A subtle school of walleye fills the lake and reacts to the scrubbed hour */}
-      {width ? <LakeSchool width={width} top={HORIZON + (ice ? 10 : 4)} bottom={fishBottom} mood={moodFor(hour?.score ?? 0)} count={fishCount} sizeScale={fishScale} /> : null}
+      {/* Fish live below the ribbon and react to the scrubbed hour */}
+      {width ? <LakeSchool width={width} top={HORIZON + RIB_H + (ice ? 10 : 6)} bottom={H - FADE - 14} mood={moodFor(hour.score)} count={fishCount} sizeScale={fishScale} /> : null}
 
-      {/* Vertical guide + sun/moon marker */}
+      {/* Block ribbon along the waterline */}
+      {width
+        ? segments.map((seg) => {
+            const b = scoreBands[scoreBand(seg.score)];
+            const left = xAt(seg.start) + 1;
+            const w = Math.max(2, xAt(seg.end + 1) - xAt(seg.start) - 2);
+            const current = index >= seg.start && index <= seg.end;
+            return (
+              <View
+                key={`${seg.start}-${seg.end}`}
+                pointerEvents="none"
+                style={[
+                  styles.segment,
+                  { left, width: w, backgroundColor: seg.window ? b.color : b.tint, borderColor: current ? colors.ink : 'transparent' },
+                  seg.window && styles.segmentWindow,
+                ]}
+              >
+                {w >= 46 ? (
+                  <T variant="label" color={seg.window ? colors.white : b.color} style={styles.segmentLabel} numberOfLines={1} maxFontSizeMultiplier={1}>
+                    {b.label}
+                  </T>
+                ) : null}
+              </View>
+            );
+          })
+        : null}
+
+      {/* Sunrise / sunset labels (step aside for the marker tag) */}
+      {width
+        ? crossings.map((c) => {
+            const centre = PAD + (c.i + 0.5) * step;
+            const left = Math.min(width - TICK_LABEL_W - 2, Math.max(2, centre - TICK_LABEL_W / 2));
+            const near = Math.abs(target - (left + TICK_LABEL_W / 2)) < TICK_LABEL_W * 0.75;
+            return (
+              <View key={c.label} pointerEvents="none" style={[styles.tickLabel, { left, opacity: near ? 0 : 1 }]}>
+                <Icon name={c.label === 'rise' ? 'today' : 'low-light'} size={11} color={colors.inkMuted} />
+                <T variant="caption" color={colors.inkMuted} style={{ fontSize: 10.5 }} numberOfLines={1} maxFontSizeMultiplier={1.1}>{clockAt(c.i + 0.5)}</T>
+              </View>
+            );
+          })
+        : null}
+
+      {/* Guide + sun/moon marker with time · score tag */}
       {width ? (
         <>
           <Animated.View pointerEvents="none" style={[styles.guide, guideStyle]} />
           <Animated.View pointerEvents="none" style={[styles.marker, markerStyle]}>
             <Animated.View style={[styles.tag, tagStyle]}>
-              <T variant="caption" weight="700" color={colors.onDark} style={{ fontSize: 10.5, lineHeight: 13 }} maxFontSizeMultiplier={1.1}>
-                {index === 0 ? 'Now' : shortClock(hour.ts)}{tagScore ? ` · ${hour.score}` : ''}
+              <T variant="caption" weight="700" color={colors.onDark} style={{ fontSize: 10.5, lineHeight: 13 }} numberOfLines={1} maxFontSizeMultiplier={1.1}>
+                {index === 0 ? 'Now' : shortClock(hour.ts)} · {hour.score}
               </T>
             </Animated.View>
             {daylight ? <SunGlyph /> : <MoonGlyph />}
@@ -215,28 +213,9 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = 
         </>
       ) : null}
 
-      {/* Horizon labels and hour axis */}
-      {width
-        ? crossings.map((c) => {
-              const centre = PAD + c.i * step;
-              const left = Math.min(width - HORIZON_LABEL_W - 2, Math.max(2, centre - HORIZON_LABEL_W / 2));
-              // Step aside for the time tag so the two never overlap.
-              const nearMarker = Math.abs(PAD + index * step - (left + HORIZON_LABEL_W / 2)) < HORIZON_LABEL_W * 0.7;
-              return (
-                <T key={c.label} variant="caption" color={colors.inkMuted} align="center" numberOfLines={1} style={[styles.horizonLabel, { left, width: HORIZON_LABEL_W, opacity: nearMarker ? 0 : 1 }]} maxFontSizeMultiplier={1.1}>
-                  {c.label === 'rise' ? 'Sunrise' : 'Sunset'} {clockAt(c.i)}
-                </T>
-              );
-            })
-        : null}
-      <View style={[styles.axis, immersive && { bottom: FADE - 6 }]} pointerEvents="none">
-        {[0, 6, 12, 18, 23].map((i) => (
-          <T key={i} variant="caption" color={colors.inkMuted} style={{ fontSize: 10.5 }} maxFontSizeMultiplier={1.2}>{i === 0 ? 'Now' : shortClock(data[i].ts)}</T>
-        ))}
+      <View style={styles.axis} pointerEvents="none">
+        {[0, 6, 12, 18, 23].map((i) => (data[i] ? <T key={i} variant="caption" color={colors.inkMuted} style={{ fontSize: 10.5 }} maxFontSizeMultiplier={1.2}>{i === 0 ? 'Now' : shortClock(data[i].ts)}</T> : null))}
       </View>
-
-      {overlayLeft ? <View pointerEvents="none" style={[styles.overlay, { left: PAD }]}>{overlayLeft}</View> : null}
-      {overlayRight ? <View pointerEvents="none" style={[styles.overlay, { right: PAD }]}>{overlayRight}</View> : null}
 
       {/* Touch surface */}
       <View
@@ -251,18 +230,11 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = 
   );
 }
 
-const MARKER_W = 56;
-const TAG_H = 17;
-const GLYPH = 28;
-const GLYPH_CENTER_Y = TAG_H + 4 + GLYPH / 2;
-/** Nudge only once per app session. */
-let nudged = false;
-
 function SunGlyph() {
   return (
     <View style={styles.glyph}>
       {Array.from({ length: 8 }, (_, i) => (
-        <View key={i} style={[styles.ray, { transform: [{ rotate: `${i * 45}deg` }, { translateY: -11 }] }]} />
+        <View key={i} style={[styles.ray, { transform: [{ rotate: `${i * 45}deg` }, { translateY: -10.5 }] }]} />
       ))}
       <View style={styles.sunCore} />
     </View>
@@ -280,14 +252,16 @@ function MoonGlyph() {
 }
 
 const styles = StyleSheet.create({
-  guide: { position: 'absolute', top: SKY_TOP - 6, height: HORIZON + NIGHT_DIP - SKY_TOP + 10, width: 1, backgroundColor: colors.lineStrong },
-  marker: { position: 'absolute', top: 0, left: 0, width: MARKER_W, alignItems: 'center', gap: 4 },
+  segment: { position: 'absolute', top: HORIZON, height: RIB_H, borderRadius: 5, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  segmentWindow: { shadowColor: colors.sunrise, shadowOpacity: 0.55, shadowRadius: 6, shadowOffset: { width: 0, height: 0 } },
+  segmentLabel: { fontSize: 9, lineHeight: 11, letterSpacing: 0.8 },
+  tickLabel: { position: 'absolute', top: 4, width: TICK_LABEL_W, flexDirection: 'row', gap: 4, alignItems: 'center', justifyContent: 'center' },
+  guide: { position: 'absolute', top: GLYPH_Y, height: HORIZON + RIB_H - GLYPH_Y, width: 1, backgroundColor: colors.ink, opacity: 0.35 },
+  marker: { position: 'absolute', top: MARKER_TOP, left: 0, width: MARKER_W, alignItems: 'center', gap: 4 },
   tag: { height: TAG_H, paddingHorizontal: 7, borderRadius: TAG_H / 2, backgroundColor: colors.deep, justifyContent: 'center' },
   glyph: { width: GLYPH, height: GLYPH, alignItems: 'center', justifyContent: 'center' },
   ray: { position: 'absolute', width: 2.5, height: 5, borderRadius: 1.5, backgroundColor: colors.sunrise },
-  sunCore: { width: 15, height: 15, borderRadius: 8, backgroundColor: colors.sunrise, borderWidth: 2, borderColor: colors.white },
+  sunCore: { width: 14, height: 14, borderRadius: 7, backgroundColor: colors.sunrise, borderWidth: 2, borderColor: colors.white },
   moonCore: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.paper, borderWidth: 1.5, borderColor: colors.inkSoft, alignItems: 'center', justifyContent: 'center' },
-  horizonLabel: { position: 'absolute', top: HORIZON - 18, fontSize: 10.5 },
-  overlay: { position: 'absolute', top: 8, maxWidth: '58%' },
-  axis: { position: 'absolute', left: PAD - 4, right: PAD - 8, bottom: 0, flexDirection: 'row', justifyContent: 'space-between' },
+  axis: { position: 'absolute', left: PAD - 4, right: PAD - 8, bottom: FADE - 8, flexDirection: 'row', justifyContent: 'space-between' },
 });
