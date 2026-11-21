@@ -93,13 +93,26 @@ export default function TodayScreen() {
       <LakeBackground night={night} score={nowHour?.score ?? 50} ice={best?.season === 'ice'} waterTop={insets.top + WATERLINE} />
 
       <Screen tab header background="transparent" refreshing={refreshing} onRefresh={refresh}>
-        <Header now={now} fresh={fresh} refreshing={refreshing} onRefresh={refresh} top={insets.top} />
+        <Header now={now} fresh={fresh} refreshing={refreshing} onRefresh={refresh} top={insets.top} aboutOpen={aboutOpen} onAbout={() => setAboutOpen((open) => !open)} />
+        {aboutOpen ? (
+          <Reveal style={styles.about}>
+            <T variant="caption" color={colors.inkSoft}>
+              Bite scores describe conditions, not a guarantee of fish.{best ? ` Source: ${forecastSource(best.forecast)}.` : ''}
+              {broad ? ' This lake uses broad time-block outlooks; they repeat across the day and don’t identify an exact peak hour.' : ''}
+            </T>
+          </Reveal>
+        ) : null}
 
         {best ? (
           <>
             <Reveal index={0} style={{ marginTop: spacing.xxl }}>
               <AnswerCard entry={best} now={now} units={units} />
             </Reveal>
+            {best.next ? (
+              <Reveal index={1}>
+                <TacticCard window={best.next} />
+              </Reveal>
+            ) : null}
             {seasons.includes('ice') ? <IceSafetyNotice compact /> : null}
             <OfflineBanner />
             <Reveal index={1} style={styles.buoys}>
@@ -140,24 +153,6 @@ export default function TodayScreen() {
           </View>
         )}
 
-        {/* Open water: the lake scene lives here; the footer rests on the lake bed. */}
-        <View style={{ flexGrow: 1, minHeight: spacing.lg }} />
-
-        <View style={styles.footer}>
-          <Row gap={6} justify="center">
-            <T variant="caption" color={colors.inkSoft}>Conditions, not a guarantee of fish{best ? ` · ${forecastSource(best.forecast)}` : ''}</T>
-            {broad ? (
-              <Pressable onPress={() => setAboutOpen((open) => !open)} hitSlop={hitSlop} accessibilityRole="button" accessibilityState={{ expanded: aboutOpen }} accessibilityLabel="About broad time blocks">
-                <Icon name="info" size={14} color={colors.teal} />
-              </Pressable>
-            ) : null}
-          </Row>
-          {broad && aboutOpen ? (
-            <T variant="caption" color={colors.inkSoft} align="center" style={{ paddingHorizontal: spacing.lg }}>
-              This lake uses broad time-block outlooks. They repeat across the day and don’t identify an exact peak hour.
-            </T>
-          ) : null}
-        </View>
       </Screen>
 
       <Toast trigger={refreshErrorAt} icon="sync-error" message="Couldn’t refresh. Showing the forecast saved on this device." actionLabel="Retry" onAction={refresh} />
@@ -336,7 +331,7 @@ function Bubble({ left, bottom, rise, size, duration, delay }: { left: number; b
   return <Animated.View style={[styles.bubble, { left, bottom, width: size, height: size, borderRadius: size / 2 }, style]} />;
 }
 
-function Header({ now, fresh, refreshing, onRefresh, top }: { now: number; fresh: { state: 'fresh' | 'aging' | 'stale'; label: string }; refreshing: boolean; onRefresh: () => void; top: number }) {
+function Header({ now, fresh, refreshing, onRefresh, top, aboutOpen, onAbout }: { now: number; fresh: { state: 'fresh' | 'aging' | 'stale'; label: string }; refreshing: boolean; onRefresh: () => void; top: number; aboutOpen: boolean; onAbout: () => void }) {
   const stale = fresh.state === 'stale';
   const date = new Date(now).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
   const updated = refreshing ? 'refreshing…' : fresh.label.replace(/^Updated /, 'updated ').replace(/^Forecast is /, '');
@@ -356,6 +351,9 @@ function Header({ now, fresh, refreshing, onRefresh, top }: { now: number; fresh
           <T variant="caption" weight="700" color={colors.tealDeep}>{date}</T>
           <T variant="caption" color={stale ? colors.warning : colors.inkMuted}> · {updated}</T>
         </T>
+      </Pressable>
+      <Pressable onPress={onAbout} hitSlop={hitSlop} accessibilityRole="button" accessibilityState={{ expanded: aboutOpen }} accessibilityLabel="About this forecast" style={{ marginLeft: spacing.sm }}>
+        <Icon name="info" size={16} color={aboutOpen ? colors.teal : colors.inkMuted} />
       </Pressable>
     </Row>
   );
@@ -540,6 +538,34 @@ function Bars({ level, bare }: { level: 'High' | 'Medium' | 'Low'; bare?: boolea
   );
 }
 
+/* ───────────── How to fish it: depth (as a tiny lake cross-section) + tactic ───────────── */
+
+const depthLevel = { shallow: 0.22, mid: 0.5, deep: 0.8 } as const;
+
+function TacticCard({ window }: { window: ForecastWindow }) {
+  const W = 76;
+  const H = 52;
+  const y = 6 + depthLevel[window.depth] * (H - 14);
+  return (
+    <View style={styles.tactic} accessible accessibilityLabel={`How to fish it: ${window.depth} water. ${window.tactics}`}>
+      <View style={styles.depthArt} importantForAccessibility="no-hide-descendants">
+        <Svg width={W} height={H}>
+          <Rect x={0} y={4} width={W} height={H - 4} rx={8} fill={colors.tealMist} />
+          {/* bottom contour sloping from shore (left) into deep water (right) */}
+          <Path d={`M0 ${H * 0.35} C${W * 0.3} ${H * 0.4} ${W * 0.45} ${H * 0.85} ${W} ${H * 0.92} L${W} ${H} L0 ${H} Z`} fill="#C9C2A7" />
+          <Path d={`M0 4 L${W} 4`} stroke={colors.teal} strokeWidth={1.5} />
+          <Rect x={4} y={y - 5} width={W - 8} height={10} rx={5} fill={colors.sunrise} opacity={0.35} />
+          <Circle cx={W * 0.62} cy={y} r={4} fill={colors.sunrise} />
+        </Svg>
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <T variant="label" color={colors.teal} style={{ fontSize: 10 }}>How to fish it · {window.depth} water</T>
+        <T variant="callout" numberOfLines={3}>{window.tactics}</T>
+      </View>
+    </View>
+  );
+}
+
 /* ───────────── Other lakes as buoys floating in the lake ───────────── */
 
 function Buoy({ entry, now }: { entry: LakeData; now: number }) {
@@ -592,12 +618,14 @@ const styles = StyleSheet.create({
   chipWarn: { backgroundColor: colors.warningTint },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   bar: { width: 3, borderRadius: 1 },
+  about: { padding: spacing.md, borderRadius: radius.md, backgroundColor: 'rgba(251,250,245,0.92)' },
+  tactic: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: radius.lg, backgroundColor: 'rgba(255,255,255,0.94)', ...elevation.low },
+  depthArt: { borderRadius: 8, overflow: 'hidden' },
   buoys: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   buoy: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, maxWidth: '100%', paddingVertical: 6, paddingLeft: 6, paddingRight: spacing.md, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.94)', ...elevation.low },
   buoyScore: { width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   followBuoy: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 46, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.teal, backgroundColor: 'rgba(255,255,255,0.55)' },
   plainBlock: { gap: spacing.lg, marginTop: spacing.xxl, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.paper },
-  footer: { gap: spacing.xs, alignItems: 'center', alignSelf: 'center', marginBottom: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: 'rgba(251,250,245,0.7)' },
   weed: { position: 'absolute', transformOrigin: 'bottom' },
   bubble: { position: 'absolute', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(255,255,255,0.25)' },
 });
