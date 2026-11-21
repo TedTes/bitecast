@@ -5,7 +5,7 @@ import type { ForecastHour, ForecastWindow, LakeForecast, Season } from '@biteca
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
-import { ForecastFootnote, conditionLabel, upcomingWindows, windowEnd } from '@/components/forecast';
+import { conditionLabel, upcomingWindows, windowEnd } from '@/components/forecast';
 import { Icon } from '@/components/icon';
 import { SkyArc } from '@/components/sky-arc';
 import { Toast } from '@/components/toast';
@@ -15,7 +15,7 @@ import { colors, elevation, hitSlop, radius, scoreBand, scoreBands, spacing, tou
 import { forecastQuery, forecastSource, freshness } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { seasonLabel, useConditionResolver } from '@/features/lake-season';
-import { formatDay, formatDuration, shortClock, shortRange } from '@/lib/format';
+import { formatDay, formatDuration, reasonIcon, shortClock, shortRange } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { useNow } from '@/lib/use-now';
 import { useAppStore } from '@/store/use-app-store';
@@ -24,6 +24,12 @@ import type { Lake } from '@/types/app';
 const MAX_LAKES = 5;
 
 type LakeData = { lake: Lake; season: Season; forecast: LakeForecast; updatedAt: number; next?: ForecastWindow; live: boolean };
+
+/** “Today”, “Tomorrow”, else a short weekday (“Mon”) — compact enough for pills and rows. */
+const shortDay = (value: string) => {
+  const day = formatDay(value);
+  return day === 'Today' || day === 'Tomorrow' ? day : new Date(value).toLocaleDateString([], { weekday: 'short' });
+};
 
 /** The window to act on for a lake: one open now, else the soonest upcoming. */
 function actionable(windows: ForecastWindow[], now: number) {
@@ -69,6 +75,8 @@ export default function TodayScreen() {
   };
 
   const focusHour = focus?.forecast.hours[Math.min(hourIndex, focus.forecast.hours.length - 1)];
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const broad = focus?.forecast.predictionGranularity === 'time_block';
 
   return (
     <View style={{ flex: 1 }}>
@@ -79,6 +87,7 @@ export default function TodayScreen() {
             <>
               <LakeLine entry={focus} isTop={focus.lake.id === data[0]?.lake.id} />
               <Readout entry={focus} hour={focusHour} index={hourIndex} onReset={() => setHourIndex(0)} />
+              <WindowPills entry={focus} hour={focusHour} now={now} />
               <SkyArc
                 immersive
                 tagScore
@@ -89,7 +98,6 @@ export default function TodayScreen() {
                 ice={focus.season === 'ice'}
                 index={hourIndex}
                 onIndexChange={setHourIndex}
-                {...skyPills(focus, focusHour, now)}
               />
             </>
           ) : null}
@@ -97,9 +105,7 @@ export default function TodayScreen() {
 
         {focus ? (
           <>
-            {focus.season === 'ice' || seasons.includes('ice') ? <IceSafetyNotice compact /> : null}
-            <OfflineBanner />
-            <Reveal index={0} style={{ gap: spacing.sm }}>
+            <Reveal index={0} style={styles.rows}>
               {others.map((entry) => (
                 <LakeRow key={entry.lake.id} entry={entry} now={now} onPress={() => chooseLake(entry.lake.id)} />
               ))}
@@ -116,6 +122,8 @@ export default function TodayScreen() {
                 </Pressable>
               ) : null}
             </Reveal>
+            {focus.season === 'ice' || seasons.includes('ice') ? <IceSafetyNotice compact /> : null}
+            <OfflineBanner />
           </>
         ) : (
           <>
@@ -139,12 +147,20 @@ export default function TodayScreen() {
           </>
         )}
 
-        <View style={{ gap: 4 }}>
-          {focus?.forecast.predictionGranularity === 'time_block' ? (
-            <T variant="caption" color={colors.inkMuted} align="center">Broad time blocks repeat across the day; they are not exact hourly predictions.</T>
+        <View style={{ gap: spacing.xs, alignItems: 'center' }}>
+          <Row gap={6} justify="center">
+            <T variant="caption" color={colors.inkMuted}>Conditions, not a guarantee of fish{data[0] ? ` · ${forecastSource(data[0].forecast)}` : ''}</T>
+            {broad ? (
+              <Pressable onPress={() => setAboutOpen((open) => !open)} hitSlop={hitSlop} accessibilityRole="button" accessibilityState={{ expanded: aboutOpen }} accessibilityLabel="About broad time blocks">
+                <Icon name="info" size={14} color={colors.teal} />
+              </Pressable>
+            ) : null}
+          </Row>
+          {broad && aboutOpen ? (
+            <T variant="caption" color={colors.inkMuted} align="center" style={{ paddingHorizontal: spacing.lg }}>
+              This lake uses broad time-block outlooks. They repeat across the day and don’t identify an exact peak hour.
+            </T>
           ) : null}
-          {data[0] ? <T variant="caption" color={colors.inkMuted} align="center">Source: {forecastSource(data[0].forecast)}</T> : null}
-          <ForecastFootnote predictionGranularity={focus?.forecast.predictionGranularity} />
         </View>
       </Screen>
       <Toast trigger={refreshErrorAt} icon="sync-error" message="Couldn’t refresh. Showing the forecast saved on this device." actionLabel="Retry" onAction={refresh} />
@@ -220,8 +236,7 @@ function LakeLine({ entry, isTop }: { entry: LakeData; isTop: boolean }) {
 /** Score → (time, reason, confidence) for the scrubbed hour. */
 function Readout({ entry, hour, index, onReset }: { entry: LakeData; hour: ForecastHour; index: number; onReset: () => void }) {
   const band = scoreBands[scoreBand(hour.score)];
-  const broad = entry.forecast.predictionGranularity === 'time_block';
-  const timeLabel = `${index === 0 ? 'Now' : `${formatDay(hour.ts)} · ${shortClock(hour.ts)}`}${broad ? ' · broad block' : ''}`;
+  const timeLabel = index === 0 ? 'Now' : `${shortDay(hour.ts)} · ${shortClock(hour.ts)}`;
   const reason = hour.reasons[0] ?? 'Mixed conditions';
   return (
     <Row gap={spacing.lg} align="center" style={[styles.pad, { marginTop: spacing.xs, marginBottom: spacing.sm }]} accessibilityLiveRegion="polite">
@@ -246,42 +261,59 @@ function Readout({ entry, hour, index, onReset }: { entry: LakeData; hour: Forec
   );
 }
 
-/** In-sky pills: the window you're in (left) and the next one (right). */
-function skyPills(entry: LakeData, hour: ForecastHour, now: number) {
+/** Window context for the scrubbed hour: the window you're in (left) and the next one (right). */
+function WindowPills({ entry, hour, now }: { entry: LakeData; hour: ForecastHour; now: number }) {
   const { forecast } = entry;
   const broad = forecast.predictionGranularity === 'time_block';
   const hourMs = new Date(hour.ts).getTime();
   const containing = forecast.windows.find((w) => w.hours.some((h) => h.ts === hour.ts));
   const next = upcomingWindows(forecast.windows, Math.max(now, hourMs)).find((w) => new Date(w.start).getTime() > hourMs);
-  return {
-    overlayLeft: containing ? (
-      <View style={styles.pillLight} accessible accessibilityLabel={`In a ${broad ? 'broad block' : 'bite window'}, ends ${shortClock(windowEnd(containing))}`}>
-        <View style={styles.swatch} />
-        <T variant="caption" weight="700" color={colors.sunriseInk} numberOfLines={1}>{broad ? 'Broad block' : 'Bite window'} · ends {shortClock(windowEnd(containing))}</T>
-      </View>
-    ) : undefined,
-    overlayRight: next ? (
-      <View style={styles.pillDark} accessible accessibilityLabel={`Next ${broad ? 'block' : 'window'} ${formatDay(next.start)} ${shortRange(next.start, windowEnd(next))}${broad ? '' : `, peak ${next.peakScore}`}, ${next.confidence} confidence`}>
-        <T variant="caption" weight="700" color={colors.onDark} numberOfLines={1}>
-          Next {formatDay(next.start) === 'Today' ? '' : `${formatDay(next.start).toLowerCase()} `}{shortRange(next.start, windowEnd(next))}{broad ? '' : ` · peak ${next.peakScore}`}
-        </T>
-      </View>
-    ) : undefined,
-  };
+  if (!containing && !next) return null;
+  const nextDay = next ? shortDay(next.start) : '';
+  return (
+    <Row gap={spacing.sm} style={[styles.pad, { marginBottom: spacing.xs }]}>
+      {containing ? (
+        <View style={styles.pillLight} accessible accessibilityLabel={`In a ${broad ? 'broad block' : 'bite window'}, ends ${shortClock(windowEnd(containing))}`}>
+          <View style={styles.swatch} />
+          <T variant="caption" weight="700" color={colors.sunriseInk} numberOfLines={1}>{broad ? 'In block' : 'Bite window'} · ends {shortClock(windowEnd(containing))}</T>
+        </View>
+      ) : null}
+      <View style={{ flex: 1 }} />
+      {next ? (
+        <View style={styles.pillDark} accessible accessibilityLabel={`Next ${broad ? 'block' : 'window'} ${formatDay(next.start)} ${shortRange(next.start, windowEnd(next))}${broad ? '' : `, peak ${next.peakScore}`}, ${next.confidence} confidence`}>
+          <T variant="caption" weight="700" color={colors.onDark} numberOfLines={1}>
+            Next · {nextDay === 'Today' ? '' : `${nextDay} `}{shortRange(next.start, windowEnd(next))}{broad ? '' : ` · ${next.peakScore}`}
+          </T>
+        </View>
+      ) : null}
+    </Row>
+  );
 }
 
 /* ───────────── Other lakes: slim rows; tap to put one in the sky ───────────── */
 
+const barLevel = { High: 3, Medium: 2, Low: 1 } as const;
+/** Compact confidence: three bars + level word. */
+function Bars({ level }: { level: 'High' | 'Medium' | 'Low' }) {
+  return (
+    <Row gap={4} importantForAccessibility="no-hide-descendants">
+      <View style={styles.bars}>
+        {[1, 2, 3].map((bar) => <View key={bar} style={[styles.bar, { height: 3 + bar * 3, backgroundColor: bar <= barLevel[level] ? colors.teal : colors.fogDeep }]} />)}
+      </View>
+      <T variant="caption" color={colors.inkMuted}>{level}</T>
+    </Row>
+  );
+}
+
 function LakeRow({ entry, now, onPress }: { entry: LakeData; now: number; onPress: () => void }) {
   const { lake, next, live, forecast, season } = entry;
-  const broad = forecast.predictionGranularity === 'time_block';
   const current = forecast.hours[0];
   const score = next?.peakScore ?? current.score;
   const band = scoreBands[scoreBand(score)];
   const when = next
     ? live
-      ? `${broad ? 'Block' : 'Window'} on now · ends ${shortClock(windowEnd(next))}`
-      : `${broad ? 'Block' : 'Window'} opens ${formatDay(next.start) === 'Today' ? '' : `${formatDay(next.start).toLowerCase()} `}${shortClock(next.start)}`
+      ? 'On now'
+      : `Opens ${shortDay(next.start) === 'Today' ? '' : `${shortDay(next.start)} `}${shortClock(next.start)}`
     : 'No window this week';
   const reason = (next?.reasons ?? current.reasons)[0] ?? 'Mixed conditions';
   const confidence = next?.confidence ?? current.confidence;
@@ -301,7 +333,11 @@ function LakeRow({ entry, now, onPress }: { entry: LakeData; now: number; onPres
         <T variant="callout" color={live ? colors.sunriseInk : colors.inkSoft} weight={live ? '700' : '400'} numberOfLines={1}>
           {when}{live && next ? ` · ${formatDuration(new Date(windowEnd(next)).getTime() - now)} left` : ''}
         </T>
-        <T variant="caption" color={colors.inkMuted} numberOfLines={1}>{reason} · {confidence} confidence</T>
+        <Row gap={spacing.sm}>
+          <Icon name={reasonIcon(reason)} size={13} color={colors.teal} />
+          <T variant="caption" color={colors.inkMuted} numberOfLines={1} style={{ flex: 1 }}>{reason}</T>
+          <Bars level={confidence} />
+        </Row>
       </View>
       <View style={[styles.scorePill, { backgroundColor: band.tint }]}>
         <T variant="numeralM" color={colors.ink}>{score}</T>
@@ -321,5 +357,8 @@ const styles = StyleSheet.create({
   swatch: { width: 14, height: 4, borderRadius: 2, backgroundColor: colors.sunrise },
   lakeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.white, ...elevation.low },
   scorePill: { minWidth: 56, minHeight: 44, paddingHorizontal: spacing.md, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  rows: { gap: spacing.sm, marginTop: -spacing.xxxl },
+  bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
+  bar: { width: 3, borderRadius: 1 },
   addRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: touch.comfortable, paddingHorizontal: spacing.lg, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.lineStrong },
 });
