@@ -45,13 +45,24 @@ type Props = {
   ice: boolean;
   index: number;
   onIndexChange: (index: number) => void;
+  /**
+   * Full-bleed scene: no sky fill (the page's sky shows through), a deeper lake that fades
+   * into the page at the bottom, and the hour axis just above the fade.
+   */
+  immersive?: boolean;
 };
+
+const IMMERSIVE_H = 262;
+const FADE = 56;
 
 /**
  * Sky arc: the next 24 hours of sun elevation over a lake horizon. Daylight rises above the
  * waterline, night dips under it; window hours glow. Drag to scrub hours.
  */
-export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
+export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = false }: Props) {
+  const height = immersive ? IMMERSIVE_H : H;
+  const lakeH = immersive ? height - HORIZON : AXIS_Y - HORIZON - 6;
+  const fishBottom = immersive ? height - FADE - 18 : AXIS_Y - 8;
   const data = hours.slice(0, 24);
   const [width, setWidth] = useState(0);
   const reduced = useReducedMotion();
@@ -115,7 +126,7 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
 
   return (
     <View
-      style={{ height: H }}
+      style={{ height }}
       onLayout={(event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width)}
       accessible
       accessibilityRole="adjustable"
@@ -125,7 +136,7 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
       onAccessibilityAction={(event: AccessibilityActionEvent) => onIndexChange(Math.min(data.length - 1, Math.max(0, index + (event.nativeEvent.actionName === 'increment' ? 1 : -1))))}
     >
       {width ? (
-        <Svg width={width} height={H} style={StyleSheet.absoluteFill} pointerEvents="none">
+        <Svg width={width} height={height} style={StyleSheet.absoluteFill} pointerEvents="none">
           <Defs>
             <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
               <Stop offset="0" stopColor={daylight ? '#E3EFEC' : '#D9E1E3'} />
@@ -133,14 +144,15 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
             </LinearGradient>
             <LinearGradient id="lake" x1="0" y1="0" x2="0" y2="1">
               <Stop offset="0" stopColor={ice ? '#E6EEF0' : colors.chartWater} />
-              <Stop offset="1" stopColor={ice ? '#D3DFE2' : colors.chartWaterDeep} />
+              <Stop offset={immersive ? (lakeH - FADE) / lakeH : 1} stopColor={ice ? '#D3DFE2' : colors.chartWaterDeep} />
+              <Stop offset="1" stopColor={immersive ? colors.cream : ice ? '#D3DFE2' : colors.chartWaterDeep} />
             </LinearGradient>
           </Defs>
-          <Rect x={0} y={0} width={width} height={HORIZON} fill="url(#sky)" />
-          <Rect x={0} y={HORIZON} width={width} height={AXIS_Y - HORIZON - 6} fill="url(#lake)" />
+          {immersive ? null : <Rect x={0} y={0} width={width} height={HORIZON} fill="url(#sky)" />}
+          <Rect x={0} y={HORIZON} width={width} height={lakeH} fill="url(#lake)" />
           {/* Gentle ripples / contour lines in the lake */}
           {[0.35, 0.65].map((t) => {
-            const y = HORIZON + (AXIS_Y - HORIZON - 6) * t;
+            const y = HORIZON + (immersive ? lakeH - FADE : lakeH) * t;
             return <Path key={t} d={`M0 ${y} C${width * 0.25} ${y - 3} ${width * 0.5} ${y + 3} ${width * 0.75} ${y - 2} S${width} ${y + 2} ${width} ${y}`} stroke={colors.chartContour} strokeWidth={1} fill="none" opacity={0.6} />;
           })}
           {ice ? (
@@ -159,7 +171,7 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
       ) : null}
 
       {/* A subtle school of walleye fills the lake and reacts to the scrubbed hour */}
-      {width ? <LakeSchool width={width} top={HORIZON + (ice ? 10 : 4)} bottom={AXIS_Y - 8} mood={moodFor(hour?.score ?? 0)} /> : null}
+      {width ? <LakeSchool width={width} top={HORIZON + (ice ? 10 : 4)} bottom={fishBottom} mood={moodFor(hour?.score ?? 0)} /> : null}
 
       {/* Vertical guide + sun/moon marker */}
       {width ? (
@@ -190,7 +202,7 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
               );
             })
         : null}
-      <View style={styles.axis} pointerEvents="none">
+      <View style={[styles.axis, immersive && { bottom: FADE - 6 }]} pointerEvents="none">
         {[0, 6, 12, 18, 23].map((i) => (
           <T key={i} variant="caption" color={colors.inkMuted} style={{ fontSize: 10.5 }} maxFontSizeMultiplier={1.2}>{i === 0 ? 'Now' : shortClock(data[i].ts)}</T>
         ))}

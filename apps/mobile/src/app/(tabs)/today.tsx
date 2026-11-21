@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { router } from 'expo-router';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import type { ForecastWindow, LakeForecast, Season } from '@bitecast/engine';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { ConfidenceMeter, DayStrip, ForecastFootnote, ReasonLine, ScoreReadout, conditionLabel, upcomingWindows, windowEnd } from '@/components/forecast';
 import { Icon } from '@/components/icon';
 import { SkyArc } from '@/components/sky-arc';
 import { Toast } from '@/components/toast';
 import { Button, Card, Divider, EmptyState, ErrorState, IceSafetyNotice, LinkButton, OfflineBanner, Reveal, Row, Screen, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
-import { colors, hitSlop, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
+import { colors, elevation, hitSlop, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
 import { forecastQuery, forecastSource, freshness } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { seasonLabel, useConditionResolver } from '@/features/lake-season';
@@ -20,6 +22,8 @@ import { useAppStore } from '@/store/use-app-store';
 import type { Lake } from '@/types/app';
 
 const MAX_LAKES = 5;
+/** How far the readout card floats up over the lake's fade. */
+const FLOAT_OVERLAP = 44;
 
 type LakeData = { lake: Lake; season: Season; forecast: LakeForecast; updatedAt: number; next?: ForecastWindow; live: boolean };
 
@@ -65,26 +69,25 @@ export default function TodayScreen() {
     setHourIndex(0);
   };
 
+  const focusHour = focus?.forecast.hours[Math.min(hourIndex, focus.forecast.hours.length - 1)];
+
   return (
     <View style={{ flex: 1 }}>
-    <Screen tab refreshing={refreshing} onRefresh={refresh}>
-      <Row justify="space-between" align="flex-end" gap={spacing.md}>
-        <T variant="title" accessibilityRole="header">Today</T>
-        <View style={{ alignItems: 'flex-end', gap: 2, flexShrink: 1, marginBottom: 3 }}>
-          <T variant="caption" weight="700" color={colors.teal}>{new Date(now).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}</T>
-          <Row gap={5}>
-            <Icon name={fresh.state === 'stale' ? 'warning' : 'clock'} size={11} color={fresh.state === 'stale' ? colors.warning : colors.inkMuted} />
-            <T variant="caption" color={fresh.state === 'stale' ? colors.warning : colors.inkMuted} numberOfLines={1} style={{ flexShrink: 1 }}>
-              {fresh.label} · {data[0] ? forecastSource(data[0].forecast) : 'No forecast'}
-            </T>
-          </Row>
-          {fresh.state === 'stale' && data.length ? <LinkButton icon="refresh" onPress={refresh}>{refreshing ? 'Refreshing…' : 'Refresh'}</LinkButton> : null}
-        </View>
-      </Row>
+    <Screen tab header refreshing={refreshing} onRefresh={refresh}>
+      <Hero
+        now={now}
+        source={data[0] ? forecastSource(data[0].forecast) : 'No forecast'}
+        fresh={fresh}
+        refreshing={refreshing}
+        onRefresh={refresh}
+        night={focusHour ? focusHour.sunElevation <= 0 : false}
+      >
+        {focus ? (
+          <SkyArc immersive hours={focus.forecast.hours} windows={focus.forecast.windows} ice={focus.season === 'ice'} index={hourIndex} onIndexChange={setHourIndex} />
+        ) : null}
+      </Hero>
 
-      {seasons.includes('ice') ? <IceSafetyNotice compact /> : null}
-      <OfflineBanner />
-
+      {!focus ? <OfflineBanner /> : null}
       {ids.length === 0 ? (
         <EmptyState
           icon="lake"
@@ -102,9 +105,12 @@ export default function TodayScreen() {
         </>
       ) : focus ? (
         <>
-          <Reveal index={0}>
-            <SkyCard entry={focus} isTop={focus.lake.id === data[0]?.lake.id} index={hourIndex} onIndexChange={setHourIndex} now={now} />
+          <Reveal index={0} style={styles.float}>
+            <ReadoutCard entry={focus} isTop={focus.lake.id === data[0]?.lake.id} index={hourIndex} onIndexChange={setHourIndex} now={now} />
           </Reveal>
+          {/* Notices sit below the floating card so its overlap never covers them. */}
+          {seasons.includes('ice') ? <IceSafetyNotice compact /> : null}
+          <OfflineBanner />
           <Reveal index={1}>
             <LakeList entries={data} focusId={focus.lake.id} onFocus={chooseLake} now={now} canAdd={ids.length < MAX_LAKES} count={ids.length} />
           </Reveal>
@@ -118,9 +124,60 @@ export default function TodayScreen() {
   );
 }
 
-/* ───────────── Sky card: lake → scrubbed hour readout → arc ───────────── */
+/* ───────────── Hero: sky behind the status bar, header, immersive lake ───────────── */
 
-function SkyCard({ entry, isTop, index, onIndexChange, now }: { entry: LakeData; isTop: boolean; index: number; onIndexChange: (i: number) => void; now: number }) {
+const sky = {
+  day: { top: '#CFE2E0', horizon: '#EDF1EA' },
+  night: { top: '#B7C5CD', horizon: '#E2E8E6' },
+};
+
+function Hero({ now, source, fresh, refreshing, onRefresh, night, children }: { now: number; source: string; fresh: { state: 'fresh' | 'aging' | 'stale'; label: string }; refreshing: boolean; onRefresh: () => void; night: boolean; children?: ReactNode }) {
+  const insets = useSafeAreaInsets();
+  const tone = night ? sky.night : sky.day;
+  const stale = fresh.state === 'stale';
+  return (
+    <View style={[styles.hero, { paddingTop: insets.top + spacing.sm }]}>
+      <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+        <Defs>
+          <LinearGradient id="pageSky" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={tone.top} />
+            <Stop offset={children ? '0.62' : '0.8'} stopColor={tone.horizon} />
+            <Stop offset="1" stopColor={children ? tone.horizon : colors.cream} />
+          </LinearGradient>
+        </Defs>
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#pageSky)" />
+      </Svg>
+
+      <Row justify="space-between" align="flex-end" gap={spacing.md} style={styles.heroHeader}>
+        <View style={{ flexShrink: 1, gap: 2 }}>
+          <T variant="label" color={colors.tealDeep} numberOfLines={1}>
+            {new Date(now).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })} · {source}
+          </T>
+          <T variant="title" accessibilityRole="header">Today</T>
+        </View>
+        <Pressable
+          disabled={!stale || refreshing}
+          onPress={onRefresh}
+          accessibilityRole={stale ? 'button' : 'text'}
+          accessibilityLabel={stale ? `${fresh.label}. Refresh` : fresh.label}
+          hitSlop={hitSlop}
+          style={({ pressed }) => [styles.freshPill, stale && styles.freshPillStale, pressed && { opacity: 0.7 }]}
+        >
+          <Icon name={stale ? (refreshing ? 'sync-pending' : 'refresh') : 'clock'} size={12} color={stale ? colors.warning : colors.inkSoft} />
+          <T variant="caption" weight="700" color={stale ? colors.warning : colors.inkSoft} numberOfLines={1}>
+            {refreshing ? 'Refreshing…' : fresh.label}
+          </T>
+        </Pressable>
+      </Row>
+
+      {children}
+    </View>
+  );
+}
+
+/* ───────────── Floating readout: lake → scrubbed hour → score → reasons → confidence → window ───────────── */
+
+function ReadoutCard({ entry, isTop, index, onIndexChange, now }: { entry: LakeData; isTop: boolean; index: number; onIndexChange: (i: number) => void; now: number }) {
   const { lake, forecast, season } = entry;
   const hour = forecast.hours[Math.min(index, forecast.hours.length - 1)];
   const broad = forecast.predictionGranularity === 'time_block';
@@ -133,7 +190,7 @@ function SkyCard({ entry, isTop, index, onIndexChange, now }: { entry: LakeData;
     : index === 0 ? 'Now' : `${formatDay(hour.ts)} · ${shortClock(hour.ts)}`;
 
   return (
-    <Card style={styles.sky}>
+    <Card style={styles.readout}>
       {/* Header: lake + link */}
       <Row gap={spacing.sm} style={styles.skyHeader}>
         <Icon name={season === 'ice' ? 'ice' : 'open-water'} size={14} color={colors.teal} />
@@ -183,8 +240,6 @@ function SkyCard({ entry, isTop, index, onIndexChange, now }: { entry: LakeData;
           <T variant="callout" color={colors.inkMuted}>No window above 60 in this forecast.</T>
         )}
       </View>
-
-      <SkyArc hours={forecast.hours} windows={forecast.windows} ice={season === 'ice'} index={index} onIndexChange={onIndexChange} />
 
       {broad ? (
         <T variant="caption" color={colors.inkMuted} align="center">
@@ -262,7 +317,12 @@ const styles = StyleSheet.create({
   skyHeader: { paddingBottom: spacing.sm, marginBottom: -spacing.xs, borderBottomWidth: StyleSheet.hairlineWidth * 2, borderBottomColor: colors.line, marginHorizontal: -spacing.lg, paddingHorizontal: spacing.lg },
   status: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radius.sm, backgroundColor: colors.fog },
   statusLive: { backgroundColor: colors.sunriseTint },
-  sky: { gap: spacing.md + 2, borderRadius: radius.xl, backgroundColor: colors.white },
+  hero: { marginHorizontal: -spacing.xl, marginTop: -spacing.lg, overflow: 'hidden' },
+  heroHeader: { paddingHorizontal: spacing.xl, paddingBottom: spacing.sm },
+  freshPill: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: 190, paddingHorizontal: spacing.sm + 2, paddingVertical: 6, marginBottom: 4, borderRadius: radius.pill, backgroundColor: 'rgba(251,250,245,0.72)', borderWidth: 1, borderColor: 'rgba(191,200,194,0.6)' },
+  freshPillStale: { backgroundColor: colors.warningTint, borderColor: colors.warningLine },
+  float: { marginTop: -FLOAT_OVERLAP },
+  readout: { gap: spacing.md + 2, borderRadius: radius.xl, backgroundColor: colors.white, borderWidth: 0, ...elevation.raised },
   nowPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.sm + 2, paddingVertical: 4, borderRadius: radius.pill, backgroundColor: colors.tealMist },
   topTag: { backgroundColor: colors.sunriseTint, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.xs },
   lakeRowFocus: { borderLeftWidth: 3, borderLeftColor: colors.teal, paddingLeft: spacing.md, marginLeft: -spacing.lg + 3, paddingRight: 0 },
