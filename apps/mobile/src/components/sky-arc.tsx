@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { ForecastHour, ForecastWindow } from '@bitecast/engine';
 import { StyleSheet, View, type AccessibilityActionEvent, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
@@ -54,6 +54,13 @@ type Props = {
    * into the page at the bottom, and the hour axis just above the fade.
    */
   immersive?: boolean;
+  /** Pills drawn inside the sky, top-left and top-right (e.g. current / next window). */
+  overlayLeft?: ReactNode;
+  overlayRight?: ReactNode;
+  /** Show the scrubbed hour's score in the marker tag (“2 am · 29”). */
+  tagScore?: boolean;
+  fishCount?: number;
+  fishScale?: number;
 };
 
 const IMMERSIVE_H = 262;
@@ -63,7 +70,7 @@ const FADE = 56;
  * Sky arc: the next 24 hours of sun elevation over a lake horizon. Daylight rises above the
  * waterline, night dips under it; window hours glow. Drag to scrub hours.
  */
-export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = false }: Props) {
+export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = false, overlayLeft, overlayRight, tagScore = false, fishCount, fishScale }: Props) {
   const height = immersive ? IMMERSIVE_H : H;
   const lakeH = immersive ? height - HORIZON : AXIS_Y - HORIZON - 6;
   const fishBottom = immersive ? height - FADE - 18 : AXIS_Y - 8;
@@ -176,7 +183,7 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = 
       ) : null}
 
       {/* A subtle school of walleye fills the lake and reacts to the scrubbed hour */}
-      {width ? <LakeSchool width={width} top={HORIZON + (ice ? 10 : 4)} bottom={fishBottom} mood={moodFor(hour?.score ?? 0)} /> : null}
+      {width ? <LakeSchool width={width} top={HORIZON + (ice ? 10 : 4)} bottom={fishBottom} mood={moodFor(hour?.score ?? 0)} count={fishCount} sizeScale={fishScale} /> : null}
 
       {/* Vertical guide + sun/moon marker */}
       {width ? (
@@ -185,7 +192,7 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = 
           <Animated.View pointerEvents="none" style={[styles.marker, markerStyle]}>
             <View style={styles.tag}>
               <T variant="caption" weight="700" color={colors.onDark} style={{ fontSize: 10.5, lineHeight: 13 }} maxFontSizeMultiplier={1.1}>
-                {index === 0 ? 'Now' : shortClock(hour.ts)}
+                {index === 0 ? 'Now' : shortClock(hour.ts)}{tagScore ? ` · ${hour.score}` : ''}
               </T>
             </View>
             {daylight ? <SunGlyph /> : <MoonGlyph />}
@@ -212,6 +219,9 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = 
           <T key={i} variant="caption" color={colors.inkMuted} style={{ fontSize: 10.5 }} maxFontSizeMultiplier={1.2}>{i === 0 ? 'Now' : shortClock(data[i].ts)}</T>
         ))}
       </View>
+
+      {overlayLeft ? <View pointerEvents="none" style={[styles.overlay, { left: PAD }]}>{overlayLeft}</View> : null}
+      {overlayRight ? <View pointerEvents="none" style={[styles.overlay, { right: PAD }]}>{overlayRight}</View> : null}
 
       {/* Touch surface */}
       <View
@@ -263,5 +273,6 @@ const styles = StyleSheet.create({
   sunCore: { width: 15, height: 15, borderRadius: 8, backgroundColor: colors.sunrise, borderWidth: 2, borderColor: colors.white },
   moonCore: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.paper, borderWidth: 1.5, borderColor: colors.inkSoft, alignItems: 'center', justifyContent: 'center' },
   horizonLabel: { position: 'absolute', top: HORIZON - 18, fontSize: 10.5 },
+  overlay: { position: 'absolute', top: 8, maxWidth: '58%' },
   axis: { position: 'absolute', left: PAD - 4, right: PAD - 8, bottom: 0, flexDirection: 'row', justifyContent: 'space-between' },
 });

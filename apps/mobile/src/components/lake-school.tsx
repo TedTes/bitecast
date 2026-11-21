@@ -54,7 +54,7 @@ function roomiest(fish: Fish[], self: Fish, width: number, top: number, room: nu
  * random lifespan dwindle away and reappear somewhere roomy — often mid-lake — so the scene
  * stays evenly populated and never visibly repeats. `mood` changes behaviour, never count.
  */
-export function LakeSchool({ width, top, bottom, mood, count = 10 }: { width: number; top: number; bottom: number; mood: Mood; count?: number }) {
+export function LakeSchool({ width, top, bottom, mood, count = 10, sizeScale = 1 }: { width: number; top: number; bottom: number; mood: Mood; count?: number; sizeScale?: number }) {
   const reduced = useReducedMotion();
   const activity = useSharedValue(level[mood]);
   const band = bottom - top;
@@ -65,7 +65,7 @@ export function LakeSchool({ width, top, bottom, mood, count = 10 }: { width: nu
     const rows = Math.ceil(count / cols);
     return Array.from({ length: count }, (_, i) => {
       const depth = Math.random();
-      const size = 46 - depth * 22 + Math.random() * 4;
+      const size = (46 - depth * 22 + Math.random() * 4) * sizeScale;
       const room = Math.max(0, band - size * FISH_ASPECT);
       const col = i % cols, row = Math.floor(i / cols);
       const x = ((col + 0.15 + Math.random() * 0.7) / cols) * width - size / 2;
