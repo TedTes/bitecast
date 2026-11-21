@@ -1,17 +1,17 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import type { ForecastHour, ForecastWindow, LakeForecast, Season } from '@bitecast/engine';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { Easing, useAnimatedProps, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import * as SunCalc from 'suncalc';
 import { conditionLabel, upcomingWindows, windowEnd } from '@/components/forecast';
 import { Icon, type IconName } from '@/components/icon';
 import { LakeSchool } from '@/components/lake-school';
 import { Toast } from '@/components/toast';
-import { Button, Divider, EmptyState, ErrorState, IceSafetyNotice, LinkButton, OfflineBanner, Reveal, Row, Screen, SkeletonCard, T } from '@/components/ui';
+import { Button, EmptyState, ErrorState, IceSafetyNotice, OfflineBanner, Reveal, Row, Screen, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
 import { colors, elevation, hitSlop, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
 import { forecastQuery, forecastSource, freshness } from '@/data/forecasts';
@@ -25,10 +25,13 @@ import type { AppSettings, Lake } from '@/types/app';
 /*
  * Today answers, in order: should I go and when (the answer card) → is it comfortable and
  * safe (conditions for that window) → how my other lakes compare → log a trip.
- * The sky and lake are a calm backdrop only; hour-by-hour detail lives on the lake screen.
+ * The whole screen is a calm lake: a fixed backdrop the content floats over. Fish show
+ * mood only (livelier vs lazy) — their number never encodes the forecast.
  */
 
 const MAX_LAKES = 5;
+/** Where the waterline sits below the header. */
+const WATERLINE = 64;
 
 type LakeData = { lake: Lake; season: Season; forecast: LakeForecast; updatedAt: number; next?: ForecastWindow; live: boolean };
 
@@ -45,12 +48,12 @@ function actionable(windows: ForecastWindow[], now: number) {
   return { next: open ?? upcoming[0], live: Boolean(open) };
 }
 
-/** “Today 7–10 am”, “Tomorrow noon–6 pm”, “Mon 5–9 am”. */
-const whenLabel = (window: ForecastWindow) => {
-  const day = formatDay(window.start);
-  const short = day === 'Today' || day === 'Tomorrow' ? day : new Date(window.start).toLocaleDateString([], { weekday: 'short' });
-  return `${short} ${shortRange(window.start, windowEnd(window))}`;
+/** “Today”, “Tomorrow”, else a short weekday. */
+const dayLabel = (value: string) => {
+  const day = formatDay(value);
+  return day === 'Today' || day === 'Tomorrow' ? day : new Date(value).toLocaleDateString([], { weekday: 'short' });
 };
+const capitalizeFirst = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
 export default function TodayScreen() {
   const ids = useAppStore((state) => state.followedLakeIds);
@@ -58,6 +61,7 @@ export default function TodayScreen() {
   const resolve = useConditionResolver();
   const seasons = ids.map((id) => resolve(id).season);
   const queryClient = useQueryClient();
+  const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const now = useNow(30_000);
@@ -86,44 +90,36 @@ export default function TodayScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <Screen tab header refreshing={refreshing} onRefresh={refresh}>
-        <Backdrop night={night} score={nowHour?.score ?? 50} ice={best?.season === 'ice'} hasAnswer={Boolean(best)}>
-          <Header now={now} fresh={fresh} refreshing={refreshing} onRefresh={refresh} />
-        </Backdrop>
+      <LakeBackground night={night} score={nowHour?.score ?? 50} ice={best?.season === 'ice'} waterTop={insets.top + WATERLINE} />
+
+      <Screen tab header background="transparent" refreshing={refreshing} onRefresh={refresh}>
+        <Header now={now} fresh={fresh} refreshing={refreshing} onRefresh={refresh} top={insets.top} />
 
         {best ? (
           <>
-            <Reveal index={0} style={styles.float}>
+            <Reveal index={0} style={{ marginTop: spacing.xxl }}>
               <AnswerCard entry={best} now={now} units={units} />
             </Reveal>
             {seasons.includes('ice') ? <IceSafetyNotice compact /> : null}
             <OfflineBanner />
 
-            <Reveal index={1} style={{ gap: spacing.sm }}>
-              <Row justify="space-between" align="center">
-                <T variant="label" color={colors.inkMuted} accessibilityRole="header">{others.length ? 'Your other lakes' : 'Compare lakes'}</T>
-                {ids.length < MAX_LAKES ? <LinkButton icon="plus" onPress={() => router.push('/(tabs)/map')}>{`Follow · ${ids.length}/${MAX_LAKES}`}</LinkButton> : null}
-              </Row>
-              {others.length ? (
-                <View style={styles.group}>
-                  {others.map((entry, i) => (
-                    <View key={entry.lake.id}>
-                      {i > 0 ? <Divider /> : null}
-                      <LakeRow entry={entry} now={now} />
-                    </View>
-                  ))}
-                </View>
-              ) : (
-                <T variant="caption" color={colors.inkMuted}>Follow another lake to compare windows.</T>
-              )}
-            </Reveal>
-
-            <Reveal index={2}>
-              <LogAction lakeId={best.lake.id} />
+            <Reveal index={1} style={styles.buoys}>
+              {others.map((entry) => <Buoy key={entry.lake.id} entry={entry} now={now} />)}
+              {ids.length < MAX_LAKES ? (
+                <Pressable
+                  onPress={() => router.push('/(tabs)/map')}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Follow another lake. ${ids.length} of ${MAX_LAKES} followed.`}
+                  style={({ pressed }) => [styles.followBuoy, pressed && { opacity: 0.6 }]}
+                >
+                  <Icon name="plus" size={14} color={colors.teal} />
+                  <T variant="caption" weight="700" color={colors.teal}>Follow</T>
+                </Pressable>
+              ) : null}
             </Reveal>
           </>
         ) : (
-          <>
+          <View style={styles.plainBlock}>
             <OfflineBanner />
             {ids.length === 0 ? (
               <EmptyState
@@ -141,12 +137,12 @@ export default function TodayScreen() {
                 <SkeletonCard lines={2} />
               </>
             ) : null}
-          </>
+          </View>
         )}
 
-        <View style={{ gap: spacing.xs, alignItems: 'center' }}>
+        <View style={styles.footer}>
           <Row gap={6} justify="center">
-            <T variant="caption" color={colors.inkMuted}>Conditions, not a guarantee of fish{best ? ` · ${forecastSource(best.forecast)}` : ''}</T>
+            <T variant="caption" color={colors.inkSoft}>Conditions, not a guarantee of fish{best ? ` · ${forecastSource(best.forecast)}` : ''}</T>
             {broad ? (
               <Pressable onPress={() => setAboutOpen((open) => !open)} hitSlop={hitSlop} accessibilityRole="button" accessibilityState={{ expanded: aboutOpen }} accessibilityLabel="About broad time blocks">
                 <Icon name="info" size={14} color={colors.teal} />
@@ -154,70 +150,74 @@ export default function TodayScreen() {
             ) : null}
           </Row>
           {broad && aboutOpen ? (
-            <T variant="caption" color={colors.inkMuted} align="center" style={{ paddingHorizontal: spacing.lg }}>
+            <T variant="caption" color={colors.inkSoft} align="center" style={{ paddingHorizontal: spacing.lg }}>
               This lake uses broad time-block outlooks. They repeat across the day and don’t identify an exact peak hour.
             </T>
           ) : null}
         </View>
+        {/* Room so the floating log button never covers content. */}
+        <View style={{ height: 64 }} />
       </Screen>
+
+      {best ? <LogButton lakeId={best.lake.id} /> : null}
       <Toast trigger={refreshErrorAt} icon="sync-error" message="Couldn’t refresh. Showing the forecast saved on this device." actionLabel="Retry" onAction={refresh} />
     </View>
   );
 }
 
-/* ───────────── Backdrop: sky behind the header, a calm lake below (decorative) ───────────── */
+/* ───────────── Full-screen lake (fixed; content floats over it) ───────────── */
 
-const LAKE_H = 320;
-/** How much open water shows above the card before it floats into the lake. */
-const WATER_ABOVE_CARD = 72;
-
-function Backdrop({ night, score, ice, hasAnswer, children }: { night: boolean; score: number; ice: boolean; hasAnswer: boolean; children: ReactNode }) {
-  const insets = useSafeAreaInsets();
-  const [width, setWidth] = useState(0);
-  const sky = night ? { top: '#BCC9D0', bottom: '#DDE5E5' } : { top: '#D3E5E2', bottom: '#E8EFEA' };
+function LakeBackground({ night, score, ice, waterTop }: { night: boolean; score: number; ice: boolean; waterTop: number }) {
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const sky = night ? { top: '#BCC9D0', bottom: '#DCE4E4' } : { top: '#D3E5E2', bottom: '#E6EEEA' };
+  const water = ice ? { top: '#E4EDEF', bottom: '#C9D8DC' } : { top: '#CFE2E1', bottom: '#A9C8CB' };
+  const { width, height } = size;
+  const lakeH = Math.max(0, height - waterTop);
   return (
-    <View style={[styles.backdrop, { paddingTop: insets.top + spacing.sm }]} onLayout={(event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width)}>
-      <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
-        <Defs>
-          <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={sky.top} />
-            <Stop offset="1" stopColor={sky.bottom} />
-          </LinearGradient>
-        </Defs>
-        <Rect x="0" y="0" width="100%" height="100%" fill="url(#sky)" />
-      </Svg>
-      {children}
-      {hasAnswer && width ? (
-        <View style={{ height: LAKE_H }} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <Svg width={width} height={LAKE_H} style={StyleSheet.absoluteFill}>
-            <Defs>
-              <LinearGradient id="water" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor={ice ? '#E6EEF0' : colors.chartWater} />
-                <Stop offset="0.6" stopColor={ice ? '#D3DFE2' : colors.chartWaterDeep} />
-                <Stop offset="1" stopColor={colors.cream} />
-              </LinearGradient>
-            </Defs>
-            <Rect x={0} y={0} width={width} height={LAKE_H} fill="url(#water)" />
-            {[0.22, 0.5, 0.78].map((t) => {
-              const y = LAKE_H * t;
-              return <Path key={t} d={`M0 ${y} C${width * 0.25} ${y - 4} ${width * 0.5} ${y + 4} ${width * 0.75} ${y - 3} S${width} ${y + 3} ${width} ${y}`} stroke={colors.chartContour} strokeWidth={1} fill="none" opacity={0.5} />;
-            })}
-            <Path d={`M0 0 L${width} 0`} stroke={colors.teal} strokeWidth={1} opacity={0.4} />
-            {ice ? <Rect x={0} y={0} width={width} height={7} fill={colors.white} opacity={0.85} /> : null}
-          </Svg>
-          <LakeSchool width={width} top={ice ? 12 : 8} bottom={LAKE_H - 40} mood={score >= 60 ? 'active' : score >= 40 ? 'idle' : 'sleepy'} count={8} sizeScale={1.3} />
+    <View
+      style={StyleSheet.absoluteFill}
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      onLayout={(event: LayoutChangeEvent) => setSize({ width: event.nativeEvent.layout.width, height: event.nativeEvent.layout.height })}
+    >
+      {width ? (
+        <Svg width={width} height={height}>
+          <Defs>
+            <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={sky.top} />
+              <Stop offset="1" stopColor={sky.bottom} />
+            </LinearGradient>
+            <LinearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={water.top} />
+              <Stop offset="1" stopColor={water.bottom} />
+            </LinearGradient>
+          </Defs>
+          <Rect x={0} y={0} width={width} height={waterTop} fill="url(#sky)" />
+          <Rect x={0} y={waterTop} width={width} height={lakeH} fill="url(#water)" />
+          {[0.12, 0.3, 0.5, 0.7, 0.88].map((t) => {
+            const y = waterTop + lakeH * t;
+            return <Path key={t} d={`M0 ${y} C${width * 0.25} ${y - 5} ${width * 0.5} ${y + 5} ${width * 0.75} ${y - 3} S${width} ${y + 4} ${width} ${y}`} stroke={colors.white} strokeWidth={1} fill="none" opacity={0.35} />;
+          })}
+          <Path d={`M0 ${waterTop} L${width} ${waterTop}`} stroke={colors.teal} strokeWidth={1} opacity={0.35} />
+          {ice ? <Rect x={0} y={waterTop} width={width} height={8} fill={colors.white} opacity={0.85} /> : null}
+        </Svg>
+      ) : null}
+      {width ? (
+        <View style={{ position: 'absolute', top: waterTop, left: 0, width, height: lakeH }}>
+          <LakeSchool width={width} top={ice ? 14 : 10} bottom={lakeH - 30} mood={score >= 60 ? 'active' : score >= 40 ? 'idle' : 'sleepy'} count={11} sizeScale={1.15} />
         </View>
       ) : null}
     </View>
   );
 }
 
-function Header({ now, fresh, refreshing, onRefresh }: { now: number; fresh: { state: 'fresh' | 'aging' | 'stale'; label: string }; refreshing: boolean; onRefresh: () => void }) {
+function Header({ now, fresh, refreshing, onRefresh, top }: { now: number; fresh: { state: 'fresh' | 'aging' | 'stale'; label: string }; refreshing: boolean; onRefresh: () => void; top: number }) {
   const stale = fresh.state === 'stale';
   const date = new Date(now).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
   const updated = refreshing ? 'refreshing…' : fresh.label.replace(/^Updated /, 'updated ').replace(/^Forecast is /, '');
   return (
-    <Row justify="space-between" align="center" style={styles.headerRow}>
+    <Row justify="space-between" align="center" style={{ paddingTop: top - spacing.sm, minHeight: WATERLINE - spacing.sm }}>
       <T variant="title" accessibilityRole="header">Today</T>
       <Pressable
         disabled={!stale || refreshing}
@@ -250,7 +250,7 @@ function AnswerCard({ entry, now, units }: { entry: LakeData; now: number; units
   const status = next
     ? live
       ? `Open · ${formatDuration(new Date(windowEnd(next)).getTime() - now)} left`
-      : `Starts in ${formatDuration(new Date(next.start).getTime() - now)}`
+      : `${dayLabel(next.start)} · in ${formatDuration(new Date(next.start).getTime() - now)}`
     : 'No window this week';
   // Conditions over the window (or right now when there is none).
   const span = next ? next.hours : [current];
@@ -263,8 +263,8 @@ function AnswerCard({ entry, now, units }: { entry: LakeData; now: number; units
       onPress={() => router.push({ pathname: '/lake/[id]', params: { id: lake.id } })}
       accessibilityRole="button"
       accessibilityHint="Opens the hour-by-hour forecast"
-      accessibilityLabel={`${lake.name}, ${seasonLabel(season).toLowerCase()}. ${next ? `${broad ? 'Block' : 'Window'} ${whenLabel(next)}` : 'No window this week'}. ${status}. ${next ? 'Peak' : 'Now'} bite score ${score}, ${band.label}. ${reason}. ${confidence} confidence. Wind ${formatWind(wind, units)}, ${rainLabel(rain)}, ${cloudLabel(cloud)}, pressure ${pressureTrend(span).toLowerCase()}.`}
-      style={({ pressed }) => [styles.card, live && styles.cardLive, pressed && { opacity: 0.92 }]}
+      accessibilityLabel={`${lake.name}, ${seasonLabel(season).toLowerCase()}. ${next ? `${broad ? 'Block' : 'Window'} ${dayLabel(next.start)} ${shortRange(next.start, windowEnd(next))}` : 'No window this week'}. ${status}. ${next ? 'Peak' : 'Now'} bite score ${score}, ${band.label}. ${reason}. ${confidence} confidence. Wind ${formatWind(wind, units)}, ${rainLabel(rain)}, ${cloudLabel(cloud)}, pressure ${pressureTrend(span).toLowerCase()}.`}
+      style={({ pressed }) => [styles.card, live && styles.cardLive, pressed && { opacity: 0.94 }]}
     >
       {/* Band-coloured wash: a Good day and a Slow day feel different at a glance */}
       <Svg style={styles.wash} pointerEvents="none">
@@ -284,8 +284,8 @@ function AnswerCard({ entry, now, units }: { entry: LakeData; now: number; units
             <T variant="subhead" color={colors.inkSoft} numberOfLines={1} style={{ flexShrink: 1 }}>{lake.name}</T>
             <Icon name="chevron-right" size={13} color={colors.inkFaint} />
           </Row>
-          <T variant="title" style={{ fontSize: 27, lineHeight: 32 }} numberOfLines={2}>
-            {next ? whenLabel(next) : conditionLabel(current.score)}
+          <T variant="title" style={{ fontSize: 28, lineHeight: 33 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+            {next ? capitalizeFirst(shortRange(next.start, windowEnd(next))) : conditionLabel(current.score)}
           </T>
           <View style={[styles.statusChip, live && styles.statusChipLive]}>
             {live ? <View style={styles.liveDot} /> : <Icon name="clock" size={12} color={colors.inkSoft} />}
@@ -368,14 +368,14 @@ function WindowTrack({ window, now, live }: { window: ForecastWindow; now: numbe
         <View style={[styles.trackNow, live && { backgroundColor: colors.sunrise }]} />
       </View>
       <View style={{ height: 15 }}>
-        <T variant="caption" color={colors.inkMuted} style={[styles.trackLabel, { left: 0, textAlign: 'left' }]}>Now</T>
+        <T variant="caption" color={colors.inkMuted} style={[styles.trackLabel, styles.trackLabelNow]}>Now</T>
         {close || live ? (
-          <T variant="caption" weight="700" color={colors.sunriseInk} style={[styles.trackLabel, { left: `${Math.min(0.72, Math.max(0.12, s))* 100}%` }]} numberOfLines={1}>
+          <T variant="caption" weight="700" color={colors.sunriseInk} style={[styles.trackLabel, { left: `${Math.min(0.72, Math.max(0.2, s)) * 100}%` }]} numberOfLines={1}>
             {live ? `until ${shortClock(windowEnd(window))}` : shortRange(window.start, windowEnd(window))}
           </T>
         ) : (
           <>
-            <T variant="caption" weight="700" color={colors.sunriseInk} style={[styles.trackLabel, { left: `${Math.min(0.8, Math.max(0.12, s)) * 100}%` }]} numberOfLines={1}>{shortClock(window.start)}</T>
+            <T variant="caption" weight="700" color={colors.sunriseInk} style={[styles.trackLabel, { left: `${Math.min(0.8, Math.max(0.2, s)) * 100}%` }]} numberOfLines={1}>{shortClock(window.start)}</T>
             <T variant="caption" weight="700" color={colors.sunriseInk} style={[styles.trackLabel, { left: `${Math.min(0.86, e) * 100}%` }]} numberOfLines={1}>{shortClock(windowEnd(window))}</T>
           </>
         )}
@@ -393,11 +393,10 @@ function Chip({ icon, text, warn }: { icon: IconName; text: string; warn?: boole
   );
 }
 
-const cloudLabel = (pct: number) => (pct < 25 ? 'Clear' : pct < 70 ? 'Partly cloudy' : 'Overcast');
-
 const avg = (hours: ForecastHour[], pick: (h: ForecastHour) => number) => hours.reduce((total, h) => total + pick(h), 0) / Math.max(1, hours.length);
 const sum = (hours: ForecastHour[], pick: (h: ForecastHour) => number) => hours.reduce((total, h) => total + pick(h), 0);
 const rainLabel = (mm: number) => (mm < 0.2 ? 'Dry' : `${Math.round(mm * 10) / 10} mm`);
+const cloudLabel = (pct: number) => (pct < 25 ? 'Clear' : pct < 70 ? 'Partly cloudy' : 'Overcast');
 const pressureTrend = (hours: ForecastHour[]) => {
   if (hours.length < 2) return 'Steady';
   const delta = hours[hours.length - 1].pressureHpa - hours[0].pressureHpa;
@@ -405,88 +404,92 @@ const pressureTrend = (hours: ForecastHour[]) => {
 };
 
 const barLevel = { High: 3, Medium: 2, Low: 1 } as const;
-/** Compact confidence: three bars + level word. */
-function Bars({ level }: { level: 'High' | 'Medium' | 'Low' }) {
+/** Compact confidence: three bars (+ level word unless `bare`). */
+function Bars({ level, bare }: { level: 'High' | 'Medium' | 'Low'; bare?: boolean }) {
   return (
     <Row gap={4} importantForAccessibility="no-hide-descendants">
       <View style={styles.bars}>
         {[1, 2, 3].map((bar) => <View key={bar} style={[styles.bar, { height: 3 + bar * 3, backgroundColor: bar <= barLevel[level] ? colors.teal : colors.fogDeep }]} />)}
       </View>
-      <T variant="caption" color={colors.inkMuted}>{level}</T>
+      {bare ? null : <T variant="caption" color={colors.inkMuted}>{level}</T>}
     </Row>
   );
 }
 
-/* ───────────── Other lakes: one line each, ranked ───────────── */
+/* ───────────── Other lakes as buoys floating in the lake ───────────── */
 
-function LakeRow({ entry, now }: { entry: LakeData; now: number }) {
+function Buoy({ entry, now }: { entry: LakeData; now: number }) {
   const { lake, next, live, forecast, season } = entry;
   const current = fromNow(forecast.hours, now)[0];
   const score = next?.peakScore ?? current.score;
   const band = scoreBands[scoreBand(score)];
-  const when = next ? (live ? `Open now · ends ${shortClock(windowEnd(next))}` : whenLabel(next)) : 'No window this week';
+  const when = next ? (live ? 'Open now' : `${dayLabel(next.start)} ${shortClock(next.start)}`) : 'No window';
   const reason = (next?.reasons ?? current.reasons)[0] ?? 'Mixed conditions';
   const confidence = next?.confidence ?? current.confidence;
   return (
     <Pressable
       onPress={() => router.push({ pathname: '/lake/[id]', params: { id: lake.id } })}
       accessibilityRole="button"
-      accessibilityLabel={`${lake.name}, ${seasonLabel(season).toLowerCase()}. ${when}. ${next ? 'Peak' : 'Now'} bite score ${score}, ${band.label}. ${reason}. ${confidence} confidence.`}
+      accessibilityLabel={`${lake.name}, ${seasonLabel(season).toLowerCase()}. ${next ? `${live ? 'Window open now' : `Next window ${formatDay(next.start)} ${shortRange(next.start, windowEnd(next))}`}` : 'No window this week'}. ${next ? 'Peak' : 'Now'} bite score ${score}, ${band.label}. ${reason}. ${confidence} confidence.`}
       accessibilityHint="Opens the lake forecast"
-      style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}
+      style={({ pressed }) => [styles.buoy, pressed && { opacity: 0.8 }]}
     >
-      <View style={{ flex: 1, gap: 2 }}>
-        <Row gap={6}>
-          <T variant="subhead" numberOfLines={1} style={{ flexShrink: 1 }}>{lake.name}</T>
-          <T variant="caption" weight="700" color={live ? colors.sunriseInk : colors.inkSoft} numberOfLines={1} style={{ flexShrink: 1 }}>· {when}</T>
-        </Row>
-        <Row gap={spacing.sm}>
-          <Icon name={reasonIcon(reason)} size={12} color={colors.teal} />
-          <T variant="caption" color={colors.inkMuted} numberOfLines={1} style={{ flex: 1 }}>{reason}</T>
-          <Bars level={confidence} />
-        </Row>
+      <View style={[styles.buoyScore, { backgroundColor: band.tint, borderColor: band.color }]}>
+        <T variant="numeralS" color={colors.ink} style={{ fontSize: 14 }}>{score}</T>
       </View>
-      <View style={[styles.pill, { backgroundColor: band.tint }]}>
-        <T variant="numeralS" color={colors.ink}>{score}</T>
+      <View style={{ gap: 1, flexShrink: 1 }}>
+        <T variant="caption" weight="800" color={colors.ink} numberOfLines={1}>{lake.name}</T>
+        <Row gap={5}>
+          <Icon name={reasonIcon(reason)} size={11} color={colors.teal} />
+          <T variant="caption" color={live ? colors.sunriseInk : colors.inkMuted} weight={live ? '700' : '500'} style={{ fontSize: 11.5 }} numberOfLines={1}>{when}</T>
+          <Bars level={confidence} bare />
+        </Row>
       </View>
     </Pressable>
   );
 }
 
-function LogAction({ lakeId }: { lakeId: string }) {
-  const last = useAppStore((state) => state.catchLogs[0]);
+/* ───────────── Floating log button ───────────── */
+
+function LogButton({ lakeId }: { lakeId: string }) {
   return (
-    <View style={{ gap: spacing.xs }}>
-      <Button variant="secondary" size="md" icon="plus" onPress={() => router.push({ pathname: '/log/new', params: { lakeId } })}>Log a trip</Button>
-      <T variant="caption" color={colors.inkMuted} align="center">
-        {last ? `Last trip · ${lakeById(last.lakeId).name}, ${formatDay(last.caughtAt)}` : 'No-catch trips count too'}
-      </T>
-    </View>
+    <Pressable
+      onPress={() => router.push({ pathname: '/log/new', params: { lakeId } })}
+      accessibilityRole="button"
+      accessibilityLabel="Log a trip"
+      accessibilityHint="Catch and no-catch trips both count"
+      hitSlop={hitSlop}
+      style={({ pressed }) => [styles.fab, pressed && { transform: [{ scale: 0.95 }] }]}
+    >
+      <Icon name="plus" size={24} color={colors.onDark} />
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { marginHorizontal: -spacing.xl, marginTop: -spacing.lg, overflow: 'hidden' },
-  headerRow: { paddingHorizontal: spacing.xl, paddingBottom: spacing.lg },
   freshness: { flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1, marginLeft: spacing.md },
-  float: { marginTop: -(LAKE_H - WATER_ABOVE_CARD) },
-  card: { gap: spacing.md, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: 'rgba(255,255,255,0.95)', overflow: 'hidden', ...elevation.raised },
+  card: { gap: spacing.md, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.white, overflow: 'hidden', ...elevation.raised },
   cardLive: { borderWidth: 1.5, borderColor: colors.sunrise },
   wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 120 },
   statusChip: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', marginTop: 2, paddingHorizontal: 9, paddingVertical: 4, borderRadius: radius.pill, backgroundColor: 'rgba(231,234,228,0.9)' },
   statusChipLive: { backgroundColor: colors.sunriseTint },
-  ring: { width: RING, height: RING, alignItems: 'center', justifyContent: 'center', marginTop: spacing.md },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.sunrise },
+  ring: { width: RING, height: RING, alignItems: 'center', justifyContent: 'center' },
   track: { height: 8, borderRadius: 4, backgroundColor: colors.fog, justifyContent: 'center' },
   trackWindow: { position: 'absolute', top: 0, bottom: 0, borderRadius: 4, backgroundColor: colors.sunrise, shadowColor: colors.sunrise, shadowOpacity: 0.6, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } },
   trackNow: { position: 'absolute', left: -2, width: 12, height: 12, borderRadius: 6, backgroundColor: colors.ink, borderWidth: 2, borderColor: colors.white },
   trackLabel: { position: 'absolute', top: 0, width: 72, marginLeft: -36, textAlign: 'center', fontSize: 11 },
+  trackLabelNow: { left: 0, marginLeft: 0, textAlign: 'left' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: colors.tealMist },
   chipWarn: { backgroundColor: colors.warningTint },
-  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.sunrise },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   bar: { width: 3, borderRadius: 1 },
-  group: { paddingHorizontal: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.white, ...elevation.low },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },
-  pill: { minWidth: 44, minHeight: 36, paddingHorizontal: spacing.sm, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
+  buoys: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
+  buoy: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, maxWidth: '100%', paddingVertical: 6, paddingLeft: 6, paddingRight: spacing.md, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.94)', ...elevation.low },
+  buoyScore: { width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  followBuoy: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 46, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.teal, backgroundColor: 'rgba(255,255,255,0.55)' },
+  plainBlock: { gap: spacing.lg, marginTop: spacing.xxl, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.paper },
+  footer: { gap: spacing.xs, alignItems: 'center', alignSelf: 'center', marginTop: spacing.lg, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: 'rgba(251,250,245,0.7)' },
+  fab: { position: 'absolute', right: spacing.xl, bottom: spacing.lg, width: 58, height: 58, borderRadius: 29, backgroundColor: colors.deep, alignItems: 'center', justifyContent: 'center', ...elevation.raised },
 });
