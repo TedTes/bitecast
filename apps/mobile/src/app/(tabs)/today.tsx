@@ -103,20 +103,6 @@ export default function TodayScreen() {
             {seasons.includes('ice') ? <IceSafetyNotice compact /> : null}
             <OfflineBanner />
 
-            <Reveal index={1} style={styles.buoys}>
-              {others.map((entry) => <Buoy key={entry.lake.id} entry={entry} now={now} />)}
-              {ids.length < MAX_LAKES ? (
-                <Pressable
-                  onPress={() => router.push('/(tabs)/map')}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Follow another lake. ${ids.length} of ${MAX_LAKES} followed.`}
-                  style={({ pressed }) => [styles.followBuoy, pressed && { opacity: 0.6 }]}
-                >
-                  <Icon name="plus" size={14} color={colors.teal} />
-                  <T variant="caption" weight="700" color={colors.teal}>Follow</T>
-                </Pressable>
-              ) : null}
-            </Reveal>
           </>
         ) : (
           <View style={styles.plainBlock}>
@@ -140,6 +126,29 @@ export default function TodayScreen() {
           </View>
         )}
 
+        {/* Open water between the answer and the dock below: the fish live here. */}
+        <View style={{ flexGrow: 1, minHeight: spacing.lg }} />
+
+        {best ? (
+          <View style={styles.dock}>
+            <Reveal index={1} style={styles.buoys}>
+              {others.map((entry) => <Buoy key={entry.lake.id} entry={entry} now={now} />)}
+              {ids.length < MAX_LAKES ? (
+                <Pressable
+                  onPress={() => router.push('/(tabs)/map')}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Follow another lake. ${ids.length} of ${MAX_LAKES} followed.`}
+                  style={({ pressed }) => [styles.followBuoy, pressed && { opacity: 0.6 }]}
+                >
+                  <Icon name="plus" size={14} color={colors.teal} />
+                  <T variant="caption" weight="700" color={colors.teal}>Follow</T>
+                </Pressable>
+              ) : null}
+            </Reveal>
+            <LogPill lakeId={best.lake.id} />
+          </View>
+        ) : null}
+
         <View style={styles.footer}>
           <Row gap={6} justify="center">
             <T variant="caption" color={colors.inkSoft}>Conditions, not a guarantee of fish{best ? ` · ${forecastSource(best.forecast)}` : ''}</T>
@@ -155,11 +164,8 @@ export default function TodayScreen() {
             </T>
           ) : null}
         </View>
-        {/* Room so the floating log button never covers content. */}
-        <View style={{ height: 64 }} />
       </Screen>
 
-      {best ? <LogButton lakeId={best.lake.id} /> : null}
       <Toast trigger={refreshErrorAt} icon="sync-error" message="Couldn’t refresh. Showing the forecast saved on this device." actionLabel="Retry" onAction={refresh} />
     </View>
   );
@@ -512,20 +518,26 @@ function Buoy({ entry, now }: { entry: LakeData; now: number }) {
   );
 }
 
-/* ───────────── Floating log button ───────────── */
+/* ───────────── Log a trip: centred, labelled, resting on the lake bed ───────────── */
 
-function LogButton({ lakeId }: { lakeId: string }) {
+function LogPill({ lakeId }: { lakeId: string }) {
+  const last = useAppStore((state) => state.catchLogs[0]);
   return (
-    <Pressable
-      onPress={() => router.push({ pathname: '/log/new', params: { lakeId } })}
-      accessibilityRole="button"
-      accessibilityLabel="Log a trip"
-      accessibilityHint="Catch and no-catch trips both count"
-      hitSlop={hitSlop}
-      style={({ pressed }) => [styles.fab, pressed && { transform: [{ scale: 0.95 }] }]}
-    >
-      <Icon name="plus" size={24} color={colors.onDark} />
-    </Pressable>
+    <View style={{ alignItems: 'center', gap: spacing.xs }}>
+      <Pressable
+        onPress={() => router.push({ pathname: '/log/new', params: { lakeId } })}
+        accessibilityRole="button"
+        accessibilityLabel="Log a trip"
+        accessibilityHint="Catch and no-catch trips both count"
+        style={({ pressed }) => [styles.logPill, pressed && { transform: [{ scale: 0.97 }] }]}
+      >
+        <Icon name="plus" size={18} color={colors.onDark} />
+        <T variant="subhead" color={colors.onDark}>Log a trip</T>
+      </Pressable>
+      <T variant="caption" color={colors.inkSoft} style={styles.lastTrip}>
+        {last ? `Last trip · ${lakeById(last.lakeId).name}, ${formatDay(last.caughtAt)}` : 'No-catch trips count too'}
+      </T>
+    </View>
   );
 }
 
@@ -548,12 +560,14 @@ const styles = StyleSheet.create({
   chipWarn: { backgroundColor: colors.warningTint },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   bar: { width: 3, borderRadius: 1 },
-  buoys: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
+  dock: { gap: spacing.lg },
+  logPill: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 52, paddingHorizontal: spacing.xxl, borderRadius: radius.pill, backgroundColor: colors.deep, ...elevation.raised },
+  lastTrip: { paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: 'rgba(251,250,245,0.6)' },
+  buoys: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
   buoy: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, maxWidth: '100%', paddingVertical: 6, paddingLeft: 6, paddingRight: spacing.md, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.94)', ...elevation.low },
   buoyScore: { width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   followBuoy: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 46, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.teal, backgroundColor: 'rgba(255,255,255,0.55)' },
   plainBlock: { gap: spacing.lg, marginTop: spacing.xxl, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.paper },
-  footer: { gap: spacing.xs, alignItems: 'center', alignSelf: 'center', marginTop: spacing.lg, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: 'rgba(251,250,245,0.7)' },
+  footer: { gap: spacing.xs, alignItems: 'center', alignSelf: 'center', marginBottom: spacing.sm, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: 'rgba(251,250,245,0.7)' },
   weed: { position: 'absolute', width: 4, borderRadius: 2, backgroundColor: '#5E8F86', opacity: 0.55, transformOrigin: 'bottom' },
-  fab: { position: 'absolute', right: spacing.xl, bottom: spacing.lg, width: 58, height: 58, borderRadius: 29, backgroundColor: colors.deep, alignItems: 'center', justifyContent: 'center', ...elevation.raised },
 });
