@@ -108,28 +108,26 @@ export default function TodayScreen() {
             <Reveal index={0} style={{ marginTop: spacing.xxl }}>
               <AnswerCard entry={best} now={now} units={units} />
             </Reveal>
-            {best.next ? (
-              <Reveal index={1}>
-                <TacticCard window={best.next} />
-              </Reveal>
-            ) : null}
             {seasons.includes('ice') ? <IceSafetyNotice compact /> : null}
             <OfflineBanner />
-            <Reveal index={1} style={styles.buoys}>
-              {others.map((entry) => <Buoy key={entry.lake.id} entry={entry} now={now} />)}
-              {ids.length < MAX_LAKES ? (
-                <Pressable
-                  onPress={() => router.push('/(tabs)/map')}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Follow another lake. ${ids.length} of ${MAX_LAKES} followed.`}
-                  style={({ pressed }) => [styles.followBuoy, pressed && { opacity: 0.6 }]}
-                >
-                  <Icon name="plus" size={14} color={colors.teal} />
-                  <T variant="caption" weight="700" color={colors.teal}>Follow</T>
-                </Pressable>
-              ) : null}
+            <Reveal index={2} style={{ gap: spacing.sm }}>
+              <Row justify="space-between" align="center">
+                <T variant="label" color={colors.inkSoft} accessibilityRole="header">{others.length ? 'Other lakes' : 'Compare lakes'}</T>
+                {ids.length < MAX_LAKES ? (
+                  <Pressable
+                    onPress={() => router.push('/(tabs)/map')}
+                    hitSlop={hitSlop}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Follow another lake. ${ids.length} of ${MAX_LAKES} followed.`}
+                    style={({ pressed }) => [styles.followButton, pressed && { opacity: 0.7 }]}
+                  >
+                    <Icon name="plus" size={14} color={colors.teal} />
+                    <T variant="caption" weight="700" color={colors.teal}>Follow</T>
+                  </Pressable>
+                ) : null}
+              </Row>
+              {others.map((entry) => <LakeCard key={entry.lake.id} entry={entry} now={now} />)}
             </Reveal>
-
           </>
         ) : (
           <View style={styles.plainBlock}>
@@ -381,11 +379,12 @@ function AnswerCard({ entry, now, units }: { entry: LakeData; now: number; units
   const cloud = avg(span, (h) => h.cloudPct);
 
   return (
+    <View style={{ gap: spacing.md }}>
     <Pressable
       onPress={() => router.push({ pathname: '/lake/[id]', params: { id: lake.id } })}
       accessibilityRole="button"
       accessibilityHint="Opens the hour-by-hour forecast"
-      accessibilityLabel={`${lake.name}, ${seasonLabel(season).toLowerCase()}. ${next ? `${broad ? 'Block' : 'Window'} ${dayLabel(next.start)} ${shortRange(next.start, windowEnd(next))}` : 'No window this week'}. ${status}. ${next ? 'Peak' : 'Now'} bite score ${score}, ${band.label}. ${reason}. ${confidence} confidence. Wind ${formatWind(wind, units)}, ${rainLabel(rain)}, ${cloudLabel(cloud)}, pressure ${pressureTrend(span).toLowerCase()}.`}
+      accessibilityLabel={`${lake.name}, ${seasonLabel(season).toLowerCase()}. ${next ? `${broad ? 'Block' : 'Window'} ${dayLabel(next.start)} ${shortRange(next.start, windowEnd(next))}` : 'No window this week'}. ${status}. ${next ? 'Peak' : 'Now'} bite score ${score}, ${band.label}.`}
       style={({ pressed }) => [styles.card, live && styles.cardLive, pressed && { opacity: 0.94 }]}
     >
       {/* Band-coloured wash: a Good day and a Slow day feel different at a glance */}
@@ -418,20 +417,23 @@ function AnswerCard({ entry, now, units }: { entry: LakeData; now: number; units
       </Row>
 
       {next ? <WindowTrack window={next} now={now} live={live} /> : null}
+    </Pressable>
 
+    {/* Second card: why (reason + confidence) and what it will be like out there */}
+    <View style={styles.conditionsCard} accessible accessibilityLabel={`${reason}. ${confidence} confidence. Wind ${formatWind(wind, units)}, ${rainLabel(rain)}, ${cloudLabel(cloud)}, pressure ${pressureTrend(span).toLowerCase()}.`}>
       <Row gap={spacing.sm}>
         <Icon name={reasonIcon(reason)} size={15} color={colors.teal} />
         <T variant="callout" style={{ flex: 1 }} numberOfLines={2}>{reason}</T>
         <Bars level={confidence} />
       </Row>
-
       <View style={styles.chips}>
         <Chip icon="wind" text={formatWind(wind, units)} warn={wind >= 25} />
         <Chip icon="rain" text={rainLabel(rain)} warn={rain >= 2} />
         <Chip icon="cloud" text={cloudLabel(cloud)} />
         <Chip icon="pressure" text={pressureTrend(span)} />
       </View>
-    </Pressable>
+    </View>
+    </View>
   );
 }
 
@@ -538,63 +540,41 @@ function Bars({ level, bare }: { level: 'High' | 'Medium' | 'Low'; bare?: boolea
   );
 }
 
-/* ───────────── How to fish it: depth (as a tiny lake cross-section) + tactic ───────────── */
+/* ───────────── Other lakes: full-width cards, ranked ───────────── */
 
-const depthLevel = { shallow: 0.22, mid: 0.5, deep: 0.8 } as const;
-
-function TacticCard({ window }: { window: ForecastWindow }) {
-  const W = 76;
-  const H = 52;
-  const y = 6 + depthLevel[window.depth] * (H - 14);
-  return (
-    <View style={styles.tactic} accessible accessibilityLabel={`How to fish it: ${window.depth} water. ${window.tactics}`}>
-      <View style={styles.depthArt} importantForAccessibility="no-hide-descendants">
-        <Svg width={W} height={H}>
-          <Rect x={0} y={4} width={W} height={H - 4} rx={8} fill={colors.tealMist} />
-          {/* bottom contour sloping from shore (left) into deep water (right) */}
-          <Path d={`M0 ${H * 0.35} C${W * 0.3} ${H * 0.4} ${W * 0.45} ${H * 0.85} ${W} ${H * 0.92} L${W} ${H} L0 ${H} Z`} fill="#C9C2A7" />
-          <Path d={`M0 4 L${W} 4`} stroke={colors.teal} strokeWidth={1.5} />
-          <Rect x={4} y={y - 5} width={W - 8} height={10} rx={5} fill={colors.sunrise} opacity={0.35} />
-          <Circle cx={W * 0.62} cy={y} r={4} fill={colors.sunrise} />
-        </Svg>
-      </View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <T variant="label" color={colors.teal} style={{ fontSize: 10 }}>How to fish it · {window.depth} water</T>
-        <T variant="callout" numberOfLines={3}>{window.tactics}</T>
-      </View>
-    </View>
-  );
-}
-
-/* ───────────── Other lakes as buoys floating in the lake ───────────── */
-
-function Buoy({ entry, now }: { entry: LakeData; now: number }) {
+function LakeCard({ entry, now }: { entry: LakeData; now: number }) {
   const { lake, next, live, forecast, season } = entry;
   const current = fromNow(forecast.hours, now)[0];
   const score = next?.peakScore ?? current.score;
   const band = scoreBands[scoreBand(score)];
-  const when = next ? (live ? 'Open now' : `${dayLabel(next.start)} ${shortClock(next.start)}`) : 'No window';
+  const when = next ? (live ? `Open now · until ${shortClock(windowEnd(next))}` : `${dayLabel(next.start)} ${shortRange(next.start, windowEnd(next))}`) : 'No window this week';
   const reason = (next?.reasons ?? current.reasons)[0] ?? 'Mixed conditions';
   const confidence = next?.confidence ?? current.confidence;
   return (
     <Pressable
       onPress={() => router.push({ pathname: '/lake/[id]', params: { id: lake.id } })}
       accessibilityRole="button"
-      accessibilityLabel={`${lake.name}, ${seasonLabel(season).toLowerCase()}. ${next ? `${live ? 'Window open now' : `Next window ${formatDay(next.start)} ${shortRange(next.start, windowEnd(next))}`}` : 'No window this week'}. ${next ? 'Peak' : 'Now'} bite score ${score}, ${band.label}. ${reason}. ${confidence} confidence.`}
+      accessibilityLabel={`${lake.name}, ${seasonLabel(season).toLowerCase()}. ${when}. ${next ? 'Peak' : 'Now'} bite score ${score}, ${band.label}. ${reason}. ${confidence} confidence.`}
       accessibilityHint="Opens the lake forecast"
-      style={({ pressed }) => [styles.buoy, pressed && { opacity: 0.8 }]}
+      style={({ pressed }) => [styles.lakeCard, pressed && { opacity: 0.85 }]}
     >
-      <View style={[styles.buoyScore, { backgroundColor: band.tint, borderColor: band.color }]}>
-        <T variant="numeralS" color={colors.ink} style={{ fontSize: 14 }}>{score}</T>
+      <View style={[styles.lakeScore, { backgroundColor: band.tint, borderColor: band.color }]}>
+        <T variant="numeralM" color={colors.ink}>{score}</T>
+        <T variant="caption" weight="800" color={band.color} style={{ fontSize: 10, lineHeight: 12 }}>{band.label}</T>
       </View>
-      <View style={{ gap: 1, flexShrink: 1 }}>
-        <T variant="caption" weight="800" color={colors.ink} numberOfLines={1}>{lake.name}</T>
-        <Row gap={5}>
-          <Icon name={reasonIcon(reason)} size={11} color={colors.teal} />
-          <T variant="caption" color={live ? colors.sunriseInk : colors.inkMuted} weight={live ? '700' : '500'} style={{ fontSize: 11.5 }} numberOfLines={1}>{when}</T>
+      <View style={{ flex: 1, gap: 3 }}>
+        <Row gap={6}>
+          <Icon name={season === 'ice' ? 'ice' : 'open-water'} size={13} color={colors.teal} />
+          <T variant="subhead" numberOfLines={1} style={{ flexShrink: 1 }}>{lake.name}</T>
+        </Row>
+        <T variant="callout" weight="700" color={live ? colors.sunriseInk : colors.ink} numberOfLines={1}>{when}</T>
+        <Row gap={spacing.sm}>
+          <Icon name={reasonIcon(reason)} size={12} color={colors.teal} />
+          <T variant="caption" color={colors.inkMuted} numberOfLines={1} style={{ flex: 1 }}>{reason}</T>
           <Bars level={confidence} bare />
         </Row>
       </View>
+      <Icon name="chevron-right" size={16} color={colors.inkFaint} />
     </Pressable>
   );
 }
@@ -618,13 +598,11 @@ const styles = StyleSheet.create({
   chipWarn: { backgroundColor: colors.warningTint },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   bar: { width: 3, borderRadius: 1 },
+  conditionsCard: { gap: spacing.md, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.white, ...elevation.low },
+  followButton: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 34, paddingHorizontal: spacing.md, borderRadius: radius.pill, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.tealTint },
+  lakeCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.white, ...elevation.low },
+  lakeScore: { width: 58, height: 58, borderRadius: radius.md, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   about: { padding: spacing.md, borderRadius: radius.md, backgroundColor: 'rgba(251,250,245,0.92)' },
-  tactic: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: radius.lg, backgroundColor: 'rgba(255,255,255,0.94)', ...elevation.low },
-  depthArt: { borderRadius: 8, overflow: 'hidden' },
-  buoys: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  buoy: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, maxWidth: '100%', paddingVertical: 6, paddingLeft: 6, paddingRight: spacing.md, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.94)', ...elevation.low },
-  buoyScore: { width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  followBuoy: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 46, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.teal, backgroundColor: 'rgba(255,255,255,0.55)' },
   plainBlock: { gap: spacing.lg, marginTop: spacing.xxl, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.paper },
   weed: { position: 'absolute', transformOrigin: 'bottom' },
   bubble: { position: 'absolute', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(255,255,255,0.25)' },
