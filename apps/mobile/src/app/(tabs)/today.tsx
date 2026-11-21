@@ -1,10 +1,11 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { router } from 'expo-router';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import type { ForecastHour, ForecastWindow, LakeForecast, Season } from '@bitecast/engine';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import Animated, { Easing, useAnimatedProps, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import * as SunCalc from 'suncalc';
 import { conditionLabel, upcomingWindows, windowEnd } from '@/components/forecast';
 import { Icon, type IconName } from '@/components/icon';
@@ -166,13 +167,14 @@ export default function TodayScreen() {
 
 /* ───────────── Backdrop: sky behind the header, a calm lake below (decorative) ───────────── */
 
-const LAKE_H = 96;
-const OVERLAP = 56;
+const LAKE_H = 320;
+/** How much open water shows above the card before it floats into the lake. */
+const WATER_ABOVE_CARD = 72;
 
 function Backdrop({ night, score, ice, hasAnswer, children }: { night: boolean; score: number; ice: boolean; hasAnswer: boolean; children: ReactNode }) {
   const insets = useSafeAreaInsets();
   const [width, setWidth] = useState(0);
-  const sky = night ? { top: '#BCC9D0', bottom: '#E4E9E6' } : { top: '#D3E5E2', bottom: '#EEF1EA' };
+  const sky = night ? { top: '#BCC9D0', bottom: '#DDE5E5' } : { top: '#D3E5E2', bottom: '#E8EFEA' };
   return (
     <View style={[styles.backdrop, { paddingTop: insets.top + spacing.sm }]} onLayout={(event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width)}>
       <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -191,15 +193,19 @@ function Backdrop({ night, score, ice, hasAnswer, children }: { night: boolean; 
             <Defs>
               <LinearGradient id="water" x1="0" y1="0" x2="0" y2="1">
                 <Stop offset="0" stopColor={ice ? '#E6EEF0' : colors.chartWater} />
-                <Stop offset="0.55" stopColor={ice ? '#D3DFE2' : colors.chartWaterDeep} />
+                <Stop offset="0.6" stopColor={ice ? '#D3DFE2' : colors.chartWaterDeep} />
                 <Stop offset="1" stopColor={colors.cream} />
               </LinearGradient>
             </Defs>
             <Rect x={0} y={0} width={width} height={LAKE_H} fill="url(#water)" />
+            {[0.22, 0.5, 0.78].map((t) => {
+              const y = LAKE_H * t;
+              return <Path key={t} d={`M0 ${y} C${width * 0.25} ${y - 4} ${width * 0.5} ${y + 4} ${width * 0.75} ${y - 3} S${width} ${y + 3} ${width} ${y}`} stroke={colors.chartContour} strokeWidth={1} fill="none" opacity={0.5} />;
+            })}
             <Path d={`M0 0 L${width} 0`} stroke={colors.teal} strokeWidth={1} opacity={0.4} />
-            {ice ? <Rect x={0} y={0} width={width} height={6} fill={colors.white} opacity={0.85} /> : null}
+            {ice ? <Rect x={0} y={0} width={width} height={7} fill={colors.white} opacity={0.85} /> : null}
           </Svg>
-          <LakeSchool width={width} top={ice ? 10 : 6} bottom={LAKE_H - OVERLAP - 4} mood={score >= 60 ? 'active' : score >= 40 ? 'idle' : 'sleepy'} count={5} sizeScale={1.1} />
+          <LakeSchool width={width} top={ice ? 12 : 8} bottom={LAKE_H - 40} mood={score >= 60 ? 'active' : score >= 40 ? 'idle' : 'sleepy'} count={8} sizeScale={1.3} />
         </View>
       ) : null}
     </View>
@@ -241,65 +247,153 @@ function AnswerCard({ entry, now, units }: { entry: LakeData; now: number; units
   const band = scoreBands[scoreBand(score)];
   const reason = (next?.reasons ?? current.reasons)[0] ?? 'Mixed conditions';
   const confidence = next?.confidence ?? current.confidence;
-  const kind = broad ? 'block' : 'window';
   const status = next
     ? live
-      ? `${broad ? 'Block' : 'Window'} open · ${formatDuration(new Date(windowEnd(next)).getTime() - now)} left`
-      : `Next ${kind} · in ${formatDuration(new Date(next.start).getTime() - now)}`
+      ? `Open · ${formatDuration(new Date(windowEnd(next)).getTime() - now)} left`
+      : `Starts in ${formatDuration(new Date(next.start).getTime() - now)}`
     : 'No window this week';
   // Conditions over the window (or right now when there is none).
   const span = next ? next.hours : [current];
   const wind = avg(span, (h) => h.windKmh);
   const rain = sum(span, (h) => h.precipitationMm);
+  const cloud = avg(span, (h) => h.cloudPct);
 
   return (
-    <View
-      style={[styles.card, live && styles.cardLive]}
-      accessible
-      accessibilityLabel={`${status}. ${lake.name}, ${seasonLabel(season).toLowerCase()}. ${next ? whenLabel(next) : 'Now'}. ${next ? 'Peak' : 'Now'} bite score ${score}, ${band.label}. ${reason}. ${confidence} confidence. Wind ${formatWind(wind, units)}, ${rainLabel(rain)}, cloud ${Math.round(avg(span, (h) => h.cloudPct))} percent, pressure ${pressureTrend(span).toLowerCase()}.`}
+    <Pressable
+      onPress={() => router.push({ pathname: '/lake/[id]', params: { id: lake.id } })}
+      accessibilityRole="button"
+      accessibilityHint="Opens the hour-by-hour forecast"
+      accessibilityLabel={`${lake.name}, ${seasonLabel(season).toLowerCase()}. ${next ? `${broad ? 'Block' : 'Window'} ${whenLabel(next)}` : 'No window this week'}. ${status}. ${next ? 'Peak' : 'Now'} bite score ${score}, ${band.label}. ${reason}. ${confidence} confidence. Wind ${formatWind(wind, units)}, ${rainLabel(rain)}, ${cloudLabel(cloud)}, pressure ${pressureTrend(span).toLowerCase()}.`}
+      style={({ pressed }) => [styles.card, live && styles.cardLive, pressed && { opacity: 0.92 }]}
     >
-      <Row gap={spacing.sm}>
-        {live ? <View style={styles.liveDot} /> : <Icon name="clock" size={13} color={colors.inkMuted} />}
-        <T variant="label" color={live ? colors.sunriseInk : colors.inkMuted} numberOfLines={1} style={{ flex: 1 }}>{status}</T>
-      </Row>
+      {/* Band-coloured wash: a Good day and a Slow day feel different at a glance */}
+      <Svg style={styles.wash} pointerEvents="none">
+        <Defs>
+          <LinearGradient id="wash" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={band.tint} stopOpacity={1} />
+            <Stop offset="1" stopColor={band.tint} stopOpacity={0} />
+          </LinearGradient>
+        </Defs>
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#wash)" />
+      </Svg>
 
       <Row gap={spacing.lg} align="center">
-        <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flex: 1, gap: spacing.xs }}>
           <Row gap={6}>
             <Icon name={season === 'ice' ? 'ice' : 'open-water'} size={14} color={colors.teal} />
             <T variant="subhead" color={colors.inkSoft} numberOfLines={1} style={{ flexShrink: 1 }}>{lake.name}</T>
+            <Icon name="chevron-right" size={13} color={colors.inkFaint} />
           </Row>
-          <T variant="title" style={{ fontSize: 26, lineHeight: 31 }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-            {next ? whenLabel(next) : `Now · ${conditionLabel(current.score)}`}
+          <T variant="title" style={{ fontSize: 27, lineHeight: 32 }} numberOfLines={2}>
+            {next ? whenLabel(next) : conditionLabel(current.score)}
           </T>
+          <View style={[styles.statusChip, live && styles.statusChipLive]}>
+            {live ? <View style={styles.liveDot} /> : <Icon name="clock" size={12} color={colors.inkSoft} />}
+            <T variant="caption" weight="700" color={live ? colors.sunriseInk : colors.inkSoft}>{status}</T>
+          </View>
         </View>
-        <View style={[styles.tile, { backgroundColor: band.tint, borderColor: band.color }]}>
-          <T variant="label" color={band.color} style={{ fontSize: 9 }}>{next ? 'Peak' : 'Now'}</T>
-          <T variant="numeralL">{score}</T>
-          <T variant="caption" weight="800" color={band.color}>{band.label}</T>
-        </View>
+        <ScoreRing score={score} caption={next ? 'Peak' : 'Now'} />
       </Row>
 
+      {next ? <WindowTrack window={next} now={now} live={live} /> : null}
+
       <Row gap={spacing.sm}>
-        <Icon name={reasonIcon(reason)} size={14} color={colors.teal} />
+        <Icon name={reasonIcon(reason)} size={15} color={colors.teal} />
         <T variant="callout" style={{ flex: 1 }} numberOfLines={2}>{reason}</T>
         <Bars level={confidence} />
       </Row>
 
-      <View style={styles.conditions}>
-        <Condition icon="wind" label="Wind" value={formatWind(wind, units)} warn={wind >= 25} />
-        <Condition icon="rain" label="Rain" value={rainLabel(rain)} warn={rain >= 2} />
-        <Condition icon="cloud" label="Cloud" value={`${Math.round(avg(span, (h) => h.cloudPct))}%`} />
-        <Condition icon="pressure" label="Pressure" value={pressureTrend(span)} />
+      <View style={styles.chips}>
+        <Chip icon="wind" text={formatWind(wind, units)} warn={wind >= 25} />
+        <Chip icon="rain" text={rainLabel(rain)} warn={rain >= 2} />
+        <Chip icon="cloud" text={cloudLabel(cloud)} />
+        <Chip icon="pressure" text={pressureTrend(span)} />
       </View>
+    </Pressable>
+  );
+}
 
-      <Row justify="space-between" align="center">
-        <T variant="caption" color={colors.inkMuted}>{next ? `Conditions during the ${kind}` : 'Conditions right now'}</T>
-        <LinkButton icon="chevron-right" onPress={() => router.push({ pathname: '/lake/[id]', params: { id: lake.id } })}>Hour by hour</LinkButton>
-      </Row>
+/** Circular score gauge in the band colour; sweeps in on appear (static under reduce motion). */
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const RING = 92;
+const RING_STROKE = 8;
+
+function ScoreRing({ score, caption }: { score: number; caption: string }) {
+  const band = scoreBands[scoreBand(score)];
+  const r = (RING - RING_STROKE) / 2;
+  const circumference = 2 * Math.PI * r;
+  const reduced = useReducedMotion();
+  const progress = useSharedValue(reduced ? score / 100 : 0);
+  useEffect(() => {
+    progress.set(withTiming(score / 100, { duration: reduced ? 0 : 800, easing: Easing.out(Easing.cubic) }));
+  }, [score, reduced, progress]);
+  const animatedProps = useAnimatedProps(() => ({ strokeDashoffset: circumference * (1 - progress.get()) }));
+  return (
+    <View style={styles.ring} importantForAccessibility="no-hide-descendants">
+      <Svg width={RING} height={RING} style={StyleSheet.absoluteFill}>
+        <Circle cx={RING / 2} cy={RING / 2} r={r} stroke={colors.fog} strokeWidth={RING_STROKE} fill="none" />
+        <AnimatedCircle
+          cx={RING / 2}
+          cy={RING / 2}
+          r={r}
+          stroke={band.color}
+          strokeWidth={RING_STROKE}
+          strokeLinecap="round"
+          strokeDasharray={`${circumference} ${circumference}`}
+          animatedProps={animatedProps}
+          fill="none"
+          transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
+        />
+      </Svg>
+      <T variant="label" color={colors.inkMuted} style={{ fontSize: 8.5, lineHeight: 10 }}>{caption}</T>
+      <T variant="numeralL" style={{ lineHeight: 36 }}>{score}</T>
+      <T variant="caption" weight="800" color={band.color} style={{ fontSize: 11, lineHeight: 13 }}>{band.label}</T>
     </View>
   );
 }
+
+/** Visual countdown: Now → the window as a glowing segment on a short time track. */
+function WindowTrack({ window, now, live }: { window: ForecastWindow; now: number; live: boolean }) {
+  const start = new Date(window.start).getTime();
+  const end = new Date(windowEnd(window)).getTime();
+  const spanMs = Math.min(48, Math.max(24, (end - now) / 3_600_000 + 3)) * 3_600_000;
+  const at = (t: number) => Math.min(1, Math.max(0, (t - now) / spanMs));
+  const s = at(start);
+  const e = Math.max(s + 0.03, at(end));
+  const close = e - s < 0.22;
+  return (
+    <View style={{ gap: 4 }} importantForAccessibility="no-hide-descendants">
+      <View style={styles.track}>
+        <View style={[styles.trackWindow, { left: `${s * 100}%`, width: `${(e - s) * 100}%` }]} />
+        <View style={[styles.trackNow, live && { backgroundColor: colors.sunrise }]} />
+      </View>
+      <View style={{ height: 15 }}>
+        <T variant="caption" color={colors.inkMuted} style={[styles.trackLabel, { left: 0, textAlign: 'left' }]}>Now</T>
+        {close || live ? (
+          <T variant="caption" weight="700" color={colors.sunriseInk} style={[styles.trackLabel, { left: `${Math.min(0.72, Math.max(0.12, s))* 100}%` }]} numberOfLines={1}>
+            {live ? `until ${shortClock(windowEnd(window))}` : shortRange(window.start, windowEnd(window))}
+          </T>
+        ) : (
+          <>
+            <T variant="caption" weight="700" color={colors.sunriseInk} style={[styles.trackLabel, { left: `${Math.min(0.8, Math.max(0.12, s)) * 100}%` }]} numberOfLines={1}>{shortClock(window.start)}</T>
+            <T variant="caption" weight="700" color={colors.sunriseInk} style={[styles.trackLabel, { left: `${Math.min(0.86, e) * 100}%` }]} numberOfLines={1}>{shortClock(windowEnd(window))}</T>
+          </>
+        )}
+      </View>
+    </View>
+  );
+}
+
+function Chip({ icon, text, warn }: { icon: IconName; text: string; warn?: boolean }) {
+  return (
+    <View style={[styles.chip, warn && styles.chipWarn]}>
+      <Icon name={icon} size={14} color={warn ? colors.warning : colors.teal} />
+      <T variant="caption" weight="700" color={warn ? colors.warning : colors.inkSoft} numberOfLines={1}>{text}</T>
+    </View>
+  );
+}
+
+const cloudLabel = (pct: number) => (pct < 25 ? 'Clear' : pct < 70 ? 'Partly cloudy' : 'Overcast');
 
 const avg = (hours: ForecastHour[], pick: (h: ForecastHour) => number) => hours.reduce((total, h) => total + pick(h), 0) / Math.max(1, hours.length);
 const sum = (hours: ForecastHour[], pick: (h: ForecastHour) => number) => hours.reduce((total, h) => total + pick(h), 0);
@@ -309,16 +403,6 @@ const pressureTrend = (hours: ForecastHour[]) => {
   const delta = hours[hours.length - 1].pressureHpa - hours[0].pressureHpa;
   return delta > 1 ? 'Rising' : delta < -1 ? 'Falling' : 'Steady';
 };
-
-function Condition({ icon, label, value, warn }: { icon: IconName; label: string; value: string; warn?: boolean }) {
-  return (
-    <View style={styles.condition}>
-      <Icon name={icon} size={16} color={warn ? colors.warning : colors.teal} />
-      <T variant="numeralS" color={warn ? colors.warning : colors.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ fontSize: 14 }}>{value}</T>
-      <T variant="caption" color={colors.inkMuted} style={{ fontSize: 11 }}>{label}</T>
-    </View>
-  );
-}
 
 const barLevel = { High: 3, Medium: 2, Low: 1 } as const;
 /** Compact confidence: three bars + level word. */
@@ -385,13 +469,21 @@ const styles = StyleSheet.create({
   backdrop: { marginHorizontal: -spacing.xl, marginTop: -spacing.lg, overflow: 'hidden' },
   headerRow: { paddingHorizontal: spacing.xl, paddingBottom: spacing.lg },
   freshness: { flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1, marginLeft: spacing.md },
-  float: { marginTop: -OVERLAP },
-  card: { gap: spacing.md, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.white, ...elevation.raised },
+  float: { marginTop: -(LAKE_H - WATER_ABOVE_CARD) },
+  card: { gap: spacing.md, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: 'rgba(255,255,255,0.95)', overflow: 'hidden', ...elevation.raised },
   cardLive: { borderWidth: 1.5, borderColor: colors.sunrise },
+  wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 120 },
+  statusChip: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', marginTop: 2, paddingHorizontal: 9, paddingVertical: 4, borderRadius: radius.pill, backgroundColor: 'rgba(231,234,228,0.9)' },
+  statusChipLive: { backgroundColor: colors.sunriseTint },
+  ring: { width: RING, height: RING, alignItems: 'center', justifyContent: 'center', marginTop: spacing.md },
+  track: { height: 8, borderRadius: 4, backgroundColor: colors.fog, justifyContent: 'center' },
+  trackWindow: { position: 'absolute', top: 0, bottom: 0, borderRadius: 4, backgroundColor: colors.sunrise, shadowColor: colors.sunrise, shadowOpacity: 0.6, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } },
+  trackNow: { position: 'absolute', left: -2, width: 12, height: 12, borderRadius: 6, backgroundColor: colors.ink, borderWidth: 2, borderColor: colors.white },
+  trackLabel: { position: 'absolute', top: 0, width: 72, marginLeft: -36, textAlign: 'center', fontSize: 11 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: colors.tealMist },
+  chipWarn: { backgroundColor: colors.warningTint },
   liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.sunrise },
-  tile: { width: 80, alignItems: 'center', paddingVertical: spacing.sm, borderRadius: radius.md, borderWidth: 1 },
-  conditions: { flexDirection: 'row', paddingVertical: spacing.sm, borderRadius: radius.md, backgroundColor: colors.tealMist },
-  condition: { flex: 1, alignItems: 'center', gap: 2 },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   bar: { width: 3, borderRadius: 1 },
   group: { paddingHorizontal: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.white, ...elevation.low },
