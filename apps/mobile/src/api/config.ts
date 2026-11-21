@@ -5,6 +5,7 @@ export const externalConfig = {
   /** 'cached' (code-native fallback), 'maplibre' or 'react-native-maps'. */
   mapProvider: (process.env.EXPO_PUBLIC_MAP_PROVIDER ?? 'react-native-maps') as 'cached' | 'maplibre' | 'react-native-maps',
   mapStyleUrl: process.env.EXPO_PUBLIC_MAP_STYLE_URL ?? '',
-  termsUrl: process.env.EXPO_PUBLIC_TERMS_URL ?? '', privacyUrl: process.env.EXPO_PUBLIC_PRIVACY_URL ?? '',
+  termsUrl: process.env.EXPO_PUBLIC_TERMS_URL ?? 'https://bitecast-support.cheekyrhubarb16.chatgpt.site/terms/',
+  privacyUrl: process.env.EXPO_PUBLIC_PRIVACY_URL ?? 'https://bitecast-support.cheekyrhubarb16.chatgpt.site/privacy/',
 };
 export const integrationsReady = Boolean(externalConfig.supabaseUrl && externalConfig.supabaseAnonKey);
