@@ -1,16 +1,22 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/icon';
-import { Banner, Button, Card, ChoiceChips, EmptyState, ProgressBar, Reveal, Row, Screen, SectionHeader, SkeletonCard, T } from '@/components/ui';
+import { Banner, Button, EmptyState, ProgressBar, Reveal, Row, Screen, Segmented, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
-import { colors, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
+import { colors, elevation, hitSlop, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
 import { integrationsReady } from '@/api/config';
 import { lakeById } from '@/data/lakes';
 import { capitalize, formatDay, formatTime, lengthUnit, startOfDay, toDisplayLength } from '@/lib/format';
 import { useNow } from '@/lib/use-now';
 import { useAppStore } from '@/store/use-app-store';
 import type { CatchLog } from '@/types/app';
+
+/*
+ * A field journal: your trips are the content. Logging itself lives on the centre “+”
+ * tab button, so this screen has no big action blocks — just a summary, a compact filter
+ * and a day-by-day timeline.
+ */
 
 type Filter = 'all' | 'caught' | 'none' | 'pending';
 const STATS_MIN = 5;
@@ -35,8 +41,10 @@ export default function LogListScreen() {
     else acc.push({ key, label: formatDay(log.caughtAt), items: [log] });
     return acc;
   }, []);
-  const last = logs[0];
   const recent = lastSaved && now - lastSaved.at < 60_000 ? lastSaved.id : null;
+  const fish = logs.reduce((total, log) => total + (log.caught ? log.count : 0), 0);
+  const caughtTrips = logs.filter((log) => log.caught).length;
+  const rate = logs.length ? Math.round((caughtTrips / logs.length) * 100) : 0;
 
   const retrySync = async () => {
     setSyncing(true);
@@ -46,49 +54,19 @@ export default function LogListScreen() {
 
   return (
     <Screen tab>
-      <Row gap={spacing.md} align="flex-end">
-        <View style={{ flex: 1, gap: spacing.xs }}>
-          <T variant="label" color={colors.teal}>Your field notes</T>
-          <T variant="title" accessibilityRole="header">Catch log</T>
-        </View>
-      </Row>
-
-      <Card variant="tint" style={{ gap: spacing.md }}>
-        <View style={{ gap: 2 }}>
-          <T variant="subhead">Log while it’s fresh</T>
-          <T variant="callout" color={colors.inkSoft}>
-            {last ? `Starts with ${lakeById(last.lakeId).name} · ${last.bait || 'your last bait'} · ${last.method}.` : 'Takes about 15 seconds. Works with no signal.'}
+      <View style={{ gap: 2 }}>
+        <T variant="label" color={colors.teal}>Your field notes</T>
+        <T variant="title" accessibilityRole="header">Catch log</T>
+        {logs.length ? (
+          <T variant="caption" color={colors.inkMuted}>
+            {logs.length} trip{logs.length === 1 ? '' : 's'} · last {formatDay(logs[0].caughtAt).toLowerCase()}
           </T>
-        </View>
-        <Button icon="plus" onPress={() => router.push('/log/new')}>Log a trip</Button>
-      </Card>
-
-      {failed ? (
-        <Banner tone="danger" icon="sync-error" title={`${failed} log${failed > 1 ? 's' : ''} didn’t sync`} body="They’re safe on this device. We’ll retry automatically." action={{ label: 'Retry now', onPress: retrySync, loading: syncing }} />
-      ) : pending ? (
-        <Banner
-          tone="neutral"
-          icon="device"
-          title={`${pending} log${pending > 1 ? 's' : ''} saved on this device`}
-          body={integrationsReady ? 'They’ll sync automatically when you’re back online.' : 'Cloud sync turns on once an account service is connected. Your logs stay on this device until then.'}
-        />
-      ) : null}
-
-      <Card onPress={() => router.push('/(tabs)/log/stats')} accessibilityLabel={logs.length >= STATS_MIN ? 'Your patterns. View best hours, lures and light conditions.' : `Your patterns. ${logs.length} of ${STATS_MIN} logs needed.`}>
-        <Row gap={spacing.md}>
-          <View style={styles.statsIcon}><Icon name="chart" size={18} color={colors.teal} /></View>
-          <View style={{ flex: 1, gap: 2 }}>
-            <T variant="subhead">Your patterns</T>
-            <T variant="caption" color={colors.inkMuted}>{logs.length >= STATS_MIN ? 'Best hours, lures and light conditions' : `${logs.length} of ${STATS_MIN} logs to unlock`}</T>
-          </View>
-          <Icon name="chevron-right" size={16} color={colors.inkFaint} />
-        </Row>
-        {logs.length < STATS_MIN ? <ProgressBar value={logs.length / STATS_MIN} label="Progress to personal stats" /> : null}
-      </Card>
+        ) : null}
+      </View>
 
       {!hydrated ? (
         <>
-          <SkeletonCard />
+          <SkeletonCard lines={2} />
           <SkeletonCard />
         </>
       ) : logs.length === 0 ? (
@@ -96,12 +74,49 @@ export default function LogListScreen() {
           icon="log"
           art={<WalleyeArt width={200} tone="light" />}
           title="Build your pattern"
-          body="Log your first trip — even a no-catch trip helps show which windows work for you."
+          body="Tap ＋ below to log your first trip. Even a no-catch trip helps show which windows work for you."
         />
       ) : (
         <>
-          <SectionHeader title="History" caption={`${logs.length} trip${logs.length === 1 ? '' : 's'}`} />
-          <ChoiceChips<Filter>
+          {/* Summary: three figures + the patterns unlock in one quiet card */}
+          <View style={styles.summary}>
+            <Row>
+              <Stat value={String(logs.length)} label={logs.length === 1 ? 'Trip' : 'Trips'} />
+              <View style={styles.statDivider} />
+              <Stat value={String(fish)} label="Walleye" />
+              <View style={styles.statDivider} />
+              <Stat value={`${rate}%`} label="Trips with fish" />
+            </Row>
+            <Pressable
+              onPress={() => router.push('/(tabs)/log/stats')}
+              hitSlop={hitSlop}
+              accessibilityRole="button"
+              accessibilityLabel={logs.length >= STATS_MIN ? 'Your patterns: best hours, lures and light conditions' : `Your patterns unlock at ${STATS_MIN} logs. ${logs.length} logged.`}
+              style={({ pressed }) => [styles.patterns, pressed && { opacity: 0.7 }]}
+            >
+              <Row gap={spacing.sm}>
+                <Icon name="chart" size={14} color={colors.teal} />
+                <T variant="caption" weight="700" color={colors.teal} style={{ flex: 1 }}>
+                  {logs.length >= STATS_MIN ? 'Your patterns' : `Patterns unlock at ${STATS_MIN} logs · ${logs.length}/${STATS_MIN}`}
+                </T>
+                <Icon name="chevron-right" size={13} color={colors.teal} />
+              </Row>
+              {logs.length < STATS_MIN ? <ProgressBar value={logs.length / STATS_MIN} label="Progress to personal patterns" height={4} /> : null}
+            </Pressable>
+          </View>
+
+          {failed ? (
+            <Banner tone="danger" icon="sync-error" title={`${failed} log${failed > 1 ? 's' : ''} didn’t sync`} body="They’re safe on this device. We’ll retry automatically." action={{ label: 'Retry now', onPress: retrySync, loading: syncing }} />
+          ) : pending ? (
+            <Row gap={6}>
+              <Icon name="device" size={13} color={colors.inkMuted} />
+              <T variant="caption" color={colors.inkMuted} style={{ flex: 1 }}>
+                {pending} log{pending > 1 ? 's' : ''} on this device · {integrationsReady ? 'syncs when you’re online' : 'cloud sync not connected yet'}
+              </T>
+            </Row>
+          ) : null}
+
+          <Segmented<Filter>
             label="Filter logs"
             value={filter}
             onChange={setFilter}
@@ -109,22 +124,28 @@ export default function LogListScreen() {
               { label: 'All', value: 'all' },
               { label: 'Caught', value: 'caught' },
               { label: 'No catch', value: 'none' },
-              { label: 'Not synced', value: 'pending' },
+              { label: 'Unsynced', value: 'pending', accessibilityLabel: 'Not synced' },
             ]}
           />
+
           {groups.length === 0 ? (
-            <EmptyState icon="filter" title="No logs match" body="Try a different filter." action={<Button variant="secondary" onPress={() => setFilter('all')}>Show all logs</Button>} />
+            <EmptyState icon="filter" title="No logs match" body="Try a different filter." action={<Button variant="secondary" size="md" onPress={() => setFilter('all')}>Show all logs</Button>} />
           ) : (
-            groups.map((group) => (
-              <View key={group.key} style={{ gap: spacing.sm }}>
-                <T variant="label" color={colors.inkMuted} accessibilityRole="header">{group.label}</T>
-                {group.items.map((log, index) => (
-                  <Reveal key={log.id} index={index}>
-                    <LogRow log={log} justSaved={log.id === recent} units={units} />
-                  </Reveal>
-                ))}
-              </View>
-            ))
+            <View>
+              {groups.map((group) => (
+                <View key={group.key}>
+                  <Row gap={spacing.md} style={styles.dayRow}>
+                    <View style={styles.rail}><View style={styles.railLine} /><View style={styles.dayDot} /></View>
+                    <T variant="label" color={colors.inkMuted} accessibilityRole="header">{group.label}</T>
+                  </Row>
+                  {group.items.map((log, index) => (
+                    <Reveal key={log.id} index={index}>
+                      <Entry log={log} justSaved={log.id === recent} units={units} />
+                    </Reveal>
+                  ))}
+                </View>
+              ))}
+            </View>
           )}
         </>
       )}
@@ -132,59 +153,81 @@ export default function LogListScreen() {
   );
 }
 
-function LogRow({ log, justSaved, units }: { log: CatchLog; justSaved: boolean; units: 'metric' | 'imperial' }) {
-  const lake = lakeById(log.lakeId);
-  const band = scoreBands[scoreBand(log.scoreAtTime)];
-  const sync = log.syncState === 'synced'
-    ? { icon: 'sync-done' as const, text: 'Synced', color: colors.success }
-    : log.syncState === 'error'
-      ? { icon: 'sync-error' as const, text: 'Sync failed · will retry', color: colors.danger }
-      : { icon: 'device' as const, text: 'On this device', color: colors.inkMuted };
-  const result = log.caught ? `${log.count} walleye` : 'No catch';
+function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <Card
-      onPress={() => router.push({ pathname: '/log/[id]', params: { id: log.id } })}
-      accessibilityLabel={`${lake.name}, ${formatTime(log.caughtAt)}. ${result}. ${log.method}, ${log.bait || 'no bait noted'}. Bite score ${log.scoreAtTime} at the time. ${sync.text}.${justSaved ? ' Just saved.' : ''}`}
-      accessibilityHint="Edit this log"
-      style={justSaved ? { borderColor: colors.teal, borderWidth: 1.5 } : undefined}
-    >
-      <Row gap={spacing.md} align="flex-start">
-        <View style={[styles.result, { backgroundColor: log.caught ? colors.successTint : colors.fog }]}>
-          <T variant="numeralM" color={log.caught ? colors.success : colors.inkMuted}>{log.caught ? log.count : '0'}</T>
-        </View>
-        <View style={{ flex: 1, gap: 2 }}>
-          <Row justify="space-between">
-            <T variant="subhead" style={{ flex: 1 }} numberOfLines={1}>{lake.name}</T>
-            <T variant="caption" color={colors.inkMuted}>{formatTime(log.caughtAt)}</T>
-          </Row>
-          <T variant="callout" color={colors.inkSoft} numberOfLines={1}>
-            {result}{log.lengthCm ? ` · biggest ${toDisplayLength(log.lengthCm, units)} ${lengthUnit(units)}` : ''} · {capitalize(log.method)} · {log.bait || 'No bait noted'}
-          </T>
-          <Row gap={spacing.md} style={{ marginTop: 4 }} wrap>
-            <Row gap={4}>
-              <View style={[styles.bandDot, { backgroundColor: band.color }]} />
-              <T variant="caption" color={colors.inkSoft}>Score {log.scoreAtTime} · {log.lightCondition}</T>
-            </Row>
-            <Row gap={4}>
-              <Icon name={sync.icon} size={13} color={sync.color} />
-              <T variant="caption" color={sync.color}>{sync.text}</T>
-            </Row>
-          </Row>
-        </View>
-      </Row>
-      {justSaved ? (
-        <Row gap={6} style={styles.saved} accessibilityLiveRegion="polite">
-          <Icon name="success" size={14} color={colors.success} />
-          <T variant="caption" weight="700" color={colors.success}>Saved to this device</T>
-        </Row>
-      ) : null}
-    </Card>
+    <View style={{ flex: 1, alignItems: 'center', gap: 1 }} accessible accessibilityLabel={`${value} ${label}`}>
+      <T variant="numeralM">{value}</T>
+      <T variant="caption" color={colors.inkMuted} style={{ fontSize: 11 }} numberOfLines={1}>{label}</T>
+    </View>
   );
 }
 
+/** One trip on the timeline: catch badge → lake + time → what you used → conditions then. */
+function Entry({ log, justSaved, units }: { log: CatchLog; justSaved: boolean; units: 'metric' | 'imperial' }) {
+  const lake = lakeById(log.lakeId);
+  const band = scoreBands[scoreBand(log.scoreAtTime)];
+  const unsynced = log.syncState !== 'synced';
+  const syncText = log.syncState === 'error' ? 'Sync failed · will retry' : log.syncState === 'pending' ? 'On this device' : 'Synced';
+  const result = log.caught ? `${log.count} walleye` : 'No catch';
+  return (
+    <Row gap={spacing.md} align="stretch">
+      <View style={styles.rail}>
+        <View style={styles.railLine} />
+        <View style={[styles.entryDot, log.caught ? styles.entryDotCaught : styles.entryDotNone]} />
+      </View>
+      <Pressable
+        onPress={() => router.push({ pathname: '/log/[id]', params: { id: log.id } })}
+        accessibilityRole="button"
+        accessibilityLabel={`${lake.name}, ${formatTime(log.caughtAt)}. ${result}. ${log.method}, ${log.bait || 'no bait noted'}. Bite score ${log.scoreAtTime} at the time, ${log.lightCondition}. ${syncText}.${justSaved ? ' Just saved.' : ''}`}
+        accessibilityHint="Edit this log"
+        style={({ pressed }) => [styles.entry, justSaved && styles.entrySaved, pressed && { opacity: 0.85 }]}
+      >
+        <View style={[styles.count, { backgroundColor: log.caught ? colors.successTint : colors.fog }]}>
+          <T variant="numeralM" color={log.caught ? colors.success : colors.inkFaint}>{log.caught ? log.count : '–'}</T>
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Row justify="space-between" gap={spacing.sm}>
+            <T variant="subhead" numberOfLines={1} style={{ flex: 1 }}>{lake.name}</T>
+            <T variant="caption" color={colors.inkMuted}>{formatTime(log.caughtAt)}</T>
+          </Row>
+          <T variant="caption" color={colors.inkSoft} numberOfLines={1}>
+            {capitalize(log.method)} · {log.bait || 'No bait noted'}{log.lengthCm ? ` · biggest ${toDisplayLength(log.lengthCm, units)} ${lengthUnit(units)}` : ''}
+          </T>
+          <Row gap={spacing.md}>
+            <Row gap={4}>
+              <View style={[styles.bandDot, { backgroundColor: band.color }]} />
+              <T variant="caption" color={colors.inkMuted}>{log.scoreAtTime} · {log.lightCondition}</T>
+            </Row>
+            <View style={{ flex: 1 }} />
+            {justSaved ? (
+              <Row gap={4}><Icon name="success" size={12} color={colors.success} /><T variant="caption" weight="700" color={colors.success}>Saved</T></Row>
+            ) : unsynced ? (
+              <Row gap={4}><Icon name={log.syncState === 'error' ? 'sync-error' : 'device'} size={12} color={log.syncState === 'error' ? colors.danger : colors.inkMuted} /><T variant="caption" color={log.syncState === 'error' ? colors.danger : colors.inkMuted}>{log.syncState === 'error' ? 'Not synced' : 'Local'}</T></Row>
+            ) : (
+              <Icon name="sync-done" size={13} color={colors.inkFaint} />
+            )}
+          </Row>
+        </View>
+      </Pressable>
+    </Row>
+  );
+}
+
+const RAIL = 14;
+
 const styles = StyleSheet.create({
-  statsIcon: { width: 36, height: 36, borderRadius: radius.sm, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
-  result: { width: 48, height: 48, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  bandDot: { width: 8, height: 8, borderRadius: 4 },
-  saved: { paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.line },
+  summary: { gap: spacing.md, paddingTop: spacing.lg, paddingBottom: spacing.md, paddingHorizontal: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.white, ...elevation.low },
+  statDivider: { width: StyleSheet.hairlineWidth * 2, alignSelf: 'stretch', backgroundColor: colors.line },
+  patterns: { gap: 6, paddingTop: spacing.md, borderTopWidth: StyleSheet.hairlineWidth * 2, borderTopColor: colors.line },
+  dayRow: { paddingVertical: spacing.sm, alignItems: 'center' },
+  rail: { width: RAIL, alignItems: 'center', alignSelf: 'stretch', justifyContent: 'flex-start' },
+  railLine: { position: 'absolute', top: 0, bottom: 0, width: 2, borderRadius: 1, backgroundColor: colors.fogDeep },
+  dayDot: { marginTop: 5, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.inkFaint },
+  entryDot: { marginTop: 26, width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
+  entryDotCaught: { backgroundColor: colors.teal, borderColor: colors.white },
+  entryDotNone: { backgroundColor: colors.cream, borderColor: colors.inkFaint },
+  entry: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.sm, padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth * 2, borderColor: colors.line },
+  entrySaved: { borderColor: colors.teal, borderWidth: 1.5 },
+  count: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  bandDot: { width: 7, height: 7, borderRadius: 4 },
 });
