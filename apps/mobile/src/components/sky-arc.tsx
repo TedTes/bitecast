@@ -19,17 +19,15 @@ const NIGHT_DIP = 20;
 const AXIS_Y = H - 16;
 const PAD = 14;
 const HORIZON_LABEL_W = 98;
-const MAX_ELEVATION = 45;
-const MIN_ELEVATION = -12;
+/** Score threshold where a bite window starts (drawn as a faint guide). */
+const WINDOW_SCORE = 60;
 
 /**
- * `peak` is the day's highest sun elevation, so the arc always uses the sky: a low winter
- * sun still reads lower via its flatter shape, but no longer hugs the horizon.
+ * The line is the hourly bite score (a “bite tide”): 0 sits just under the waterline,
+ * 100 near the top of the sky. Day/night context comes from the sky tint, the sunrise/
+ * sunset labels and the sun/moon marker — not from the line.
  */
-const yFor = (elevation: number, peak = MAX_ELEVATION) =>
-  elevation >= 0
-    ? HORIZON - (Math.min(elevation, peak) / peak) * (HORIZON - SKY_TOP) * 0.92
-    : HORIZON + (Math.min(-elevation, -MIN_ELEVATION) / -MIN_ELEVATION) * NIGHT_DIP;
+const yForScore = (score: number) => HORIZON + 10 - (Math.max(0, Math.min(100, score)) / 100) * (HORIZON + 10 - SKY_TOP);
 
 /** Smooth path through points (Catmull-Rom → cubic Bézier). */
 function smooth(points: { x: number; y: number }[]) {
@@ -89,8 +87,7 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = 
     () => data.map((hour) => (latitude !== undefined && longitude !== undefined ? (SunCalc.getPosition(new Date(hour.ts), latitude, longitude).altitude * 180) / Math.PI : hour.sunElevation)),
     [data, latitude, longitude],
   );
-  const peak = Math.min(MAX_ELEVATION, Math.max(12, ...elev));
-  const points = useMemo(() => elev.map((e, i) => ({ x: PAD + i * step, y: yFor(e, peak) })), [elev, step, peak]);
+  const points = useMemo(() => data.map((hour, i) => ({ x: PAD + i * step, y: yForScore(hour.score) })), [data, step]);
   const windowSet = useMemo(() => new Set(windows.flatMap((w) => w.hours.map((h) => h.ts))), [windows]);
 
   // Window segments drawn over the curve.
@@ -159,7 +156,7 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = 
       onLayout={(event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width)}
       accessible
       accessibilityRole="adjustable"
-      accessibilityLabel="Sun and bite score over the next 24 hours"
+      accessibilityLabel="Bite score over the next 24 hours"
       accessibilityValue={{ text: hour ? `${index === 0 ? 'Now' : formatTime(hour.ts)}, bite score ${hour.score}, ${band.label}${windowSet.has(hour.ts) ? ', inside a window' : ''}` : undefined }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(event: AccessibilityActionEvent) => onIndexChange(Math.min(data.length - 1, Math.max(0, index + (event.nativeEvent.actionName === 'increment' ? 1 : -1))))}
@@ -191,8 +188,9 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = 
             </>
           ) : null}
           <Line x1={0} y1={HORIZON} x2={width} y2={HORIZON} stroke={colors.teal} strokeWidth={1} opacity={0.5} />
-          {/* Sun-elevation curve, then window segments on top */}
-          <Path d={smooth(points)} stroke={colors.inkFaint} strokeWidth={2} fill="none" strokeLinecap="round" opacity={0.85} />
+          {/* Window threshold guide, bite-score line, then window segments on top */}
+          <Line x1={0} y1={yForScore(WINDOW_SCORE)} x2={width} y2={yForScore(WINDOW_SCORE)} stroke={colors.inkFaint} strokeWidth={1} strokeDasharray="3 5" opacity={0.45} />
+          <Path d={smooth(points)} stroke={colors.teal} strokeWidth={2.5} fill="none" strokeLinecap="round" opacity={0.9} />
           {segments.map((seg, i) => (
             <Path key={i} d={smooth(seg)} stroke={colors.sunrise} strokeWidth={6} fill="none" strokeLinecap="round" opacity={0.9} />
           ))}
