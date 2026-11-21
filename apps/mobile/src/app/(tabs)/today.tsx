@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
-import { router } from 'expo-router';
+import { router, useIsFocused } from 'expo-router';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import type { ForecastHour, ForecastWindow, LakeForecast, Season } from '@bitecast/engine';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import Animated, { Easing, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import * as SunCalc from 'suncalc';
 import { conditionLabel, upcomingWindows, windowEnd } from '@/components/forecast';
 import { Icon, type IconName } from '@/components/icon';
 import { LakeSchool } from '@/components/lake-school';
+import { ConfidenceBars, ScoreRing, ScoreTile } from '@/components/score-ring';
 import { Toast } from '@/components/toast';
-import { Button, EmptyState, ErrorState, IceSafetyNotice, OfflineBanner, Reveal, Row, Screen, SkeletonCard, T } from '@/components/ui';
+import { Button, EmptyState, ErrorState, IceSafetyNotice, LinkButton, OfflineBanner, Reveal, Row, Screen, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
 import { colors, elevation, hitSlop, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
 import { forecastQuery, forecastSource, freshness } from '@/data/forecasts';
@@ -64,6 +65,10 @@ export default function TodayScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const now = useNow(30_000);
+  // Tabs stay mounted: the lake only animates while Today is on screen.
+  const focused = useIsFocused();
+  const scrollY = useSharedValue(0);
+  const [contentBottom, setContentBottom] = useState(0);
   const queries = useQueries({ queries: ids.map((id, index) => forecastQuery(id, seasons[index])) });
 
   const refresh = async () => {
@@ -89,9 +94,9 @@ export default function TodayScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <LakeBackground night={night} score={nowHour?.score ?? 50} ice={best?.season === 'ice'} waterTop={insets.top + WATERLINE} />
+      <LakeBackground night={night} score={nowHour?.score ?? 50} ice={best?.season === 'ice'} waterTop={insets.top + WATERLINE} contentBottom={contentBottom} scrollY={scrollY} active={focused} />
 
-      <Screen tab header background="transparent" refreshing={refreshing} onRefresh={refresh}>
+      <Screen tab header background="transparent" refreshing={refreshing} onRefresh={refresh} scrollY={scrollY}>
         <Header now={now} fresh={fresh} refreshing={refreshing} onRefresh={refresh} top={insets.top} aboutOpen={aboutOpen} onAbout={() => setAboutOpen((open) => !open)} />
         {aboutOpen ? (
           <Reveal style={styles.about}>
@@ -115,6 +120,9 @@ export default function TodayScreen() {
                 {others.map((entry) => <LakeCard key={entry.lake.id} entry={entry} now={now} />)}
               </Reveal>
             ) : null}
+            <View style={styles.fullLink}>
+              <LinkButton icon="chevron-right" onPress={() => router.push({ pathname: '/lake/[id]', params: { id: best.lake.id } })}>{`Full forecast · ${best.lake.name}`}</LinkButton>
+            </View>
           </>
         ) : (
           <View style={styles.plainBlock}>
@@ -137,7 +145,8 @@ export default function TodayScreen() {
             ) : null}
           </View>
         )}
-
+        {/* Marks where the content ends so fish keep to the open water below it. */}
+        <View onLayout={(event: LayoutChangeEvent) => setContentBottom(event.nativeEvent.layout.y)} />
       </Screen>
 
       <Toast trigger={refreshErrorAt} icon="sync-error" message="Couldn’t refresh. Showing the forecast saved on this device." actionLabel="Retry" onAction={refresh} />
@@ -147,12 +156,23 @@ export default function TodayScreen() {
 
 /* ───────────── Full-screen lake (fixed; content floats over it) ───────────── */
 
-function LakeBackground({ night, score, ice, waterTop }: { night: boolean; score: number; ice: boolean; waterTop: number }) {
+/** Smallest band of water the fish keep, even when the cards reach far down. */
+const MIN_FISH_BAND = 150;
+
+function LakeBackground({ night, score, ice, waterTop, contentBottom, scrollY, active }: { night: boolean; score: number; ice: boolean; waterTop: number; contentBottom: number; scrollY: SharedValue<number>; active: boolean }) {
   const [size, setSize] = useState({ width: 0, height: 0 });
   const sky = night ? { top: '#BCC9D0', bottom: '#DCE4E4' } : { top: '#D3E5E2', bottom: '#E6EEEA' };
   const water = ice ? { top: '#E4EDEF', bottom: '#C9D8DC' } : { top: '#CFE2E1', bottom: '#A9C8CB' };
   const { width, height } = size;
   const lakeH = Math.max(0, height - waterTop);
+  // The bed sits a little above the tab bar so the floor never crowds the navigation.
+  const lift = Math.round(Math.min(56, Math.max(20, lakeH * 0.08)));
+  const floor = lakeH - BED * 0.6 - lift; // fish stay above the weeds
+  // Fish swim in the open water below the last card (in lake coordinates).
+  const fishTop = Math.max(lakeH * 0.3, Math.min(floor - MIN_FISH_BAND, contentBottom - waterTop + spacing.md));
+  const mood = score >= 60 ? 'active' : score >= 40 ? 'idle' : 'sleepy';
+  // Mild parallax: the deep layer drifts a fraction of the scroll (none during pull-to-refresh).
+  const deep = useAnimatedStyle(() => ({ transform: [{ translateY: -Math.min(80, Math.max(0, scrollY.get()) * 0.12) }] }));
   return (
     <View
       style={StyleSheet.absoluteFill}
@@ -175,23 +195,24 @@ function LakeBackground({ night, score, ice, waterTop }: { night: boolean; score
           </Defs>
           <Rect x={0} y={0} width={width} height={waterTop} fill="url(#sky)" />
           <Rect x={0} y={waterTop} width={width} height={lakeH} fill="url(#water)" />
-          {[0.12, 0.3, 0.5, 0.7, 0.88].map((t) => {
+          {[0.12, 0.3, 0.5, 0.7].map((t) => {
             const y = waterTop + lakeH * t;
             return <Path key={t} d={`M0 ${y} C${width * 0.25} ${y - 5} ${width * 0.5} ${y + 5} ${width * 0.75} ${y - 3} S${width} ${y + 4} ${width} ${y}`} stroke={colors.white} strokeWidth={1} fill="none" opacity={0.35} />;
           })}
           <Path d={`M0 ${waterTop} L${width} ${waterTop}`} stroke={colors.teal} strokeWidth={1} opacity={0.35} />
           {ice ? <Rect x={0} y={waterTop} width={width} height={8} fill={colors.white} opacity={0.85} /> : null}
-          <LakeBed width={width} height={height} />
+          <LakeBed width={width} height={height} lift={lift} />
         </Svg>
       ) : null}
-      {width ? <LightShafts width={width} top={waterTop} height={lakeH} /> : null}
-      {width ? <Bubbles width={width} bottom={BED * 0.6} rise={lakeH * 0.55} /> : null}
-      {width ? <Weeds width={width} bottom={BED * 0.55} /> : null}
+      {width ? <LightShafts width={width} top={waterTop} height={lakeH} strength={0.75 + score / 250} active={active} /> : null}
+      {width ? <Bubbles width={width} bottom={BED * 0.6 + lift} rise={lakeH * 0.5} active={active} /> : null}
+      {width ? <Weeds width={width} bottom={BED * 0.55 + lift} active={active} /> : null}
       {width ? (
-        <View style={{ position: 'absolute', top: waterTop, left: 0, width, height: lakeH }}>
-          {/* Fish favour the open lower water, between the content and the lake bed. */}
-          <LakeSchool width={width} top={lakeH * 0.4} bottom={lakeH - BED * 0.6} mood={score >= 60 ? 'active' : score >= 40 ? 'idle' : 'sleepy'} count={8} sizeScale={1.45} visibility={1.25} />
-        </View>
+        <Animated.View style={[{ position: 'absolute', top: waterTop, left: 0, width, height: lakeH }, deep]}>
+          <Motes width={width} top={fishTop - spacing.xl} bottom={floor} active={active} />
+          {/* Fish favour the open water between the content and the lake bed. Count is fixed; mood is not a fish count. */}
+          <LakeSchool key={Math.round(fishTop / 40)} width={width} top={fishTop} bottom={floor} mood={mood} count={9} sizeScale={1.4} visibility={1.25} active={active} />
+        </Animated.View>
       ) : null}
     </View>
   );
@@ -201,8 +222,8 @@ function LakeBackground({ night, score, ice, waterTop }: { night: boolean; score
 
 const BED = 92;
 
-function LakeBed({ width, height }: { width: number; height: number }) {
-  const top = height - BED;
+function LakeBed({ width, height, lift }: { width: number; height: number; lift: number }) {
+  const top = height - BED - lift;
   const sand = `M0 ${top + 34} C${width * 0.18} ${top + 18} ${width * 0.32} ${top + 40} ${width * 0.5} ${top + 28} S${width * 0.82} ${top + 14} ${width} ${top + 30} L${width} ${height} L0 ${height} Z`;
   const back = `M0 ${top + 18} C${width * 0.22} ${top + 4} ${width * 0.45} ${top + 26} ${width * 0.66} ${top + 12} S${width * 0.9} ${top + 2} ${width} ${top + 14} L${width} ${height} L0 ${height} Z`;
   const rocks = [
@@ -235,24 +256,24 @@ function LakeBed({ width, height }: { width: number; height: number }) {
 }
 
 /** A few weeds rooted in the bed, each swaying on its own slow rhythm (still under reduce motion). */
-function Weeds({ width, bottom }: { width: number; bottom: number }) {
+function Weeds({ width, bottom, active }: { width: number; bottom: number; active: boolean }) {
   const [weeds] = useState(() =>
     [0.05, 0.09, 0.27, 0.31, 0.47, 0.73, 0.77, 0.95].map((x, i) => ({ x, height: 26 + ((i * 37) % 30), period: 2600 + ((i * 613) % 1600), delay: (i * 271) % 900 })),
   );
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      {weeds.map((weed) => <Weed key={weed.x} left={weed.x * width} bottom={bottom} height={weed.height} period={weed.period} delay={weed.delay} />)}
+      {weeds.map((weed) => <Weed key={weed.x} left={weed.x * width} bottom={bottom} height={weed.height} period={weed.period} delay={weed.delay} active={active} />)}
     </View>
   );
 }
 
-function Weed({ left, bottom, height, period, delay }: { left: number; bottom: number; height: number; period: number; delay: number }) {
+function Weed({ left, bottom, height, period, delay, active }: { left: number; bottom: number; height: number; period: number; delay: number; active: boolean }) {
   const reduced = useReducedMotion();
   const sway = useSharedValue(0);
   useEffect(() => {
-    if (reduced) return;
+    if (reduced || !active) { cancelAnimation(sway); return; }
     sway.set(withDelay(delay, withRepeat(withSequence(withTiming(1, { duration: period, easing: Easing.inOut(Easing.sin) }), withTiming(-1, { duration: period, easing: Easing.inOut(Easing.sin) })), -1, true)));
-  }, [reduced, sway, period, delay]);
+  }, [reduced, active, sway, period, delay]);
   const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${sway.get() * 7}deg` }] }));
   const w = 18;
   return (
@@ -266,14 +287,15 @@ function Weed({ left, bottom, height, period, delay }: { left: number; bottom: n
   );
 }
 
-/** Soft sunlight shafts slanting down from the surface, with a slow shimmer. */
-function LightShafts({ width, top, height }: { width: number; top: number; height: number }) {
+/** Soft sunlight shafts slanting down from the surface, with a slow shimmer; brighter on better days. */
+function LightShafts({ width, top, height, strength, active }: { width: number; top: number; height: number; strength: number; active: boolean }) {
   const reduced = useReducedMotion();
-  const shimmer = useSharedValue(0.5);
+  const shimmer = useSharedValue(0.6);
   useEffect(() => {
-    if (!reduced) shimmer.set(withRepeat(withSequence(withTiming(1, { duration: 4200, easing: Easing.inOut(Easing.sin) }), withTiming(0.35, { duration: 4200, easing: Easing.inOut(Easing.sin) })), -1, true));
-  }, [reduced, shimmer]);
-  const style = useAnimatedStyle(() => ({ opacity: shimmer.get() }));
+    if (reduced || !active) { cancelAnimation(shimmer); return; }
+    shimmer.set(withRepeat(withSequence(withTiming(1, { duration: 4200, easing: Easing.inOut(Easing.sin) }), withTiming(0.35, { duration: 4200, easing: Easing.inOut(Easing.sin) })), -1, true));
+  }, [reduced, active, shimmer]);
+  const style = useAnimatedStyle(() => ({ opacity: Math.min(1, shimmer.get() * strength) }));
   const shafts = [0.18, 0.46, 0.78].map((x, i) => ({ x: x * width, w: 46 + i * 14, lean: 70 + i * 20 }));
   return (
     <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, style]}>
@@ -293,27 +315,66 @@ function LightShafts({ width, top, height }: { width: number; top: number; heigh
 }
 
 /** A few bubbles drifting up from the weeds (none under reduce motion). */
-function Bubbles({ width, bottom, rise }: { width: number; bottom: number; rise: number }) {
+function Bubbles({ width, bottom, rise, active }: { width: number; bottom: number; rise: number; active: boolean }) {
   const reduced = useReducedMotion();
   const [bubbles] = useState(() => [0.08, 0.3, 0.5, 0.75, 0.94].map((x, i) => ({ x, size: 4 + (i % 3) * 2, duration: 6000 + i * 1300, delay: i * 1700 })));
   if (reduced) return null;
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      {bubbles.map((bubble) => <Bubble key={bubble.x} left={bubble.x * width} bottom={bottom} rise={rise} {...bubble} />)}
+      {bubbles.map((bubble) => <Bubble key={bubble.x} left={bubble.x * width} bottom={bottom} rise={rise} active={active} {...bubble} />)}
     </View>
   );
 }
 
-function Bubble({ left, bottom, rise, size, duration, delay }: { left: number; bottom: number; rise: number; size: number; duration: number; delay: number }) {
+function Bubble({ left, bottom, rise, size, duration, delay, active }: { left: number; bottom: number; rise: number; size: number; duration: number; delay: number; active: boolean }) {
   const t = useSharedValue(0);
   useEffect(() => {
+    if (!active) { cancelAnimation(t); return; }
+    t.set(0);
     t.set(withDelay(delay, withRepeat(withTiming(1, { duration, easing: Easing.linear }), -1, false)));
-  }, [t, duration, delay]);
+  }, [t, duration, delay, active]);
   const style = useAnimatedStyle(() => ({
     opacity: t.get() < 0.1 ? t.get() * 6 : 0.6 * (1 - t.get()),
     transform: [{ translateY: -t.get() * rise }, { translateX: Math.sin(t.get() * 12) * 4 }],
   }));
   return <Animated.View style={[styles.bubble, { left, bottom, width: size, height: size, borderRadius: size / 2 }, style]} />;
+}
+
+/**
+ * Fine particles suspended in the water, drifting very slowly. One shared clock drives them
+ * all (cheap). Hidden under reduce motion; frozen while the screen is out of focus.
+ */
+const MOTE_PERIOD = 60_000;
+function Motes({ width, top, bottom, active }: { width: number; top: number; bottom: number; active: boolean }) {
+  const reduced = useReducedMotion();
+  const clock = useSharedValue(0);
+  const [motes] = useState(() => Array.from({ length: 10 }, (_, i) => ({ x: ((i * 0.37) % 1), y: ((i * 0.61) % 1), size: 2 + (i % 3), phase: i * 0.7, drift: 0.6 + ((i * 0.29) % 0.8) })));
+  useEffect(() => {
+    if (reduced || !active) { cancelAnimation(clock); return; }
+    clock.set(0);
+    clock.set(withRepeat(withTiming(1, { duration: MOTE_PERIOD, easing: Easing.linear }), -1, false));
+  }, [reduced, active, clock]);
+  if (reduced || bottom - top < 40) return null;
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {motes.map((mote) => <Mote key={mote.phase} {...mote} clock={clock} width={width} top={top} band={bottom - top} />)}
+    </View>
+  );
+}
+
+function Mote({ x, y, size, phase, drift, clock, width, top, band }: { x: number; y: number; size: number; phase: number; drift: number; clock: SharedValue<number>; width: number; top: number; band: number }) {
+  const style = useAnimatedStyle(() => {
+    // Whole-number frequencies keep the loop seamless when the clock wraps.
+    const t = clock.get() * Math.PI * 2;
+    return {
+      opacity: 0.25 + 0.2 * Math.sin(t * 3 + phase),
+      transform: [
+        { translateX: x * width + Math.sin(t + phase) * 28 * drift },
+        { translateY: top + y * band + Math.sin(t * 2 + phase * 1.3) * 12 },
+      ],
+    };
+  });
+  return <Animated.View style={[styles.mote, { width: size, height: size, borderRadius: size / 2 }, style]} />;
 }
 
 function Header({ now, fresh, refreshing, onRefresh, top, aboutOpen, onAbout }: { now: number; fresh: { state: 'fresh' | 'aging' | 'stale'; label: string }; refreshing: boolean; onRefresh: () => void; top: number; aboutOpen: boolean; onAbout: () => void }) {
@@ -411,7 +472,7 @@ function AnswerCard({ entry, now, units }: { entry: LakeData; now: number; units
       <Row gap={spacing.sm}>
         <Icon name={reasonIcon(reason)} size={15} color={colors.teal} />
         <T variant="callout" style={{ flex: 1 }} numberOfLines={2}>{reason}</T>
-        <Bars level={confidence} />
+        <ConfidenceBars level={confidence} />
       </Row>
       <View style={styles.chips}>
         <Chip icon="wind" text={formatWind(wind, units)} warn={wind >= 25} />
@@ -420,45 +481,6 @@ function AnswerCard({ entry, now, units }: { entry: LakeData; now: number; units
         <Chip icon="pressure" text={pressureTrend(span)} />
       </View>
     </View>
-    </View>
-  );
-}
-
-/** Circular score gauge in the band colour; sweeps in on appear (static under reduce motion). */
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-const RING = 92;
-const RING_STROKE = 8;
-
-function ScoreRing({ score, caption }: { score: number; caption: string }) {
-  const band = scoreBands[scoreBand(score)];
-  const r = (RING - RING_STROKE) / 2;
-  const circumference = 2 * Math.PI * r;
-  const reduced = useReducedMotion();
-  const progress = useSharedValue(reduced ? score / 100 : 0);
-  useEffect(() => {
-    progress.set(withTiming(score / 100, { duration: reduced ? 0 : 800, easing: Easing.out(Easing.cubic) }));
-  }, [score, reduced, progress]);
-  const animatedProps = useAnimatedProps(() => ({ strokeDashoffset: circumference * (1 - progress.get()) }));
-  return (
-    <View style={styles.ring} importantForAccessibility="no-hide-descendants">
-      <Svg width={RING} height={RING} style={StyleSheet.absoluteFill}>
-        <Circle cx={RING / 2} cy={RING / 2} r={r} stroke={colors.fog} strokeWidth={RING_STROKE} fill="none" />
-        <AnimatedCircle
-          cx={RING / 2}
-          cy={RING / 2}
-          r={r}
-          stroke={band.color}
-          strokeWidth={RING_STROKE}
-          strokeLinecap="round"
-          strokeDasharray={`${circumference} ${circumference}`}
-          animatedProps={animatedProps}
-          fill="none"
-          transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
-        />
-      </Svg>
-      <T variant="label" color={colors.inkMuted} style={{ fontSize: 8.5, lineHeight: 10 }}>{caption}</T>
-      <T variant="numeralL" style={{ lineHeight: 36 }}>{score}</T>
-      <T variant="caption" weight="800" color={band.color} style={{ fontSize: 11, lineHeight: 13 }}>{band.label}</T>
     </View>
   );
 }
@@ -517,19 +539,6 @@ const pressureTrend = (hours: ForecastHour[]) => {
   return delta > 1 ? 'Rising' : delta < -1 ? 'Falling' : 'Steady';
 };
 
-const barLevel = { High: 3, Medium: 2, Low: 1 } as const;
-/** Compact confidence: three bars (+ level word unless `bare`). */
-function Bars({ level, bare }: { level: 'High' | 'Medium' | 'Low'; bare?: boolean }) {
-  return (
-    <Row gap={4} importantForAccessibility="no-hide-descendants">
-      <View style={styles.bars}>
-        {[1, 2, 3].map((bar) => <View key={bar} style={[styles.bar, { height: 3 + bar * 3, backgroundColor: bar <= barLevel[level] ? colors.teal : colors.fogDeep }]} />)}
-      </View>
-      {bare ? null : <T variant="caption" color={colors.inkMuted}>{level}</T>}
-    </Row>
-  );
-}
-
 /* ───────────── Other lakes: full-width cards, ranked ───────────── */
 
 function LakeCard({ entry, now }: { entry: LakeData; now: number }) {
@@ -548,10 +557,7 @@ function LakeCard({ entry, now }: { entry: LakeData; now: number }) {
       accessibilityHint="Opens the lake forecast"
       style={({ pressed }) => [styles.lakeCard, pressed && { opacity: 0.85 }]}
     >
-      <View style={[styles.lakeScore, { backgroundColor: band.tint, borderColor: band.color }]}>
-        <T variant="numeralM" color={colors.ink}>{score}</T>
-        <T variant="caption" weight="800" color={band.color} style={{ fontSize: 10, lineHeight: 12 }}>{band.label}</T>
-      </View>
+      <ScoreTile score={score} size={58} />
       <View style={{ flex: 1, gap: 3 }}>
         <Row gap={6}>
           <Icon name={season === 'ice' ? 'ice' : 'open-water'} size={13} color={colors.teal} />
@@ -561,7 +567,7 @@ function LakeCard({ entry, now }: { entry: LakeData; now: number }) {
         <Row gap={spacing.sm}>
           <Icon name={reasonIcon(reason)} size={12} color={colors.teal} />
           <T variant="caption" color={colors.inkMuted} numberOfLines={1} style={{ flex: 1 }}>{reason}</T>
-          <Bars level={confidence} bare />
+          <ConfidenceBars level={confidence} bare />
         </Row>
       </View>
       <Icon name="chevron-right" size={16} color={colors.inkFaint} />
@@ -577,7 +583,6 @@ const styles = StyleSheet.create({
   statusChip: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', marginTop: 2, paddingHorizontal: 9, paddingVertical: 4, borderRadius: radius.pill, backgroundColor: 'rgba(231,234,228,0.9)' },
   statusChipLive: { backgroundColor: colors.sunriseTint },
   liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.sunrise },
-  ring: { width: RING, height: RING, alignItems: 'center', justifyContent: 'center' },
   track: { height: 8, borderRadius: 4, backgroundColor: colors.fog, justifyContent: 'center' },
   trackWindow: { position: 'absolute', top: 0, bottom: 0, borderRadius: 4, backgroundColor: colors.sunrise, shadowColor: colors.sunrise, shadowOpacity: 0.6, shadowRadius: 5, shadowOffset: { width: 0, height: 0 } },
   trackNow: { position: 'absolute', left: -2, width: 12, height: 12, borderRadius: 6, backgroundColor: colors.ink, borderWidth: 2, borderColor: colors.white },
@@ -587,13 +592,12 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: colors.tealMist },
   chipWarn: { backgroundColor: colors.warningTint },
-  bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
-  bar: { width: 3, borderRadius: 1 },
   conditionsCard: { gap: spacing.md, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.white, ...elevation.low },
   lakeCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.white, ...elevation.low },
-  lakeScore: { width: 58, height: 58, borderRadius: radius.md, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   about: { padding: spacing.md, borderRadius: radius.md, backgroundColor: 'rgba(251,250,245,0.92)' },
   plainBlock: { gap: spacing.lg, marginTop: spacing.xxl, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.paper },
   weed: { position: 'absolute', transformOrigin: 'bottom' },
+  mote: { position: 'absolute', top: 0, left: 0, backgroundColor: colors.white },
+  fullLink: { alignItems: 'flex-start', marginTop: -spacing.sm },
   bubble: { position: 'absolute', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(255,255,255,0.25)' },
 });

@@ -54,7 +54,7 @@ function roomiest(fish: Fish[], self: Fish, width: number, top: number, room: nu
  * random lifespan dwindle away and reappear somewhere roomy — often mid-lake — so the scene
  * stays evenly populated and never visibly repeats. `mood` changes behaviour, never count.
  */
-export function LakeSchool({ width, top, bottom, mood, count = 10, sizeScale = 1, visibility = 1 }: { width: number; top: number; bottom: number; mood: Mood; count?: number; sizeScale?: number; /** Multiplies fish opacity (capped at 1). */ visibility?: number }) {
+export function LakeSchool({ width, top, bottom, mood, count = 10, sizeScale = 1, visibility = 1, active = true }: { width: number; top: number; bottom: number; mood: Mood; count?: number; sizeScale?: number; /** Multiplies fish opacity (capped at 1). */ visibility?: number; /** False pauses swimming (e.g. while the screen is out of focus). */ active?: boolean }) {
   const reduced = useReducedMotion();
   const activity = useSharedValue(level[mood]);
   const band = bottom - top;
@@ -93,7 +93,7 @@ export function LakeSchool({ width, top, bottom, mood, count = 10, sizeScale = 1
     });
   }, [mood, activity, school]);
 
-  useFrameCallback((frame) => {
+  const swim = useFrameCallback((frame) => {
     'worklet';
     const dt = Math.min(0.05, (frame.timeSincePreviousFrame ?? 16) / 1000);
     const a = activity.get(); // 0 sleepy … 2 active
@@ -162,7 +162,12 @@ export function LakeSchool({ width, top, bottom, mood, count = 10, sizeScale = 1
       }
       return fish;
     });
-  }, !reduced);
+  }, false);
+
+  // Swim only while visible and motion is allowed; Reduce Motion leaves a still scene.
+  useEffect(() => {
+    swim.setActive(active && !reduced);
+  }, [swim, active, reduced]);
 
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill} importantForAccessibility="no-hide-descendants">
