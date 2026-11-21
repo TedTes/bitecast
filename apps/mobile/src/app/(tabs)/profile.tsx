@@ -68,18 +68,18 @@ export default function ProfileScreen() {
 
   const confirmDelete = () => {
     Alert.alert(
-      'Delete data on this device?',
-      `This permanently removes ${logs.length} catch log${logs.length === 1 ? '' : 's'}${pending ? `, including ${pending} that haven’t synced` : ''}. Export first if you want a copy.`,
+      'Delete account?',
+      `This permanently removes your ${logs.length} catch log${logs.length === 1 ? '' : 's'}${pending ? ` (${pending} not synced)` : ''} and pending lake requests from this phone. Your lake list and settings stay. Export first if you want a copy.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Delete account',
           style: 'destructive',
           onPress: async () => {
             try {
               await clearLocalData();
               haptic.success();
-              setNotice({ tone: 'success', title: 'Local data deleted', body: 'Catch logs and pending requests were removed from this device.' });
+              setNotice({ tone: 'success', title: 'Account deleted', body: 'Your catch logs and pending requests were removed from this phone.' });
             } catch {
               setNotice({ tone: 'danger', title: 'Couldn’t delete data', body: 'Nothing was removed. Try again.' });
             }
@@ -225,8 +225,12 @@ export default function ProfileScreen() {
 
       {/* Destructive actions: findable, never loud */}
       <View style={styles.danger}>
-        <DangerLink label="Delete data on this device" onPress={confirmDelete} hint={pending ? `${pending} unsynced log${pending === 1 ? '' : 's'} would be lost` : undefined} />
-        {integrationStatus[0].ready ? <DangerLink label={deletingAccount ? 'Deleting account…' : 'Delete BiteCast account'} onPress={deletingAccount ? undefined : confirmDeleteAccount} /> : null}
+        {/* One action. With cloud sync it deletes the cloud account too; without it, this phone's data is the whole account. */}
+        <DangerLink
+          label={deletingAccount ? 'Deleting account…' : 'Delete account'}
+          onPress={deletingAccount ? undefined : integrationStatus[0].ready ? confirmDeleteAccount : confirmDelete}
+          hint={pending ? `${pending} unsynced log${pending === 1 ? '' : 's'} would be lost` : undefined}
+        />
       </View>
     </Screen>
   );
