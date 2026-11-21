@@ -54,7 +54,7 @@ function roomiest(fish: Fish[], self: Fish, width: number, top: number, room: nu
  * random lifespan dwindle away and reappear somewhere roomy — often mid-lake — so the scene
  * stays evenly populated and never visibly repeats. `mood` changes behaviour, never count.
  */
-export function LakeSchool({ width, top, bottom, mood, count = 10, sizeScale = 1 }: { width: number; top: number; bottom: number; mood: Mood; count?: number; sizeScale?: number }) {
+export function LakeSchool({ width, top, bottom, mood, count = 10, sizeScale = 1, visibility = 1 }: { width: number; top: number; bottom: number; mood: Mood; count?: number; sizeScale?: number; /** Multiplies fish opacity (capped at 1). */ visibility?: number }) {
   const reduced = useReducedMotion();
   const activity = useSharedValue(level[mood]);
   const band = bottom - top;
@@ -169,19 +169,19 @@ export function LakeSchool({ width, top, bottom, mood, count = 10, sizeScale = 1
       {initial
         .map((fish, i) => ({ fish, i }))
         .sort((a, b) => b.fish.depth - a.fish.depth) // far fish render first
-        .map(({ fish, i }) => <SwimmingFish key={i} index={i} size={fish.size} width={width} school={school} />)}
+        .map(({ fish, i }) => <SwimmingFish key={i} index={i} size={fish.size} width={width} school={school} visibility={visibility} />)}
     </View>
   );
 }
 
-function SwimmingFish({ index, size, width, school }: { index: number; size: number; width: number; school: SharedValue<Fish[]> }) {
+function SwimmingFish({ index, size, width, school, visibility }: { index: number; size: number; width: number; school: SharedValue<Fish[]>; visibility: number }) {
   const style = useAnimatedStyle(() => {
     const f = school.get()[index];
     // Fade near the edges so fish dwindle away instead of hitting a wall.
     const fadeZone = f.size * 1.4;
     const centre = f.x + f.size / 2;
     const edge = Math.max(0, Math.min(1, Math.min(centre, width - centre) / fadeZone));
-    const base = 0.38 + (1 - f.depth) * 0.42; // 0.38 far … 0.8 near: visible even when lazy
+    const base = Math.min(1, (0.38 + (1 - f.depth) * 0.42) * visibility); // 0.38 far … 0.8 near: visible even when lazy
     const facing = Math.abs(f.facing) < 0.12 ? (f.facing < 0 ? -0.12 : 0.12) : f.facing;
     return {
       opacity: base * edge * f.alpha,

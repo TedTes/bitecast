@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import type { ForecastHour, ForecastWindow, LakeForecast, Season } from '@bitecast/engine';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import Animated, { Easing, useAnimatedProps, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import * as SunCalc from 'suncalc';
@@ -201,15 +201,78 @@ function LakeBackground({ night, score, ice, waterTop }: { night: boolean; score
           })}
           <Path d={`M0 ${waterTop} L${width} ${waterTop}`} stroke={colors.teal} strokeWidth={1} opacity={0.35} />
           {ice ? <Rect x={0} y={waterTop} width={width} height={8} fill={colors.white} opacity={0.85} /> : null}
+          <LakeBed width={width} height={height} />
         </Svg>
       ) : null}
+      {width ? <Weeds width={width} bottom={BED * 0.55} /> : null}
       {width ? (
         <View style={{ position: 'absolute', top: waterTop, left: 0, width, height: lakeH }}>
-          <LakeSchool width={width} top={ice ? 14 : 10} bottom={lakeH - 30} mood={score >= 60 ? 'active' : score >= 40 ? 'idle' : 'sleepy'} count={11} sizeScale={1.15} />
+          {/* Fish favour the open lower water, between the content and the lake bed. */}
+          <LakeSchool width={width} top={lakeH * 0.4} bottom={lakeH - BED * 0.6} mood={score >= 60 ? 'active' : score >= 40 ? 'idle' : 'sleepy'} count={8} sizeScale={1.45} visibility={1.25} />
         </View>
       ) : null}
     </View>
   );
+}
+
+/* ───────────── Lake bed: sand, a few rocks and slowly swaying weeds (decorative) ───────────── */
+
+const BED = 92;
+
+function LakeBed({ width, height }: { width: number; height: number }) {
+  const top = height - BED;
+  const sand = `M0 ${top + 34} C${width * 0.18} ${top + 18} ${width * 0.32} ${top + 40} ${width * 0.5} ${top + 28} S${width * 0.82} ${top + 14} ${width} ${top + 30} L${width} ${height} L0 ${height} Z`;
+  const back = `M0 ${top + 18} C${width * 0.22} ${top + 4} ${width * 0.45} ${top + 26} ${width * 0.66} ${top + 12} S${width * 0.9} ${top + 2} ${width} ${top + 14} L${width} ${height} L0 ${height} Z`;
+  const rocks = [
+    { x: 0.12, w: 34, h: 16 },
+    { x: 0.2, w: 18, h: 10 },
+    { x: 0.58, w: 42, h: 18 },
+    { x: 0.66, w: 20, h: 11 },
+    { x: 0.9, w: 28, h: 14 },
+  ];
+  return (
+    <>
+      <Defs>
+        <LinearGradient id="sand" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor="#CBC4AA" />
+          <Stop offset="1" stopColor="#B7AF92" />
+        </LinearGradient>
+      </Defs>
+      <Path d={back} fill="#9FBFC0" opacity={0.55} />
+      {rocks.map((rock) => (
+        <Path
+          key={rock.x}
+          d={`M${rock.x * width - rock.w / 2} ${top + 32} q${rock.w * 0.1} ${-rock.h} ${rock.w / 2} ${-rock.h} q${rock.w * 0.4} 0 ${rock.w / 2} ${rock.h} Z`}
+          fill="#8EA6A5"
+          opacity={0.75}
+        />
+      ))}
+      <Path d={sand} fill="url(#sand)" opacity={0.9} />
+    </>
+  );
+}
+
+/** A few weeds rooted in the bed, each swaying on its own slow rhythm (still under reduce motion). */
+function Weeds({ width, bottom }: { width: number; bottom: number }) {
+  const [weeds] = useState(() =>
+    [0.05, 0.09, 0.27, 0.31, 0.47, 0.73, 0.77, 0.95].map((x, i) => ({ x, height: 26 + ((i * 37) % 30), period: 2600 + ((i * 613) % 1600), delay: (i * 271) % 900 })),
+  );
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {weeds.map((weed) => <Weed key={weed.x} left={weed.x * width} bottom={bottom} height={weed.height} period={weed.period} delay={weed.delay} />)}
+    </View>
+  );
+}
+
+function Weed({ left, bottom, height, period, delay }: { left: number; bottom: number; height: number; period: number; delay: number }) {
+  const reduced = useReducedMotion();
+  const sway = useSharedValue(0);
+  useEffect(() => {
+    if (reduced) return;
+    sway.set(withDelay(delay, withRepeat(withSequence(withTiming(1, { duration: period, easing: Easing.inOut(Easing.sin) }), withTiming(-1, { duration: period, easing: Easing.inOut(Easing.sin) })), -1, true)));
+  }, [reduced, sway, period, delay]);
+  const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${sway.get() * 7}deg` }] }));
+  return <Animated.View style={[styles.weed, { left, bottom, height }, style]} />;
 }
 
 function Header({ now, fresh, refreshing, onRefresh, top }: { now: number; fresh: { state: 'fresh' | 'aging' | 'stale'; label: string }; refreshing: boolean; onRefresh: () => void; top: number }) {
@@ -491,5 +554,6 @@ const styles = StyleSheet.create({
   followBuoy: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 46, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.teal, backgroundColor: 'rgba(255,255,255,0.55)' },
   plainBlock: { gap: spacing.lg, marginTop: spacing.xxl, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.paper },
   footer: { gap: spacing.xs, alignItems: 'center', alignSelf: 'center', marginTop: spacing.lg, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.pill, backgroundColor: 'rgba(251,250,245,0.7)' },
+  weed: { position: 'absolute', width: 4, borderRadius: 2, backgroundColor: '#5E8F86', opacity: 0.55, transformOrigin: 'bottom' },
   fab: { position: 'absolute', right: spacing.xl, bottom: spacing.lg, width: 58, height: 58, borderRadius: 29, backgroundColor: colors.deep, alignItems: 'center', justifyContent: 'center', ...elevation.raised },
 });
