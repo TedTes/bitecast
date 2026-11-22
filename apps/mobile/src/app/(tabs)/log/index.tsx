@@ -5,18 +5,18 @@ import { Icon } from '@/components/icon';
 import { Banner, Button, Card, EmptyState, ProgressBar, Reveal, Row, Screen, Segmented, SkeletonCard, T } from '@/components/ui';
 import { ShorelineHeader } from '@/components/shoreline-header';
 import { WalleyeArt } from '@/components/walleye';
-import { colors, hitSlop, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
+import { colors, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
 import { integrationsReady } from '@/api/config';
 import { lakeById } from '@/data/lakes';
-import { capitalize, formatDay, formatDayInline, formatTime, lengthUnit, startOfDay, toDisplayLength } from '@/lib/format';
+import { capitalize, formatDay, formatTime, lengthUnit, startOfDay, toDisplayLength } from '@/lib/format';
 import { useNow } from '@/lib/use-now';
 import { useAppStore } from '@/store/use-app-store';
 import type { CatchLog } from '@/types/app';
 
 /*
  * A field journal: your trips are the content. Logging itself lives on the centre “+”
- * tab button, so this screen has no big action blocks — just a summary, a compact filter
- * and a day-by-day timeline.
+ * tab button, so this screen has no big action blocks — the tally is the header, then a
+ * patterns line, a compact filter and a day-by-day timeline.
  */
 
 type Filter = 'all' | 'caught' | 'none' | 'pending';
@@ -58,8 +58,13 @@ export default function LogListScreen() {
       tab
       top={
         <ShorelineHeader
-          title="Catch log"
-          subtitle={logs.length ? `${logs.length} trip${logs.length === 1 ? '' : 's'} · last ${formatDayInline(logs[0].caughtAt)}` : 'Your field notes'}
+          // The tab already says “Log”, so the header is your tally: the catch, then how it came.
+          title={!hydrated ? 'Your fish tales' : !logs.length ? 'First cast awaits' : fish ? `${fish} in the net` : 'The net’s still dry'}
+          subtitle={
+            !hydrated || !logs.length
+              ? 'Your field notes'
+              : `${fish ? 'Walleye · ' : ''}${logs.length} trip${logs.length === 1 ? '' : 's'}${fish ? ` · ${rate}% with fish` : ''}`
+          }
         />
       }
     >
@@ -77,31 +82,19 @@ export default function LogListScreen() {
         />
       ) : (
         <>
-          {/* Summary: three figures + the patterns unlock in one quiet card */}
-          <Card style={styles.summary}>
-            <Row>
-              <Stat value={String(logs.length)} label={logs.length === 1 ? 'Trip' : 'Trips'} />
-              <View style={styles.statDivider} />
-              <Stat value={String(fish)} label="Walleye" />
-              <View style={styles.statDivider} />
-              <Stat value={`${rate}%`} label="Trips with fish" />
+          <Card
+            style={styles.patterns}
+            onPress={() => router.push('/(tabs)/log/stats')}
+            accessibilityLabel={logs.length >= STATS_MIN ? 'Your patterns: best hours, lures and light conditions' : `Your patterns unlock at ${STATS_MIN} logs. ${logs.length} logged.`}
+          >
+            <Row gap={spacing.sm}>
+              <Icon name="chart" size={14} color={colors.teal} />
+              <T variant="caption" weight="600" color={colors.teal} style={{ flex: 1 }}>
+                {logs.length >= STATS_MIN ? 'Your patterns' : `Patterns unlock at ${STATS_MIN} logs · ${logs.length}/${STATS_MIN}`}
+              </T>
+              <Icon name="chevron-right" size={13} color={colors.teal} />
             </Row>
-            <Pressable
-              onPress={() => router.push('/(tabs)/log/stats')}
-              hitSlop={hitSlop}
-              accessibilityRole="button"
-              accessibilityLabel={logs.length >= STATS_MIN ? 'Your patterns: best hours, lures and light conditions' : `Your patterns unlock at ${STATS_MIN} logs. ${logs.length} logged.`}
-              style={({ pressed }) => [styles.patterns, pressed && { opacity: 0.7 }]}
-            >
-              <Row gap={spacing.sm}>
-                <Icon name="chart" size={14} color={colors.teal} />
-                <T variant="caption" weight="600" color={colors.teal} style={{ flex: 1 }}>
-                  {logs.length >= STATS_MIN ? 'Your patterns' : `Patterns unlock at ${STATS_MIN} logs · ${logs.length}/${STATS_MIN}`}
-                </T>
-                <Icon name="chevron-right" size={13} color={colors.teal} />
-              </Row>
-              {logs.length < STATS_MIN ? <ProgressBar value={logs.length / STATS_MIN} label="Progress to personal patterns" height={4} /> : null}
-            </Pressable>
+            {logs.length < STATS_MIN ? <ProgressBar value={logs.length / STATS_MIN} label="Progress to personal patterns" height={4} /> : null}
           </Card>
 
           {failed ? (
@@ -149,15 +142,6 @@ export default function LogListScreen() {
         </>
       )}
     </Screen>
-  );
-}
-
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', gap: 1 }} accessible accessibilityLabel={`${value} ${label}`}>
-      <T variant="numeralM">{value}</T>
-      <T variant="caption" color={colors.inkMuted} style={{ fontSize: 11 }} numberOfLines={1}>{label}</T>
-    </View>
   );
 }
 
@@ -216,9 +200,7 @@ function Entry({ log, justSaved, units }: { log: CatchLog; justSaved: boolean; u
 const RAIL = 14;
 
 const styles = StyleSheet.create({
-  summary: { paddingBottom: spacing.md },
-  statDivider: { width: StyleSheet.hairlineWidth * 2, alignSelf: 'stretch', backgroundColor: colors.line },
-  patterns: { gap: 6, paddingTop: spacing.md, borderTopWidth: StyleSheet.hairlineWidth * 2, borderTopColor: colors.line },
+  patterns: { gap: 6, minHeight: touch.min, justifyContent: 'center', paddingVertical: spacing.md },
   dayRow: { paddingVertical: spacing.sm, alignItems: 'center' },
   rail: { width: RAIL, alignItems: 'center', alignSelf: 'stretch', justifyContent: 'flex-start' },
   railLine: { position: 'absolute', top: 0, bottom: 0, width: 2, borderRadius: 1, backgroundColor: colors.fogDeep },
