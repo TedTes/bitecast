@@ -4,6 +4,7 @@ import {
   Platform,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -22,13 +23,11 @@ import Animated, {
   FadeIn,
   FadeInDown,
   useAnimatedKeyboard,
-  useAnimatedScrollHandler,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withRepeat,
   withTiming,
-  type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, elevation, hitSlop, radius, spacing, touch, type, type TypeVariant } from '@/constants/theme';
@@ -114,15 +113,10 @@ type ScreenProps = PropsWithChildren<{
   onRefresh?: () => void;
   style?: StyleProp<ViewStyle>;
   background?: string;
-  /** Receives the vertical scroll offset on the UI thread (for parallax backdrops). */
-  scrollY?: SharedValue<number>;
 }>;
 
-export function Screen({ children, scroll = true, header = false, tab = false, footer, refreshing, onRefresh, style, background = colors.cream, scrollY }: ScreenProps) {
+export function Screen({ children, scroll = true, header = false, tab = false, footer, refreshing, onRefresh, style, background = colors.cream }: ScreenProps) {
   const insets = useSafeAreaInsets();
-  const onScroll = useAnimatedScrollHandler((event) => {
-    scrollY?.set(event.contentOffset.y);
-  });
   const keyboard = useAnimatedKeyboard();
   const bottomInset = tab ? 0 : insets.bottom;
   // Android resizes the window for the keyboard; iOS needs the sticky footer lifted.
@@ -137,9 +131,7 @@ export function Screen({ children, scroll = true, header = false, tab = false, f
   return (
     <Animated.View style={[{ flex: 1, backgroundColor: background, paddingTop: header ? 0 : insets.top }, lift]}>
       {scroll ? (
-        <Animated.ScrollView
-          onScroll={scrollY ? onScroll : undefined}
-          scrollEventThrottle={16}
+        <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -148,7 +140,7 @@ export function Screen({ children, scroll = true, header = false, tab = false, f
           refreshControl={onRefresh ? <RefreshControl refreshing={Boolean(refreshing)} onRefresh={onRefresh} tintColor={colors.teal} colors={[colors.teal]} /> : undefined}
         >
           {content}
-        </Animated.ScrollView>
+        </ScrollView>
       ) : (
         content
       )}

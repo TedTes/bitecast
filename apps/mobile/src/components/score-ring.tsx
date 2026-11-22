@@ -52,13 +52,16 @@ export function ScoreRing({ score, caption, size = 92 }: { score: number; captio
 const barLevel: Record<Confidence, number> = { High: 3, Medium: 2, Low: 1 };
 
 /** Compact confidence: three bars, plus the level word unless `bare` (then it is in the a11y label). */
-export function ConfidenceBars({ level, bare, long }: { level: Confidence; bare?: boolean; /** “Low confidence” instead of “Low”. */ long?: boolean }) {
+export function ConfidenceBars({ level, bare, long, tone = 'light' }: { level: Confidence; bare?: boolean; /** “Low confidence” instead of “Low”. */ long?: boolean; tone?: 'light' | 'dark' }) {
+  const dark = tone === 'dark';
+  const on = dark ? colors.mint : colors.teal;
+  const off = dark ? 'rgba(255,255,255,0.3)' : colors.fogDeep;
   return (
     <Row gap={4} accessible={bare} accessibilityLabel={bare ? `${level} confidence` : undefined}>
       <View style={styles.bars} importantForAccessibility="no-hide-descendants">
-        {[1, 2, 3].map((bar) => <View key={bar} style={[styles.bar, { height: 3 + bar * 3, backgroundColor: bar <= barLevel[level] ? colors.teal : colors.fogDeep }]} />)}
+        {[1, 2, 3].map((bar) => <View key={bar} style={[styles.bar, { height: 3 + bar * 3, backgroundColor: bar <= barLevel[level] ? on : off }]} />)}
       </View>
-      {bare ? null : <T variant="caption" color={colors.inkMuted}>{long ? `${level} confidence` : level}</T>}
+      {bare ? null : <T variant="caption" color={dark ? colors.white : colors.inkMuted}>{long ? `${level} confidence` : level}</T>}
     </Row>
   );
 }

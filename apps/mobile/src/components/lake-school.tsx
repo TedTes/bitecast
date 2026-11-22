@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useFrameCallback, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
-import { WalleyeArt } from './walleye';
+import { NaturalWalleye } from './walleye';
 
 export type Mood = 'active' | 'idle' | 'sleepy';
 const level: Record<Mood, number> = { sleepy: 0, idle: 1, active: 2 };
@@ -200,7 +200,7 @@ function SwimmingFish({ index, size, width, school, visibility }: { index: numbe
   });
   return (
     <Animated.View style={[styles.fish, style]}>
-      <WalleyeArt width={size} tone="light" contours={false} />
+      <NaturalWalleye width={size} />
     </Animated.View>
   );
 }

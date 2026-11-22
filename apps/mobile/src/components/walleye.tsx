@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
-import Svg, { Circle, G, Path } from 'react-native-svg';
+import Svg, { Circle, Defs, G, LinearGradient, Path, Stop } from 'react-native-svg';
 import { colors } from '@/constants/theme';
 
 /**
@@ -53,6 +53,41 @@ export function WalleyeArt({ width = 240, tone = 'dark', contours = true }: { wi
       <Circle cx={206} cy={44} r={6} fill={colors.deep} stroke={stroke} strokeWidth={1.3} />
       <Circle cx={206} cy={44} r={3.2} fill={eye} opacity={0.9} />
       <Circle cx={207.6} cy={42.4} r={1.1} fill={colors.onDark} />
+    </Svg>
+  );
+}
+
+/**
+ * Walleye in natural colours for underwater scenes: olive back, gold flank, pale belly, dark
+ * saddles, the spot at the rear of the spiny dorsal, glassy eye and white lower tail tip.
+ * No outlines, so it reads as a fish in water rather than a drawing.
+ */
+export function NaturalWalleye({ width }: { width: number }) {
+  return (
+    <Svg width={width} height={(width * 110) / 240} viewBox="0 0 240 110">
+      <Defs>
+        <LinearGradient id="walleyeBody" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor="#39432A" />
+          <Stop offset="0.35" stopColor="#7C7A3C" />
+          <Stop offset="0.65" stopColor="#B59A56" />
+          <Stop offset="1" stopColor="#D9D6C0" />
+        </LinearGradient>
+      </Defs>
+      <Path d="M160 34 L156 15 L144 13 L132 14 L121 18 L113 35 Z" fill="#59603A" opacity={0.85} />
+      <Path d="M150 17 L149 32 M144 14 L142 32 M138 16 L136 32 M132 15 L130 32 M126 18 L124 33" stroke="#8D8A58" strokeWidth={0.9} />
+      <Circle cx={121} cy={26} r={4} fill="#1C2116" />
+      <Path d="M106 36 C103 24 88 21 76 28 L72 42 Z" fill="#59603A" opacity={0.85} />
+      <Path d="M96 63 C88 78 76 80 67 75 L63 60 Z M160 63 L149 79 L145 63 Z" fill="#A58D52" opacity={0.85} />
+      <Path d="M46 48 C34 42 25 33 15 29 C21 40 23 45 23 52 C23 59 20 66 14 74 C27 70 36 60 46 56 Z" fill="#6C6A3C" />
+      <Path d="M14 74 C18 70 20 67 21 63 L28 67 C23 71 19 73 14 74 Z" fill="#EEEBDD" />
+      <Path d="M226 51 C214 37 188 29 160 29 C128 29 96 33 70 40 C56 43 47 46 41 48 L41 56 C51 59 71 65 100 67 C140 69 180 69 205 63 C216 60 223 56 226 52 Z" fill="url(#walleyeBody)" />
+      <Path d="M150 30 L143 44 L137 31 Z M128 31 L122 45 L116 33 Z M106 35 L101 47 L96 36 Z M86 38 L82 49 L77 40 Z M66 42 L63 51 L59 44 Z" fill="#30381F" opacity={0.6} />
+      <Path d="M190 45 C150 43 100 47 46 52" stroke="#5E5A30" strokeWidth={0.9} fill="none" />
+      <Path d="M193 34 C184 43 184 56 193 64 M226 52 L210 56" stroke="#4A4A28" strokeWidth={1.4} fill="none" />
+      <Path d="M184 55 C173 58 166 64 162 71 C172 67 180 63 186 59 Z" fill="#A58D52" opacity={0.9} />
+      <Circle cx={206} cy={44} r={5.5} fill="#C9C6A0" />
+      <Circle cx={206} cy={44} r={3.4} fill="#222619" />
+      <Circle cx={207.5} cy={42.5} r={1.2} fill="#F4F1E0" />
     </Svg>
   );
 }
