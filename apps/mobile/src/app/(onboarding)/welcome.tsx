@@ -48,7 +48,7 @@ export default function WelcomeScreen() {
       </Reveal>
       <Reveal index={0} style={{ gap: spacing.md, marginTop: spacing.lg }}>
         <T variant="label" color={colors.mint}>Plan the window, not the whole day</T>
-        <T variant="display" color={colors.onDark} accessibilityRole="header" style={{ fontSize: 36, lineHeight: 42 }}>
+        <T variant="display" color={colors.onDark} accessibilityRole="header">
           Know when the lake turns on.
         </T>
       </Reveal>
@@ -62,7 +62,7 @@ export default function WelcomeScreen() {
                 <T variant="caption" weight="600" color={colors.sunrise}>{formatDay(window.start)}’s best window</T>
                 <T variant="numeralL" color={colors.onDark} style={{ marginTop: spacing.xs }}>{shortRange(window.start, windowEnd(window))}</T>
               </View>
-              <ScoreBadge size="md" score={window.peakScore} tone="dark" caption="Peak" />
+              <ScoreBadge size="md" score={window.peakScore} tone="dark" caption={forecast.predictionGranularity === 'time_block' ? 'Block' : 'Peak'} />
             </Row>
             <ReasonChips reasons={window.reasons} tone="dark" />
             <ConfidenceBars long level={window.confidence} tone="dark" />

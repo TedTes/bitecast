@@ -84,7 +84,7 @@ export default function RequestLakeScreen() {
     <Screen header footer={<Button icon="request" loading={sending} loadingLabel="Saving…" onPress={send}>Send request</Button>}>
       <View style={{ gap: spacing.sm }}>
         <T variant="title" accessibilityRole="header">Where should BiteCast go next?</T>
-        <T variant="body" color={colors.inkMuted}>Tell us about a walleye lake you fish. Requests help us decide which lakes to research next.</T>
+        <T variant="callout" color={colors.inkMuted}>Tell us about a walleye lake you fish. Requests help us decide which lakes to research next.</T>
       </View>
       <OfflineBanner what="Requests are queued on this device." />
       {saveError ? <Banner tone="danger" title="Couldn’t save your request" body="Nothing was sent. Try again." action={{ label: 'Try again', onPress: send }} live /> : null}

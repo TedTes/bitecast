@@ -1,15 +1,18 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { ChartTexture } from '@/components/brand';
-import { ReasonChips, ScoreScale, bestWindowWithin, conditionLabel, formatWindow, windowPeak } from '@/components/forecast';
+import { ReasonChips, ScoreScale, bestWindowWithin, conditionLabel, formatWindow, hoursFromNow, windowPeak } from '@/components/forecast';
 import { Icon } from '@/components/icon';
 import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { StepHeader } from '@/components/onboarding';
-import { Button, Card, Divider, IceSafetyNotice, PageHeader, Reveal, Row, Screen, SectionHeader, T } from '@/components/ui';
+import { Banner, Button, Card, Divider, IceSafetyNotice, PageHeader, Reveal, Row, Screen, SectionHeader, T } from '@/components/ui';
 import { colors, radius, spacing } from '@/constants/theme';
 import { getForecast } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { capitalize, formatDay, formatHour } from '@/lib/format';
+import { integrationsReady } from '@/api/config';
+import { publishedForecast } from '@/features/published-forecast';
+import { useNow } from '@/lib/use-now';
 import { resolveLakeCondition } from '@/features/lake-season';
 import { useAppStore } from '@/store/use-app-store';
 
@@ -23,7 +26,11 @@ export default function PreviewScreen() {
   const season = seasonOf(lake.id);
   const forecast = getForecast(lake.id, season);
   const window = bestWindowWithin(forecast.windows, 24);
-  const current = forecast.hours[0];
+  const now = useNow();
+  const current = hoursFromNow(forecast.hours, now)[0];
+  const broad = forecast.predictionGranularity === 'time_block';
+  // Before the first refresh the device only has bundled demo data: say so rather than pass it off as live.
+  const example = !publishedForecast(forecast, integrationsReady);
   const others = ids.slice(1).map((id) => ({ lake: lakeById(id), forecast: getForecast(id, seasonOf(id)) }));
 
   return (
@@ -47,6 +54,8 @@ export default function PreviewScreen() {
       <StepHeader step={3} />
       <PageHeader title={`Your first look at ${lake.name}`} lede="Here’s the best stretch in the next 24 hours, and exactly what’s behind it." />
 
+      {example ? <Banner tone="neutral" icon="info" title="Example forecast" body="These numbers use demo weather. Today shows live forecasts for lakes that have one." /> : null}
+
       <Reveal index={0}>
         <View style={styles.hero}>
           <ChartTexture />
@@ -54,25 +63,29 @@ export default function PreviewScreen() {
             <>
               <Row justify="space-between" align="flex-start" gap={spacing.md}>
                 <View style={{ flex: 1, gap: 2 }}>
-                  <T variant="label" color={colors.sunrise}>{formatDay(window.start)} · best window</T>
-                  <T variant="title" color={colors.onDark}>{formatWindow(window)}</T>
-                  <T variant="caption" color={colors.onDarkMuted}>Peaks near {formatHour(windowPeak(window).ts)}</T>
+                  <T variant="label" color={colors.sunrise}>{formatDay(window.start)} · best {broad ? 'time block' : 'window'}</T>
+                  <T variant="title" color={colors.onDark}>{capitalize(formatWindow(window))}</T>
+                  <T variant="caption" color={colors.onDarkMuted}>{broad ? 'No exact peak hour' : `Peaks near ${formatHour(windowPeak(window).ts)}`}</T>
                 </View>
-                <ScoreBadge score={window.peakScore} size="lg" tone="dark" caption="Peak" />
+                <ScoreBadge score={window.peakScore} size="lg" tone="dark" caption={broad ? 'Block' : 'Peak'} />
               </Row>
               <View style={{ gap: spacing.sm }}>
                 <T variant="label" color={colors.onDarkMuted}>Why</T>
                 <ReasonChips reasons={window.reasons} limit={4} tone="dark" />
               </View>
               <ConfidenceBars long level={window.confidence} tone="dark" explain />
-              <View style={styles.darkDivider} />
-              <Row gap={spacing.md} align="flex-start">
-                <Icon name="tactics" size={18} color={colors.mint} style={{ marginTop: 2 }} />
-                <T variant="callout" color={colors.onDark} style={{ flex: 1 }}>
-                  <T variant="callout" weight="600" color={colors.onDark}>{capitalize(window.depth)} water · </T>
-                  {window.tactics}
-                </T>
-              </Row>
+              {broad ? null : (
+                <>
+                  <View style={styles.darkDivider} />
+                  <Row gap={spacing.md} align="flex-start">
+                    <Icon name="tactics" size={18} color={colors.mint} style={{ marginTop: 2 }} />
+                    <T variant="callout" color={colors.onDark} style={{ flex: 1 }}>
+                      <T variant="callout" weight="600" color={colors.onDark}>{capitalize(window.depth)} water · </T>
+                      {window.tactics}
+                    </T>
+                  </Row>
+                </>
+              )}
             </>
           ) : (
             <>
@@ -99,7 +112,7 @@ export default function PreviewScreen() {
           <Card style={{ gap: 0, paddingVertical: spacing.xs }}>
             {others.map(({ lake: other, forecast: f }, index) => {
               const w = bestWindowWithin(f.windows, 24);
-              const score = w?.peakScore ?? f.hours[0].score;
+              const score = w?.peakScore ?? hoursFromNow(f.hours, now)[0].score;
               return (
                 <View key={other.id}>
                   {index > 0 ? <Divider /> : null}
@@ -107,7 +120,7 @@ export default function PreviewScreen() {
                     <View style={{ flex: 1, gap: 2 }}>
                       <T variant="subhead">{other.name}</T>
                       <T variant="caption" color={colors.inkMuted}>{w ? `${formatDay(w.start)} · ${formatWindow(w)}` : 'No window above 60'}</T>
-                      <T variant="caption" color={colors.inkSoft} numberOfLines={1}>{(w?.reasons ?? f.hours[0].reasons)[0] ?? 'Mixed conditions'} · {(w?.confidence ?? f.hours[0].confidence)} confidence</T>
+                      <T variant="caption" color={colors.inkSoft} numberOfLines={1}>{(w?.reasons ?? hoursFromNow(f.hours, now)[0].reasons)[0] ?? 'Mixed conditions'} · {(w?.confidence ?? hoursFromNow(f.hours, now)[0].confidence)} confidence</T>
                     </View>
                     <ScoreBadge score={score} />
                   </Row>

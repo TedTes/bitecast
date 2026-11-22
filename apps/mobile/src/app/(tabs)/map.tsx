@@ -150,7 +150,7 @@ export default function MapScreen() {
 }
 
 function windowText({ forecast, window, waiting }: { forecast?: LakeForecast; window?: ForecastWindow; waiting: boolean }) {
-  if (!forecast) return waiting ? 'Loading forecast…' : 'No forecast published yet';
+  if (!forecast) return waiting ? 'Loading forecast…' : 'No live forecast available';
   return window ? `${formatDay(window.start)} · ${formatWindow(window)}` : 'No window above 60 in 24 h';
 }
 

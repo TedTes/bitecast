@@ -123,7 +123,7 @@ export default function PaywallScreen() {
             <View style={styles.featureIcon}>
               <Icon name={item.icon} size={16} color={colors.teal} />
             </View>
-            <T variant="callout" weight="600" style={{ flex: 1 }}>{item.text}</T>
+            <T variant="callout" style={{ flex: 1 }}>{item.text}</T>
           </Row>
         ))}
       </View>
@@ -185,7 +185,7 @@ export default function PaywallScreen() {
       {status.kind === 'error' ? <Banner tone="danger" title="Purchase didn’t go through" body={status.message} action={{ label: 'Try again', onPress: purchase }} live /> : null}
       {status.kind === 'nothing-to-restore' ? <Banner tone="neutral" title="No purchases found" body="We couldn’t find an active subscription for this store account." live /> : null}
 
-      <Card variant="tint" style={{ gap: spacing.sm }}>
+      <Card style={{ gap: spacing.sm }}>
         <Row gap={spacing.sm}>
           <Icon name="log" size={18} color={colors.teal} />
           <T variant="subhead">Catch logging is always free</T>

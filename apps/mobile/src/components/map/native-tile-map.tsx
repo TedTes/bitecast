@@ -66,54 +66,54 @@ function createNativeMap(maps: MapsModule): ComponentType<LakeMapProps> {
 
     return (
       <View style={StyleSheet.absoluteFill}>
-      <MapView
-        ref={ref}
-        style={StyleSheet.absoluteFill}
-        initialRegion={initialRegion}
-        // A frame later, so the map has its final size to fit into.
-        onMapReady={() => requestAnimationFrame(() => fit(false))}
-        mapType={Platform.OS === 'ios' ? 'mutedStandard' : 'standard'}
-        showsPointsOfInterests={false}
-        showsBuildings={false}
-        showsTraffic={false}
-        pitchEnabled={false}
-        rotateEnabled={false}
-        toolbarEnabled={false}
-        userInterfaceStyle="light"
-        accessibilityLabel="Map of covered lakes"
-      >
-        {pins.map((pin) => {
-          const active = pin.id === selectedId;
-          const band = pin.score === null ? null : scoreBands[scoreBand(pin.score)];
-          return (
-            <Marker
-              // The marker is a static snapshot: re-key on anything it draws, so it never keeps an old score.
-              key={`${pin.id}:${active}:${pin.score}:${pin.followed}`}
-              coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
-              anchor={{ x: 0.5, y: 1 }}
-              tracksViewChanges={false}
-              zIndex={active ? 10 : pin.followed ? 2 : 1}
-              onPress={() => onSelect(pin.id)}
-              accessibilityLabel={`${pin.name}, ${pinScoreLabel(pin.score, band?.label)}${pin.followed ? ', followed' : ''}`}
-            >
-              <View style={styles.pinWrap}>
-                <View style={[styles.pin, active && styles.pinActive]}>
-                  <View style={[styles.stripe, { backgroundColor: band ? (active ? band.onDark : band.color) : colors.fogDeep }]} />
-                  <View style={{ alignItems: 'center', paddingHorizontal: 6 }}>
-                    <T variant="numeralS" color={active ? colors.onDark : colors.ink} maxFontSizeMultiplier={1.1}>{pin.score ?? '–'}</T>
-                    <T variant="caption" weight="600" color={active ? colors.onDarkMuted : colors.inkSoft} style={{ fontSize: 10, lineHeight: 12 }} numberOfLines={1} maxFontSizeMultiplier={1.1}>{shortLakeName(pin.name)}</T>
+        <MapView
+          ref={ref}
+          style={StyleSheet.absoluteFill}
+          initialRegion={initialRegion}
+          // A frame later, so the map has its final size to fit into.
+          onMapReady={() => requestAnimationFrame(() => fit(false))}
+          mapType={Platform.OS === 'ios' ? 'mutedStandard' : 'standard'}
+          showsPointsOfInterests={false}
+          showsBuildings={false}
+          showsTraffic={false}
+          pitchEnabled={false}
+          rotateEnabled={false}
+          toolbarEnabled={false}
+          userInterfaceStyle="light"
+          accessibilityLabel="Map of covered lakes"
+        >
+          {pins.map((pin) => {
+            const active = pin.id === selectedId;
+            const band = pin.score === null ? null : scoreBands[scoreBand(pin.score)];
+            return (
+              <Marker
+                // The marker is a static snapshot: re-key on anything it draws, so it never keeps an old score.
+                key={`${pin.id}:${active}:${pin.score}:${pin.followed}`}
+                coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
+                anchor={{ x: 0.5, y: 1 }}
+                tracksViewChanges={false}
+                zIndex={active ? 10 : pin.followed ? 2 : 1}
+                onPress={() => onSelect(pin.id)}
+                accessibilityLabel={`${pin.name}, ${pinScoreLabel(pin.score, band?.label)}${pin.followed ? ', followed' : ''}`}
+              >
+                <View style={styles.pinWrap}>
+                  <View style={[styles.pin, active && styles.pinActive]}>
+                    <View style={[styles.stripe, { backgroundColor: band ? (active ? band.onDark : band.color) : colors.fogDeep }]} />
+                    <View style={{ alignItems: 'center', paddingHorizontal: 6 }}>
+                      <T variant="numeralS" color={active ? colors.onDark : colors.ink} maxFontSizeMultiplier={1.1}>{pin.score ?? '–'}</T>
+                      <T variant="caption" weight="600" color={active ? colors.onDarkMuted : colors.inkSoft} style={{ fontSize: 10, lineHeight: 12 }} numberOfLines={1} maxFontSizeMultiplier={1.1}>{shortLakeName(pin.name)}</T>
+                    </View>
+                    {pin.followed ? <View style={styles.followDot} /> : null}
                   </View>
-                  {pin.followed ? <View style={styles.followDot} /> : null}
+                  <View style={[styles.pointer, active && { borderTopColor: colors.deep }]} />
                 </View>
-                <View style={[styles.pointer, active && { borderTopColor: colors.deep }]} />
-              </View>
-            </Marker>
-          );
-        })}
-      </MapView>
-      <View style={styles.showAll}>
-        <IconButton icon="expand" label="Show all lakes" tone="paper" size={touch.min} onPress={() => fit(true)} />
-      </View>
+              </Marker>
+            );
+          })}
+        </MapView>
+        <View style={styles.showAll}>
+          <IconButton icon="expand" label="Show all lakes" tone="paper" size={touch.min} onPress={() => fit(true)} />
+        </View>
       </View>
     );
   };

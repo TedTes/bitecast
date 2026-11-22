@@ -74,12 +74,11 @@ export default function AuthScreen() {
       }
     >
       <View style={{ gap: spacing.sm }}>
-        <T variant="label" color={colors.teal}>Optional</T>
         <T variant="title" accessibilityRole="header">Keep your logs across devices.</T>
-        <T variant="body" color={colors.inkMuted}>You’re using BiteCast anonymously. Linking adds a sign-in to the account you already have — nothing moves or resets.</T>
+        <T variant="callout" color={colors.inkMuted}>Optional. You’re using BiteCast anonymously. Linking adds a sign-in to the account you already have — nothing moves or resets.</T>
       </View>
 
-      <Card variant="tint" style={{ gap: spacing.md }}>
+      <Card style={{ gap: spacing.md }}>
         <T variant="subhead">What stays the same</T>
         {kept.map((item) => (
           <Row key={item.text} gap={spacing.md}>
