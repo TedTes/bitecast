@@ -36,7 +36,7 @@ export default function TabsLayout() {
         animation: 'shift',
         tabBarActiveTintColor: colors.teal,
         tabBarInactiveTintColor: colors.inkMuted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         tabBarStyle: { backgroundColor: colors.paper, borderTopColor: colors.line },
         sceneStyle: { backgroundColor: colors.cream },
       }}

@@ -101,7 +101,7 @@ function createNativeMap(maps: MapsModule): ComponentType<LakeMapProps> {
                   <View style={[styles.stripe, { backgroundColor: band ? (active ? band.onDark : band.color) : colors.fogDeep }]} />
                   <View style={{ alignItems: 'center', paddingHorizontal: 6 }}>
                     <T variant="numeralS" color={active ? colors.onDark : colors.ink} maxFontSizeMultiplier={1.1}>{pin.score ?? '–'}</T>
-                    <T variant="caption" weight="700" color={active ? colors.onDarkMuted : colors.inkSoft} style={{ fontSize: 10, lineHeight: 12 }} numberOfLines={1} maxFontSizeMultiplier={1.1}>{shortLakeName(pin.name)}</T>
+                    <T variant="caption" weight="600" color={active ? colors.onDarkMuted : colors.inkSoft} style={{ fontSize: 10, lineHeight: 12 }} numberOfLines={1} maxFontSizeMultiplier={1.1}>{shortLakeName(pin.name)}</T>
                   </View>
                   {pin.followed ? <View style={styles.followDot} /> : null}
                 </View>

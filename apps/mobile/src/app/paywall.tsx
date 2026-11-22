@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { BrandMark } from '@/components/brand';
 import { Icon, type IconName } from '@/components/icon';
 import { Banner, Button, Card, IconButton, LinkButton, Row, Screen, Skeleton, T } from '@/components/ui';
-import { colors, elevation, radius, spacing } from '@/constants/theme';
+import { colors, radius, spacing } from '@/constants/theme';
 import { externalConfig } from '@/api/config';
 import { getOfferings, purchasePlan, purchasesConfigured, restorePurchases, type Offering, type PlanId } from '@/api/adapters';
 import { haptic } from '@/lib/haptics';
@@ -216,7 +216,7 @@ function LegalLink({ label, url }: { label: string; url: string }) {
 const styles = StyleSheet.create({
   featureIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
   plan: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg, borderRadius: radius.lg, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.paper },
-  planActive: { borderColor: colors.teal, backgroundColor: colors.white, ...elevation.raised },
+  planActive: { borderColor: colors.teal, backgroundColor: colors.tealMist },
   radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },
   radioActive: { borderColor: colors.teal },
   radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.teal },

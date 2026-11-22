@@ -5,9 +5,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { ForecastFootnote, HourlyChart, SevenDayOutlook, conditionLabel, formatWindow, hoursFromNow, upcomingWindows, windowEnd } from '@/components/forecast';
 import { Icon } from '@/components/icon';
-import { ConfidenceBars, ScoreRing, ScoreTile } from '@/components/score-ring';
+import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { Banner, Button, Card, Divider, EmptyState, IceSafetyNotice, LinkButton, ListRow, OfflineBanner, Reveal, Row, Screen, SectionHeader, Segmented, T } from '@/components/ui';
-import { colors, elevation, hitSlop, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
+import { colors, hitSlop, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
 import { forecastSource, freshness, useForecast } from '@/data/forecasts';
 import { lakes } from '@/data/lakes';
 import { sourceLabel, useLakeCondition } from '@/features/lake-season';
@@ -77,7 +77,7 @@ export default function LakeForecastScreen() {
       style={({ pressed }) => [styles.follow, isFollowing && styles.following, atLimit && { opacity: 0.5 }, pressed && { opacity: 0.7 }]}
     >
       <Icon name={isFollowing ? 'check' : 'plus'} size={13} color={isFollowing ? colors.onDark : colors.teal} />
-      <T variant="caption" weight="700" color={isFollowing ? colors.onDark : colors.teal}>{isFollowing ? 'Following' : 'Follow'}</T>
+      <T variant="caption" weight="600" color={isFollowing ? colors.onDark : colors.teal}>{isFollowing ? 'Following' : 'Follow'}</T>
     </Pressable>
   );
 
@@ -104,10 +104,10 @@ export default function LakeForecastScreen() {
       <View style={{ gap: 4 }}>
         <Row gap={spacing.md} align="center">
           <View style={{ flex: 1, gap: 1 }}>
-            <T variant="callout" weight="700">Fishing on</T>
+            <T variant="callout" weight="600">Fishing on</T>
             <T variant="caption" color={colors.inkMuted} numberOfLines={2} accessibilityLiveRegion="polite">{sourceLabel(condition)}</T>
           </View>
-          <View style={{ width: 196 }}>
+          <View style={{ width: 176 }}>
             <Segmented
               label={`Fishing ${lake.name} on`}
               value={season}
@@ -170,7 +170,7 @@ export default function LakeForecastScreen() {
         >
           <Icon name="pro" size={18} color={colors.sunriseInk} />
           <T variant="callout" style={{ flex: 1 }}>
-            <T variant="callout" weight="700">Pro</T> adds all 7 days and alerts before windows open
+            <T variant="callout" weight="600">Pro</T> adds all 7 days and alerts before windows open
           </T>
           <Icon name="chevron-right" size={14} color={colors.inkFaint} />
         </Pressable>
@@ -230,7 +230,7 @@ function Hero({ score, reasons, confidence, meta, updated, stale, next, now, bro
             <T variant="caption" color={stale ? colors.warning : colors.inkMuted} numberOfLines={1} style={{ flexShrink: 1 }}>{updated}</T>
           </Row>
         </View>
-        <ScoreRing score={score} caption="Now" />
+        <ScoreBadge score={score} size="lg" caption="Now" />
       </Row>
 
       <View style={{ gap: spacing.sm }}>
@@ -253,7 +253,7 @@ function Hero({ score, reasons, confidence, meta, updated, stale, next, now, bro
         style={({ pressed }) => [styles.next, live && styles.nextLive, pressed && { opacity: 0.8 }]}
       >
         {live ? <View style={styles.liveDot} /> : <Icon name="clock" size={14} color={colors.sunriseInk} />}
-        <T variant="callout" weight="700" color={next ? colors.sunriseInk : colors.inkSoft} style={{ flex: 1 }} numberOfLines={1}>{status}</T>
+        <T variant="callout" weight="600" color={next ? colors.sunriseInk : colors.inkSoft} style={{ flex: 1 }} numberOfLines={1}>{status}</T>
         {next ? <Icon name="chevron-right" size={14} color={colors.sunriseInk} /> : null}
       </Pressable>
     </View>
@@ -274,7 +274,7 @@ function WindowRow({ window, now, onPress }: { window: ForecastWindow; now: numb
       accessibilityHint="Opens light curve, contributors and tactics"
       style={({ pressed }) => [styles.windowRow, pressed && { opacity: 0.7 }]}
     >
-      <ScoreTile score={window.peakScore} size={50} />
+      <ScoreBadge score={window.peakScore} />
       <View style={{ flex: 1, gap: 2 }}>
         <Row gap={6}>
           {live ? <View style={styles.liveDot} /> : null}
@@ -295,7 +295,7 @@ function WindowRow({ window, now, onPress }: { window: ForecastWindow; now: numb
 const styles = StyleSheet.create({
   follow: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 32, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.teal },
   following: { backgroundColor: colors.teal },
-  hero: { gap: spacing.lg, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.white, overflow: 'hidden', ...elevation.raised },
+  hero: { gap: spacing.lg, padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.paper, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth * 2, borderColor: colors.line },
   wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 130 },
   next: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44, paddingHorizontal: spacing.md, borderRadius: radius.md, backgroundColor: colors.sunriseTint },
   nextLive: { borderWidth: 1, borderColor: colors.sunrise },

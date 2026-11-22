@@ -244,7 +244,7 @@ export function Button({ children, variant = 'primary', size = 'lg', icon, iconR
       ) : (
         <Row gap={spacing.sm} justify="center">
           {icon ? <Icon name={icon} size={size === 'sm' ? 16 : 18} color={color} /> : null}
-          <T variant={size === 'sm' ? 'callout' : 'subhead'} weight="700" color={color} numberOfLines={2} align="center" style={{ flexShrink: 1 }}>
+          <T variant={size === 'sm' ? 'callout' : 'subhead'} weight="600" color={color} numberOfLines={2} align="center" style={{ flexShrink: 1 }}>
             {children}
           </T>
           {iconRight ? <Icon name={iconRight} size={size === 'sm' ? 14 : 16} color={color} /> : null}
@@ -278,7 +278,7 @@ export function IconButton({ icon, label, onPress, tone = 'fog', size = touch.mi
 export function LinkButton({ children, onPress, icon, color = colors.teal }: { children: string; onPress: () => void; icon?: IconName; color?: string }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress} hitSlop={hitSlop} style={({ pressed }) => [styles.link, pressed && { opacity: 0.6 }]}>
-      <T variant="callout" weight="700" color={color}>{children}</T>
+      <T variant="callout" weight="600" color={color}>{children}</T>
       {icon ? <Icon name={icon} size={14} color={color} /> : null}
     </Pressable>
   );
@@ -304,32 +304,21 @@ export function Chip({ label, tone = 'neutral', icon, accessibilityLabel }: { la
       style={[styles.chip, { backgroundColor: t.bg, borderColor: t.border ?? 'transparent' }]}
     >
       {icon ? <Icon name={icon} size={13} color={t.fg} /> : null}
-      <T variant="caption" weight="700" color={t.fg}>{label}</T>
+      <T variant="caption" weight="600" color={t.fg}>{label}</T>
     </View>
   );
 }
 
 type Option<V extends string> = { label: string; value: V; icon?: IconName; accessibilityLabel?: string };
 
-/**
- * Single-choice segmented control. Exposed to screen readers as a radio group. `compact` draws a
- * 36pt pill inside a full-height touch target, for dense forms.
- */
-export function Segmented<V extends string>({ options, value, onChange, label, tone = 'light', compact }: { options: Option<V>[]; value: V; onChange: (value: V) => void; label?: string; tone?: 'light' | 'dark'; compact?: boolean }) {
+/** Single-choice segmented control: a 36pt pill inside a 44pt target. A radio group to screen readers. */
+export function Segmented<V extends string>({ options, value, onChange, label, tone = 'light' }: { options: Option<V>[]; value: V; onChange: (value: V) => void; label?: string; tone?: 'light' | 'dark' }) {
+  const dark = tone === 'dark';
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[styles.segmented, compact && styles.segmentedCompact, tone === 'dark' && { backgroundColor: colors.deepRaised }]}>
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[styles.segmented, dark && styles.segmentedDark]}>
       {options.map((option) => {
         const active = value === option.value;
-        const fg = tone === 'dark' ? (active ? colors.deep : colors.onDarkMuted) : active ? colors.ink : colors.inkMuted;
-        const selected = active && (tone === 'dark' ? styles.segmentActiveDark : styles.segmentActive);
-        const content = (
-          <>
-            {option.icon ? <Icon name={option.icon} size={16} color={fg} /> : null}
-            <T variant="callout" weight={!compact ? '700' : active ? '600' : '400'} color={fg} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-              {option.label}
-            </T>
-          </>
-        );
+        const fg = dark ? (active ? colors.deep : colors.white) : active ? colors.ink : colors.inkMuted;
         return (
           <Pressable
             key={option.value}
@@ -340,9 +329,14 @@ export function Segmented<V extends string>({ options, value, onChange, label, t
               if (!active) haptic.select();
               onChange(option.value);
             }}
-            style={compact ? styles.segmentTouch : [styles.segment, selected]}
+            style={styles.segmentTouch}
           >
-            {compact ? <View style={[styles.segmentPill, selected]}>{content}</View> : content}
+            <View style={[styles.segmentPill, active && (dark ? styles.segmentActiveDark : styles.segmentActive)]}>
+              {option.icon ? <Icon name={option.icon} size={15} color={fg} /> : null}
+              <T variant="callout" weight={active ? '600' : '400'} color={fg} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+                {option.label}
+              </T>
+            </View>
           </Pressable>
         );
       })}
@@ -351,21 +345,15 @@ export function Segmented<V extends string>({ options, value, onChange, label, t
 }
 
 /**
- * Wrapping single-choice chips — better than segmented when options > 3 or labels vary. `compact`
- * draws smaller, quietly tinted pills inside full-height touch targets, so a form's main button leads.
+ * Wrapping single-choice chips — better than segmented when options > 3 or labels vary. Selection
+ * is a quiet tint, so a screen's main button stays the loudest thing on it.
  */
-export function ChoiceChips<V extends string>({ options, value, onChange, label, compact }: { options: Option<V>[]; value: V | null; onChange: (value: V) => void; label?: string; compact?: boolean }) {
+export function ChoiceChips<V extends string>({ options, value, onChange, label }: { options: Option<V>[]; value: V | null; onChange: (value: V) => void; label?: string }) {
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[styles.choiceWrap, compact && styles.choiceWrapCompact]}>
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={styles.choiceWrap}>
       {options.map((option) => {
         const active = value === option.value;
-        const fg = !active ? colors.ink : compact ? colors.tealDeep : colors.onDark;
-        const content = (
-          <>
-            {option.icon ? <Icon name={option.icon} size={16} color={active ? fg : colors.teal} /> : active ? <Icon name="check" size={compact ? 12 : 14} color={fg} /> : null}
-            <T variant="callout" weight={!compact ? '700' : active ? '600' : '400'} color={fg}>{option.label}</T>
-          </>
-        );
+        const fg = active ? colors.tealDeep : colors.ink;
         return (
           <Pressable
             key={option.value}
@@ -376,9 +364,12 @@ export function ChoiceChips<V extends string>({ options, value, onChange, label,
               if (!active) haptic.select();
               onChange(option.value);
             }}
-            style={({ pressed }) => [compact ? styles.choiceTouch : [styles.choice, active && styles.choiceActive], pressed && styles.pressed]}
+            style={({ pressed }) => [styles.choiceTouch, pressed && styles.pressed]}
           >
-            {compact ? <View style={[styles.choicePill, active && styles.choicePillActive]}>{content}</View> : content}
+            <View style={[styles.choicePill, active && styles.choicePillActive]}>
+              {option.icon ? <Icon name={option.icon} size={15} color={active ? fg : colors.teal} /> : active ? <Icon name="check" size={12} color={fg} /> : null}
+              <T variant="callout" weight={active ? '600' : '400'} color={fg}>{option.label}</T>
+            </View>
           </Pressable>
         );
       })}
@@ -399,7 +390,7 @@ export function Field({ label, helper, error, suffix, optional, style, ...props 
   return (
     <View style={styles.fieldWrap}>
       <Row justify="space-between">
-        <T variant="callout" weight="700" nativeID={`${label}-label`}>{label}</T>
+        <T variant="callout" weight="600" nativeID={`${label}-label`}>{label}</T>
         {optional ? <T variant="caption" color={colors.inkMuted}>Optional</T> : null}
       </Row>
       <View style={[styles.field, props.multiline && styles.fieldMultiline, error ? styles.fieldError : null]}>
@@ -538,7 +529,7 @@ export function Banner({ tone = 'info', title, body, icon, action, live }: { ton
     >
       <Icon name={icon ?? t.icon} size={18} color={t.fg} style={{ marginTop: 1 }} />
       <View style={{ flex: 1, gap: 2 }}>
-        {title ? <T variant="callout" weight="700" color={t.fg === colors.inkSoft ? colors.ink : t.fg}>{title}</T> : null}
+        {title ? <T variant="callout" weight="600" color={t.fg === colors.inkSoft ? colors.ink : t.fg}>{title}</T> : null}
         {body ? <T variant="callout" color={colors.inkSoft}>{body}</T> : null}
         {action ? (
           <View style={{ marginTop: spacing.xs, alignSelf: 'flex-start' }}>
@@ -559,7 +550,7 @@ export function IceSafetyNotice({ compact }: { compact?: boolean }) {
         <Icon name="warning" size={compact ? 16 : 18} color={colors.warning} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
-        {!compact ? <T variant="callout" weight="700" color={colors.warning}>Ice safety</T> : null}
+        {!compact ? <T variant="callout" weight="600" color={colors.warning}>Ice safety</T> : null}
         <T variant={compact ? 'caption' : 'callout'} color={colors.ink} weight={compact ? '600' : '400'}>{ICE_SAFETY_TEXT}</T>
       </View>
     </View>
@@ -660,8 +651,8 @@ const styles = StyleSheet.create({
   cardPressed: { opacity: 0.88, transform: [{ scale: 0.995 }] },
 
   button: { borderRadius: radius.pill, paddingHorizontal: spacing.xl, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
-  button_lg: { minHeight: touch.large },
-  button_md: { minHeight: touch.comfortable },
+  button_lg: { minHeight: touch.comfortable },
+  button_md: { minHeight: touch.min },
   button_sm: { minHeight: 36, paddingHorizontal: spacing.lg },
   button_primary: { backgroundColor: colors.deep, borderColor: colors.deep },
   button_secondary: { backgroundColor: colors.paper, borderColor: colors.lineStrong },
@@ -674,28 +665,24 @@ const styles = StyleSheet.create({
 
   chip: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, borderWidth: 1 },
 
-  segmented: { flexDirection: 'row', padding: 4, backgroundColor: colors.fog, borderRadius: radius.pill },
-  segment: { flex: 1, flexDirection: 'row', gap: 6, minHeight: touch.min, paddingHorizontal: spacing.sm, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill },
-  segmentActive: { backgroundColor: colors.paper, ...elevation.low },
-  segmentActiveDark: { backgroundColor: colors.onDark },
-  segmentedCompact: { paddingVertical: 0 },
+  segmented: { flexDirection: 'row', paddingHorizontal: 4, backgroundColor: colors.fog, borderRadius: radius.pill },
+  segmentedDark: { backgroundColor: 'rgba(7,24,32,0.72)' },
   segmentTouch: { flex: 1, minHeight: touch.min, justifyContent: 'center' },
   segmentPill: { flexDirection: 'row', gap: 6, minHeight: 36, paddingHorizontal: spacing.sm, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill },
+  segmentActive: { backgroundColor: colors.paper, ...elevation.low },
+  segmentActiveDark: { backgroundColor: colors.onDark },
 
-  choiceWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  choice: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: touch.min, paddingHorizontal: spacing.lg, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.lineStrong, backgroundColor: colors.paper },
-  choiceActive: { backgroundColor: colors.teal, borderColor: colors.teal },
   // The touch targets already leave space between rows of pills.
-  choiceWrapCompact: { rowGap: 0, columnGap: 6 },
+  choiceWrap: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 0, columnGap: 6 },
   choiceTouch: { minWidth: touch.min, minHeight: touch.min, justifyContent: 'center' },
   choicePill: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 34, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper },
   choicePillActive: { backgroundColor: colors.tealTint, borderColor: colors.teal },
 
   fieldWrap: { gap: spacing.sm },
-  field: { flexDirection: 'row', alignItems: 'center', minHeight: touch.comfortable + 4, borderRadius: radius.md, borderWidth: 1, borderColor: colors.lineStrong, backgroundColor: colors.paper },
+  field: { flexDirection: 'row', alignItems: 'center', minHeight: touch.comfortable, borderRadius: radius.md, borderWidth: 1, borderColor: colors.lineStrong, backgroundColor: colors.paper },
   fieldMultiline: { alignItems: 'flex-start', minHeight: 104 },
   fieldError: { borderColor: colors.danger, borderWidth: 1.5 },
-  input: { flex: 1, minHeight: touch.comfortable + 2, paddingHorizontal: spacing.lg, color: colors.ink, fontSize: 16 },
+  input: { flex: 1, minHeight: touch.comfortable - 2, paddingHorizontal: spacing.lg, color: colors.ink, fontSize: 16 },
   inputMultiline: { minHeight: 100, paddingTop: spacing.md, paddingBottom: spacing.md, textAlignVertical: 'top' },
 
   stepper: { flexDirection: 'row', alignItems: 'center', minHeight: 52 },

@@ -92,7 +92,7 @@ export default function RequestLakeScreen() {
       <Field label="Lake name" value={name} onChangeText={setName} placeholder="e.g. Lac Seul" autoCapitalize="words" returnKeyType="next" maxLength={80} error={attempted ? errors.name : null} />
       {covered ? (
         <Card variant="tint" style={{ gap: spacing.xs, padding: spacing.md }}>
-          <T variant="callout" weight="700">{covered.name} is already covered</T>
+          <T variant="callout" weight="600">{covered.name} is already covered</T>
           <LinkButton icon="chevron-right" onPress={() => router.push({ pathname: '/lake/[id]', params: { id: covered.id } })}>Open its forecast</LinkButton>
         </Card>
       ) : null}

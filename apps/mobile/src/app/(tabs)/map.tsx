@@ -3,8 +3,9 @@ import { router } from 'expo-router';
 import { useQueries } from '@tanstack/react-query';
 import type { ForecastWindow, LakeForecast } from '@bitecast/engine';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { ConfidenceMeter, ReasonChips, ScoreReadout, bestWindowWithin, formatWindow, hoursFromNow } from '@/components/forecast';
+import { ReasonLine, bestWindowWithin, formatWindow, hoursFromNow } from '@/components/forecast';
 import { Icon } from '@/components/icon';
+import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { LakeMap, useMapMode, type MapLakePin } from '@/components/map/lake-map';
 import { Banner, Button, Card, Chip, IceSafetyNotice, Row, Screen, Segmented, T } from '@/components/ui';
 import { colors, spacing, TAB_BUTTON_RISE } from '@/constants/theme';
@@ -83,7 +84,7 @@ export default function MapScreen() {
                 <T variant="headline" numberOfLines={1}>{selected.lake.name}</T>
                 <Row gap={6}>
                   <Icon name={selected.window ? 'clock' : 'info'} size={13} color={selected.window ? colors.sunriseInk : colors.inkMuted} />
-                  <T variant="callout" weight="700" color={selected.window ? colors.ink : colors.inkSoft} numberOfLines={1} style={{ flexShrink: 1 }}>
+                  <T variant="callout" weight="600" color={selected.window ? colors.ink : colors.inkSoft} numberOfLines={1} style={{ flexShrink: 1 }}>
                     {windowText(selected)}
                   </T>
                 </Row>
@@ -92,9 +93,9 @@ export default function MapScreen() {
                   {selected.forecast ? ` · ${(selected.window?.reasons ?? selected.now?.reasons ?? [])[0] ?? 'Mixed conditions'}` : ''}
                 </T>
               </View>
-              {selected.score === null ? null : <ScoreReadout score={selected.score} size="sm" caption={selectedBroad ? 'Block' : selected.window ? 'Peak' : 'Now'} />}
+              {selected.score === null ? null : <ScoreBadge score={selected.score} size="md" caption={selectedBroad ? 'Block' : selected.window ? 'Peak' : 'Now'} />}
             </Row>
-            {selected.now ? <ConfidenceMeter value={selected.window?.confidence ?? selected.now.confidence} /> : null}
+            {selected.now ? <ConfidenceBars level={selected.window?.confidence ?? selected.now.confidence} long /> : null}
             {atLimit ? <T variant="caption" color={colors.inkMuted}>You follow 5 lakes — remove one to follow another.</T> : null}
             <Row gap={spacing.sm}>
               <Button style={{ flex: 1 }} size="md" variant="secondary" icon={isFollowing ? 'check' : 'plus'} disabled={atLimit} onPress={follow}>
@@ -126,12 +127,12 @@ export default function MapScreen() {
                   </Row>
                   <T variant="caption" color={colors.inkMuted}>{windowText(summary)}</T>
                 </View>
-                {score === null ? null : <ScoreReadout score={score} size="sm" caption={broad ? 'Block' : window ? 'Peak' : 'Now'} />}
+                {score === null ? null : <ScoreBadge score={score} caption={broad ? 'Block' : window ? 'Peak' : 'Now'} />}
               </Row>
               {now ? (
                 <>
-                  <ReasonChips reasons={window?.reasons ?? now.reasons} limit={2} />
-                  <ConfidenceMeter value={window?.confidence ?? now.confidence} />
+                  <ReasonLine reasons={window?.reasons ?? now.reasons} />
+                  <ConfidenceBars level={window?.confidence ?? now.confidence} long />
                 </>
               ) : null}
             </Card>

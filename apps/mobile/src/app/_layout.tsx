@@ -24,7 +24,7 @@ export default function RootLayout() {
           headerShadowVisible: false,
           headerStyle: { backgroundColor: colors.cream },
           headerTintColor: colors.ink,
-          headerTitleStyle: { fontWeight: '700', fontSize: 17, color: colors.ink },
+          headerTitleStyle: { fontWeight: '600', fontSize: 17, color: colors.ink },
           contentStyle: { backgroundColor: colors.cream },
           headerBackButtonDisplayMode: 'minimal',
           // Consistent push transition on both platforms; modals keep their native sheet motion.

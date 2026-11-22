@@ -140,8 +140,8 @@ function RateRow({ item, hint }: { item: Bucket; hint?: string }) {
   return (
     <View style={{ gap: 6 }} accessible accessibilityLabel={`${item.label}${hint ? `, ${hint}` : ''}: ${item.trips ? `${pct(item.rate)} of ${item.trips} trips` : 'no trips yet'}${thin ? ', too few trips to rely on' : ''}`}>
       <Row justify="space-between">
-        <T variant="callout" weight="700">{item.label}{hint ? <T variant="caption" color={colors.inkMuted}>  {hint}</T> : null}</T>
-        <T variant="callout" weight="700" color={item.trips ? colors.ink : colors.inkFaint}>{item.trips ? pct(item.rate) : '—'}</T>
+        <T variant="callout" weight="600">{item.label}{hint ? <T variant="caption" color={colors.inkMuted}>  {hint}</T> : null}</T>
+        <T variant="callout" weight="600" color={item.trips ? colors.ink : colors.inkFaint}>{item.trips ? pct(item.rate) : '—'}</T>
       </Row>
       <ProgressBar value={item.rate} color={thin ? colors.inkFaint : colors.teal} />
       <T variant="caption" color={colors.inkMuted}>{item.trips ? `${item.successes} of ${item.trips} trips${thin ? ' · too few to rely on' : ''}` : 'No trips logged yet'}</T>

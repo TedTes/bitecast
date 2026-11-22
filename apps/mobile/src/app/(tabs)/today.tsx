@@ -11,7 +11,7 @@ import * as SunCalc from 'suncalc';
 import { conditionLabel, hoursFromNow, upcomingWindows, windowEnd } from '@/components/forecast';
 import { Icon, type IconName } from '@/components/icon';
 import { LAKE_FLOOR, LakeScene, ORB, SHORE, SKY_SPACE, SURFACE, orbTop } from '@/components/lake-scene';
-import { ConfidenceBars } from '@/components/score-ring';
+import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { SkyPreview } from '@/components/sky-preview';
 import { Toast } from '@/components/toast';
 import { Button, EmptyState, ErrorState, IceSafetyNotice, OfflineBanner, Reveal, Row, SkeletonCard, T } from '@/components/ui';
@@ -415,10 +415,7 @@ function SignLake({ entry, now }: { entry: LakeData; now: number }) {
       accessibilityLabel={`Also ${lake.name}, ${seasonLabel(season).toLowerCase()}. ${when}. ${caption} bite score ${score}, ${band.label}. ${reason}. ${confidence} confidence.`}
       style={({ pressed }) => [styles.signRow, styles.signLake, pressed && styles.pressed]}
     >
-      <View style={[styles.signScore, { borderColor: band.onDark }]}>
-        <T variant="callout" weight="600" color={onScene.text} maxFontSizeMultiplier={1.2}>{score}</T>
-        <T variant="caption" weight="600" color={onScene.text} maxFontSizeMultiplier={1.2} style={styles.signBand}>{band.label}</T>
-      </View>
+      <ScoreBadge score={score} caption={caption} tone="dark" />
       <View style={{ flex: 1, gap: 1 }}>
         <T variant="callout" weight="600" color={onScene.text} numberOfLines={1}>{lake.name}</T>
         <T variant="caption" weight="600" color={onScene.accent} numberOfLines={1}>{when}</T>
@@ -494,8 +491,6 @@ const styles = StyleSheet.create({
   grain: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   signRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: touch.min, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
   signLake: { borderBottomWidth: 1, borderBottomColor: '#35210F' },
-  signScore: { minWidth: 46, height: 46, paddingHorizontal: 3, borderRadius: 23, borderWidth: 2, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.25)' },
-  signBand: { fontSize: 9, lineHeight: 11 },
   nail: { position: 'absolute', width: 5, height: 5, borderRadius: 3, backgroundColor: '#2A2A28', borderTopWidth: 1, borderTopColor: '#A59A8C' },
   nailTopLeft: { top: 6, left: 6 },
   nailTopRight: { top: 6, right: 6 },

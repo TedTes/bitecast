@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { ChartTexture } from '@/components/brand';
-import { ConfidenceMeter, ReasonChips, ScoreReadout, ScoreScale, bestWindowWithin, conditionLabel, formatWindow, windowPeak } from '@/components/forecast';
+import { ReasonChips, ScoreScale, bestWindowWithin, conditionLabel, formatWindow, windowPeak } from '@/components/forecast';
 import { Icon } from '@/components/icon';
+import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { StepHeader } from '@/components/onboarding';
 import { Button, Card, Divider, IceSafetyNotice, PageHeader, Reveal, Row, Screen, SectionHeader, T } from '@/components/ui';
 import { colors, radius, spacing } from '@/constants/theme';
@@ -57,18 +58,18 @@ export default function PreviewScreen() {
                   <T variant="title" color={colors.onDark}>{formatWindow(window)}</T>
                   <T variant="caption" color={colors.onDarkMuted}>Peaks near {formatHour(windowPeak(window).ts)}</T>
                 </View>
-                <ScoreReadout score={window.peakScore} size="lg" tone="dark" caption="Peak" />
+                <ScoreBadge score={window.peakScore} size="lg" tone="dark" caption="Peak" />
               </Row>
               <View style={{ gap: spacing.sm }}>
                 <T variant="label" color={colors.onDarkMuted}>Why</T>
                 <ReasonChips reasons={window.reasons} limit={4} tone="dark" />
               </View>
-              <ConfidenceMeter value={window.confidence} tone="dark" explain />
+              <ConfidenceBars long level={window.confidence} tone="dark" explain />
               <View style={styles.darkDivider} />
               <Row gap={spacing.md} align="flex-start">
                 <Icon name="tactics" size={18} color={colors.mint} style={{ marginTop: 2 }} />
                 <T variant="callout" color={colors.onDark} style={{ flex: 1 }}>
-                  <T variant="callout" weight="700" color={colors.onDark}>{capitalize(window.depth)} water · </T>
+                  <T variant="callout" weight="600" color={colors.onDark}>{capitalize(window.depth)} water · </T>
                   {window.tactics}
                 </T>
               </Row>
@@ -81,10 +82,10 @@ export default function PreviewScreen() {
                   <T variant="title" color={colors.onDark}>No window above 60</T>
                   <T variant="callout" color={colors.onDarkMuted}>Right now: {conditionLabel(current.score).toLowerCase()}. Check the hourly chart for smaller openings.</T>
                 </View>
-                <ScoreReadout score={current.score} size="lg" tone="dark" caption="Now" />
+                <ScoreBadge score={current.score} size="lg" tone="dark" caption="Now" />
               </Row>
               <ReasonChips reasons={current.reasons} tone="dark" />
-              <ConfidenceMeter value={current.confidence} tone="dark" explain />
+              <ConfidenceBars long level={current.confidence} tone="dark" explain />
             </>
           )}
         </View>
@@ -108,7 +109,7 @@ export default function PreviewScreen() {
                       <T variant="caption" color={colors.inkMuted}>{w ? `${formatDay(w.start)} · ${formatWindow(w)}` : 'No window above 60'}</T>
                       <T variant="caption" color={colors.inkSoft} numberOfLines={1}>{(w?.reasons ?? f.hours[0].reasons)[0] ?? 'Mixed conditions'} · {(w?.confidence ?? f.hours[0].confidence)} confidence</T>
                     </View>
-                    <ScoreReadout score={score} size="sm" />
+                    <ScoreBadge score={score} />
                   </Row>
                 </View>
               );
@@ -134,6 +135,6 @@ export default function PreviewScreen() {
 }
 
 const styles = StyleSheet.create({
-  hero: { backgroundColor: colors.deep, borderRadius: radius.xl, padding: spacing.xl, gap: spacing.lg, overflow: 'hidden' },
+  hero: { backgroundColor: colors.deep, borderRadius: radius.lg, padding: spacing.xl, gap: spacing.lg, overflow: 'hidden' },
   darkDivider: { height: 1, backgroundColor: colors.deepLine },
 });

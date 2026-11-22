@@ -4,7 +4,7 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/icon';
 import { Banner, Button, Card, ChoiceChips, Divider, EmptyState, Field, IceSafetyNotice, LinkButton, Reveal, Row, Screen, Segmented, SkeletonCard, Stepper, T, ToggleRow } from '@/components/ui';
-import { ConfidenceBars, ScoreTile } from '@/components/score-ring';
+import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { colors, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
 import { lakes, lakeById } from '@/data/lakes';
 import { getForecast } from '@/data/forecasts';
@@ -178,7 +178,7 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
               Check {errorCount} field{errorCount > 1 ? 's' : ''} before saving
             </T>
           ) : null}
-          <Button size="md" loading={saving} loadingLabel="Saving…" onPress={save}>{previous ? 'Save changes' : 'Save trip'}</Button>
+          <Button loading={saving} loadingLabel="Saving…" onPress={save}>{previous ? 'Save changes' : 'Save trip'}</Button>
           <T variant="caption" color={colors.inkMuted} align="center">Saves to this phone first · works offline</T>
         </>
       }
@@ -204,7 +204,6 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
       <Section title="Lake">
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.lakes} contentContainerStyle={styles.lakesContent}>
           <ChoiceChips
-            compact
             label="Lake"
             value={lakeId}
             onChange={(id) => {
@@ -221,7 +220,6 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
         <Card style={styles.group}>
           <View style={styles.block}>
             <Segmented
-              compact
               label="Result"
               value={caught ? 'caught' : 'none'}
               onChange={(result) => setCaught(result === 'caught')}
@@ -245,7 +243,6 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
           <View style={styles.block}>
             <T variant="caption" color={colors.inkMuted}>Bait or lure</T>
             <ChoiceChips
-              compact
               label="Bait or lure"
               value={baitChoice}
               onChange={setBaitChoice}
@@ -257,7 +254,6 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
           <View style={styles.block}>
             <T variant="caption" color={colors.inkMuted}>Method</T>
             <Segmented
-              compact
               label="Method"
               value={method}
               onChange={setMethod}
@@ -295,8 +291,8 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
             </Row>
             <Field label="Water depth" value={waterDepth} onChangeText={setWaterDepth} keyboardType="decimal-pad" placeholder="—" suffix={depthUnit(units)} error={shown('waterDepth')} returnKeyType="done" />
             <View style={{ gap: spacing.sm }}>
-              <T variant="callout" weight="700">Water clarity</T>
-              <Segmented compact label="Water clarity" value={clarity} onChange={setClarity} options={[{ label: 'Clear', value: 'clear' }, { label: 'Stained', value: 'stained' }, { label: 'Murky', value: 'murky' }]} />
+              <T variant="callout" weight="600">Water clarity</T>
+              <Segmented label="Water clarity" value={clarity} onChange={setClarity} options={[{ label: 'Clear', value: 'clear' }, { label: 'Stained', value: 'stained' }, { label: 'Murky', value: 'murky' }]} />
             </View>
             <Field
               label="Notes"
@@ -325,7 +321,7 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
         accessible
         accessibilityLabel={`Conditions attached. ${attachedSource}. Bite score ${score}, ${scoreBands[scoreBand(score)].label}. ${attachedSummary}.${keepPrevious ? '' : ` ${hour.confidence} confidence.`}`}
       >
-        <ScoreTile score={score} size={44} />
+        <ScoreBadge score={score} />
         <View style={{ flex: 1, gap: 2 }}>
           <Row justify="space-between" wrap>
             <T variant="caption" weight="600" color={colors.inkSoft}>Conditions attached</T>

@@ -4,7 +4,7 @@ import { Linking, View } from 'react-native';
 import { upcomingWindows } from '@/components/forecast';
 import { Icon } from '@/components/icon';
 import { Banner, Button, Card, ChoiceChips, Divider, EmptyState, Row, Screen, SectionHeader, T, ToggleRow } from '@/components/ui';
-import { colors, scoreBand, scoreBands, spacing } from '@/constants/theme';
+import { colors, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
 import { getNotificationPermission, requestNotificationPermission, type NotificationPermission } from '@/api/adapters';
 import { getForecast } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
@@ -130,7 +130,7 @@ function LakeAlertCard({ preference, disabled, onChange, quiet }: { preference: 
         <>
           <Divider />
           <View style={{ gap: spacing.sm }}>
-            <T variant="callout" weight="700">Minimum {broad ? 'block' : 'peak'} score</T>
+            <T variant="callout" weight="600">Minimum {broad ? 'block' : 'peak'} score</T>
             <ChoiceChips
               label={`Minimum ${broad ? 'block' : 'peak'} score for ${lake.name}`}
               value={String(preference.threshold)}
@@ -139,10 +139,10 @@ function LakeAlertCard({ preference, disabled, onChange, quiet }: { preference: 
             />
           </View>
           <View style={{ gap: spacing.sm }}>
-            <T variant="callout" weight="700">Notice before the window</T>
+            <T variant="callout" weight="600">Notice before the window</T>
             <ChoiceChips label={`Notice for ${lake.name}`} value={String(preference.leadMinutes)} onChange={(value) => onChange({ leadMinutes: Number(value) })} options={[60, 120, 180].map((value) => ({ label: `${value / 60} h`, value: String(value), accessibilityLabel: `${value / 60} hour${value > 60 ? 's' : ''} before` }))} />
           </View>
-          <View style={{ flexDirection: 'row', gap: spacing.sm, padding: spacing.md, borderRadius: 12, backgroundColor: colors.tealMist }} accessible accessibilityLiveRegion="polite">
+          <View style={{ flexDirection: 'row', gap: spacing.sm, padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.tealMist }} accessible accessibilityLiveRegion="polite">
             <Icon name={suppressed ? 'quiet' : 'clock'} size={16} color={suppressed ? colors.warning : colors.teal} style={{ marginTop: 2 }} />
             <T variant="caption" color={colors.inkSoft} style={{ flex: 1 }}>
               {next && alertAt

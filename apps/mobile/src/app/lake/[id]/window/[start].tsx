@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { walleyeProfile } from '@bitecast/engine';
 import { View } from 'react-native';
-import { ConfidenceMeter, LightCurve, ReasonList, ScoreReadout, formatWindow, windowEnd, windowPeak } from '@/components/forecast';
+import { LightCurve, ReasonList, formatWindow, windowEnd, windowPeak } from '@/components/forecast';
+import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { Icon, type IconName } from '@/components/icon';
 import { Button, Card, Chip, Divider, EmptyState, IceSafetyNotice, Row, Screen, SectionHeader, T } from '@/components/ui';
 import { colors, radius, spacing } from '@/constants/theme';
@@ -66,12 +67,12 @@ export default function WindowDetailScreen() {
                 : `${durationLabel(window.start, windowEnd(window))} · peaks near ${formatHour(windowPeak(window).ts)}`}
             </T>
           </View>
-          <ScoreReadout score={window.peakScore} size="lg" caption={broad ? 'Block' : 'Peak'} />
+          <ScoreBadge score={window.peakScore} size="lg" caption={broad ? 'Block' : 'Peak'} />
         </Row>
       </View>
 
       <Card variant="tint" style={{ gap: spacing.sm }}>
-        <ConfidenceMeter value={window.confidence} explain />
+        <ConfidenceBars level={window.confidence} long explain />
         <Divider color={colors.tealTint} />
         <T variant="callout" color={colors.inkSoft}>
           {broad

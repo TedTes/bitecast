@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/icon';
-import { Banner, Button, EmptyState, ProgressBar, Reveal, Row, Screen, Segmented, SkeletonCard, T } from '@/components/ui';
+import { Banner, Button, Card, EmptyState, ProgressBar, Reveal, Row, Screen, Segmented, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
-import { colors, elevation, hitSlop, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
+import { colors, hitSlop, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
 import { integrationsReady } from '@/api/config';
 import { lakeById } from '@/data/lakes';
 import { capitalize, formatDay, formatDayInline, formatTime, lengthUnit, startOfDay, toDisplayLength } from '@/lib/format';
@@ -79,7 +79,7 @@ export default function LogListScreen() {
       ) : (
         <>
           {/* Summary: three figures + the patterns unlock in one quiet card */}
-          <View style={styles.summary}>
+          <Card style={styles.summary}>
             <Row>
               <Stat value={String(logs.length)} label={logs.length === 1 ? 'Trip' : 'Trips'} />
               <View style={styles.statDivider} />
@@ -96,14 +96,14 @@ export default function LogListScreen() {
             >
               <Row gap={spacing.sm}>
                 <Icon name="chart" size={14} color={colors.teal} />
-                <T variant="caption" weight="700" color={colors.teal} style={{ flex: 1 }}>
+                <T variant="caption" weight="600" color={colors.teal} style={{ flex: 1 }}>
                   {logs.length >= STATS_MIN ? 'Your patterns' : `Patterns unlock at ${STATS_MIN} logs · ${logs.length}/${STATS_MIN}`}
                 </T>
                 <Icon name="chevron-right" size={13} color={colors.teal} />
               </Row>
               {logs.length < STATS_MIN ? <ProgressBar value={logs.length / STATS_MIN} label="Progress to personal patterns" height={4} /> : null}
             </Pressable>
-          </View>
+          </Card>
 
           {failed ? (
             <Banner tone="danger" icon="sync-error" title={`${failed} log${failed > 1 ? 's' : ''} didn’t sync`} body="They’re safe on this device. We’ll retry automatically." action={{ label: 'Retry now', onPress: retrySync, loading: syncing }} />
@@ -183,7 +183,8 @@ function Entry({ log, justSaved, units }: { log: CatchLog; justSaved: boolean; u
         style={({ pressed }) => [styles.entry, justSaved && styles.entrySaved, pressed && { opacity: 0.85 }]}
       >
         <View style={[styles.count, { backgroundColor: log.caught ? colors.successTint : colors.fog }]}>
-          <T variant="numeralM" color={log.caught ? colors.success : colors.inkFaint}>{log.caught ? log.count : '–'}</T>
+          <T variant="numeralS" color={log.caught ? colors.success : colors.inkMuted}>{log.caught ? log.count : '–'}</T>
+          <T variant="caption" color={log.caught ? colors.success : colors.inkMuted} maxFontSizeMultiplier={1.1} style={styles.countLabel}>fish</T>
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Row justify="space-between" gap={spacing.sm}>
@@ -196,11 +197,11 @@ function Entry({ log, justSaved, units }: { log: CatchLog; justSaved: boolean; u
           <Row gap={spacing.md}>
             <Row gap={4}>
               <View style={[styles.bandDot, { backgroundColor: band.color }]} />
-              <T variant="caption" color={colors.inkMuted}>{log.scoreAtTime} · {log.lightCondition}</T>
+              <T variant="caption" color={colors.inkMuted}>Score {log.scoreAtTime} · {log.lightCondition}</T>
             </Row>
             <View style={{ flex: 1 }} />
             {justSaved ? (
-              <Row gap={4}><Icon name="success" size={12} color={colors.success} /><T variant="caption" weight="700" color={colors.success}>Saved</T></Row>
+              <Row gap={4}><Icon name="success" size={12} color={colors.success} /><T variant="caption" weight="600" color={colors.success}>Saved</T></Row>
             ) : unsynced ? (
               <Row gap={4}><Icon name={log.syncState === 'error' ? 'sync-error' : 'device'} size={12} color={log.syncState === 'error' ? colors.danger : colors.inkMuted} /><T variant="caption" color={log.syncState === 'error' ? colors.danger : colors.inkMuted}>{log.syncState === 'error' ? 'Not synced' : 'Local'}</T></Row>
             ) : (
@@ -216,7 +217,7 @@ function Entry({ log, justSaved, units }: { log: CatchLog; justSaved: boolean; u
 const RAIL = 14;
 
 const styles = StyleSheet.create({
-  summary: { gap: spacing.md, paddingTop: spacing.lg, paddingBottom: spacing.md, paddingHorizontal: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.white, ...elevation.low },
+  summary: { paddingBottom: spacing.md },
   statDivider: { width: StyleSheet.hairlineWidth * 2, alignSelf: 'stretch', backgroundColor: colors.line },
   patterns: { gap: 6, paddingTop: spacing.md, borderTopWidth: StyleSheet.hairlineWidth * 2, borderTopColor: colors.line },
   dayRow: { paddingVertical: spacing.sm, alignItems: 'center' },
@@ -224,10 +225,11 @@ const styles = StyleSheet.create({
   railLine: { position: 'absolute', top: 0, bottom: 0, width: 2, borderRadius: 1, backgroundColor: colors.fogDeep },
   dayDot: { marginTop: 5, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.inkFaint },
   entryDot: { marginTop: 26, width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
-  entryDotCaught: { backgroundColor: colors.teal, borderColor: colors.white },
+  entryDotCaught: { backgroundColor: colors.teal, borderColor: colors.paper },
   entryDotNone: { backgroundColor: colors.cream, borderColor: colors.inkFaint },
   entry: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.sm, padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.paper, borderWidth: StyleSheet.hairlineWidth * 2, borderColor: colors.line },
   entrySaved: { borderColor: colors.teal, borderWidth: 1.5 },
-  count: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  count: { width: 44, height: 44, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
+  countLabel: { fontSize: 10.5, lineHeight: 12 },
   bandDot: { width: 7, height: 7, borderRadius: 4 },
 });

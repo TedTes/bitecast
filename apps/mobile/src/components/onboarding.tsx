@@ -19,7 +19,7 @@ export function StepHeader({ step, total = 3 }: { step: number; total?: number }
           <View key={index} style={[styles.segment, { backgroundColor: index < step ? colors.teal : colors.fogDeep }]} />
         ))}
       </View>
-      <T variant="caption" weight="700" color={colors.inkMuted} importantForAccessibility="no">{step}/{total}</T>
+      <T variant="caption" weight="600" color={colors.inkMuted} importantForAccessibility="no">{step}/{total}</T>
     </Row>
   );
 }

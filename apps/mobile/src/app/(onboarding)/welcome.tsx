@@ -3,7 +3,8 @@ import { router, useFocusEffect } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { BrandLockup, ChartTexture } from '@/components/brand';
-import { ConfidenceMeter, ReasonChips, ScoreReadout, bestWindowWithin, windowEnd } from '@/components/forecast';
+import { ReasonChips, bestWindowWithin, windowEnd } from '@/components/forecast';
+import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { Icon, type IconName } from '@/components/icon';
 import { Button, Reveal, Row, Screen, T } from '@/components/ui';
 import { colors, radius, spacing } from '@/constants/theme';
@@ -58,13 +59,13 @@ export default function WelcomeScreen() {
             <Row justify="space-between" align="flex-start">
               <View style={{ flex: 1, gap: 2 }}>
                 <T variant="label" color={colors.onDarkMuted}>Sample · {lake.name}</T>
-                <T variant="caption" weight="700" color={colors.sunrise}>{formatDay(window.start)}’s best window</T>
+                <T variant="caption" weight="600" color={colors.sunrise}>{formatDay(window.start)}’s best window</T>
                 <T variant="numeralL" color={colors.onDark} style={{ marginTop: spacing.xs }}>{shortRange(window.start, windowEnd(window))}</T>
               </View>
-              <ScoreReadout score={window.peakScore} tone="dark" caption="Peak" />
+              <ScoreBadge size="md" score={window.peakScore} tone="dark" caption="Peak" />
             </Row>
             <ReasonChips reasons={window.reasons} tone="dark" />
-            <ConfidenceMeter value={window.confidence} tone="dark" />
+            <ConfidenceBars long level={window.confidence} tone="dark" />
           </View>
         </Reveal>
       ) : null}
@@ -87,6 +88,6 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  preview: { backgroundColor: colors.deepRaised, borderRadius: radius.xl, padding: spacing.xl, gap: spacing.md, borderWidth: 1, borderColor: colors.deepLine },
+  preview: { backgroundColor: colors.deepRaised, borderRadius: radius.lg, padding: spacing.xl, gap: spacing.md, borderWidth: 1, borderColor: colors.deepLine },
   promiseIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.deepRaised, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.deepLine },
 });

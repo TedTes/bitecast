@@ -5,8 +5,8 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import Constants from 'expo-constants';
 import { walleyeProfile } from '@bitecast/engine';
 import { Icon, type IconName } from '@/components/icon';
-import { Banner, Divider, ICE_SAFETY_TEXT, LinkButton, ListRow, Row, Screen, Segmented, T, ToggleRow } from '@/components/ui';
-import { colors, elevation, hitSlop, radius, spacing } from '@/constants/theme';
+import { Banner, Card, Divider, ICE_SAFETY_TEXT, LinkButton, ListRow, Row, Screen, Segmented, T, ToggleRow } from '@/components/ui';
+import { colors, hitSlop, radius, spacing, touch } from '@/constants/theme';
 import { deleteCloudAccount, integrationStatus, restorePurchases } from '@/api/adapters';
 import { DATA_SOURCE_LABEL } from '@/data/forecasts';
 import { catchLogsToCsv } from '@/features/export';
@@ -170,7 +170,7 @@ export default function ProfileScreen() {
 
       {/* Settings */}
       <T variant="label" color={colors.inkMuted} accessibilityRole="header" style={styles.groupLabel}>Fishing</T>
-      <View style={styles.group}>
+      <Card style={styles.group}>
         <Row gap={spacing.md} style={styles.settingRow}>
           <View style={styles.rowIcon}><Icon name="units" size={16} color={colors.teal} /></View>
           <T variant="subhead" weight="600" style={{ flex: 1 }}>Units</T>
@@ -195,10 +195,10 @@ export default function ProfileScreen() {
         {settings.iceFishing || Object.values(lakeSeasons).includes('ice') ? <T variant="caption" color={colors.warning} style={{ paddingLeft: 48, paddingBottom: spacing.sm }}>{ICE_SAFETY_TEXT}</T> : null}
         <Divider inset={48} />
         <ListRow icon={settings.alertsEnabled ? 'bell' : 'bell-off'} title="Window alerts" onPress={() => router.push('/profile/alerts')} right={<Value text={settings.alertsEnabled ? `${activeAlerts} of ${followed.length} lakes` : 'Off'} />} />
-      </View>
+      </Card>
 
       <T variant="label" color={colors.inkMuted} accessibilityRole="header" style={styles.groupLabel}>Data & help</T>
-      <View style={styles.group}>
+      <Card style={styles.group}>
         <ListRow icon="export" title={exporting ? 'Preparing export…' : 'Export catch logs'} onPress={exportLogs} right={<Value text={`${logs.length} log${logs.length === 1 ? '' : 's'}${pending ? ` · ${pending} local` : ''}`} />} />
         {isPro ? null : (
           <>
@@ -216,7 +216,7 @@ export default function ProfileScreen() {
             <T variant="caption" color={colors.inkMuted}>Bite scores describe conditions, never guaranteed catches. Official regulations always govern.</T>
           </View>
         ) : null}
-      </View>
+      </Card>
 
       {/* Destructive actions: findable, never loud */}
       <View style={styles.danger}>
@@ -244,7 +244,7 @@ function CardAction({ icon, label, onPress, primary }: { icon: IconName; label: 
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => [styles.cardAction, primary && styles.cardActionPrimary, pressed && { opacity: 0.75 }]}>
       <Icon name={icon} size={14} color={primary ? colors.deep : colors.onDark} />
-      <T variant="caption" weight="700" color={primary ? colors.deep : colors.onDark}>{label}</T>
+      <T variant="caption" weight="600" color={primary ? colors.deep : colors.onDark}>{label}</T>
     </Pressable>
   );
 }
@@ -261,7 +261,7 @@ function Value({ text, icon = 'chevron-right' }: { text?: string; icon?: IconNam
 
 function DangerLink({ label, onPress, hint }: { label: string; onPress?: () => void; hint?: string }) {
   return (
-    <Pressable onPress={onPress} disabled={!onPress} hitSlop={hitSlop} accessibilityRole="button" accessibilityHint={hint} style={({ pressed }) => [{ alignItems: 'center', minHeight: 40, justifyContent: 'center' }, pressed && { opacity: 0.6 }]}>
+    <Pressable onPress={onPress} disabled={!onPress} hitSlop={hitSlop} accessibilityRole="button" accessibilityHint={hint} style={({ pressed }) => [{ alignItems: 'center', minHeight: touch.min, justifyContent: 'center' }, pressed && { opacity: 0.6 }]}>
       <T variant="callout" weight="600" color={colors.danger}>{label}</T>
       {hint ? <T variant="caption" color={colors.inkMuted}>{hint}</T> : null}
     </Pressable>
@@ -269,15 +269,15 @@ function DangerLink({ label, onPress, hint }: { label: string; onPress?: () => v
 }
 
 const styles = StyleSheet.create({
-  anglerCard: { gap: spacing.lg, padding: spacing.xl, borderRadius: radius.xl, overflow: 'hidden', ...elevation.raised },
+  anglerCard: { gap: spacing.lg, padding: spacing.lg, borderRadius: radius.lg, overflow: 'hidden' },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.deepLine, backgroundColor: 'rgba(255,255,255,0.08)' },
   badgePro: { backgroundColor: colors.mint, borderColor: colors.mint },
   anglerStats: { paddingVertical: spacing.md, borderRadius: radius.md, backgroundColor: 'rgba(255,255,255,0.07)' },
   anglerDivider: { width: 1, alignSelf: 'stretch', backgroundColor: colors.deepLine },
-  cardAction: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 38, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
+  cardAction: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: touch.min, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
   cardActionPrimary: { backgroundColor: colors.onDark, borderColor: colors.onDark },
   groupLabel: { marginTop: spacing.sm, marginBottom: -spacing.sm, paddingHorizontal: spacing.xs },
-  group: { paddingHorizontal: spacing.lg, paddingVertical: spacing.xs, borderRadius: radius.lg, backgroundColor: colors.white, ...elevation.low },
+  group: { gap: 0, paddingVertical: spacing.xs },
   settingRow: { minHeight: 56, paddingVertical: spacing.sm },
   rowIcon: { width: 36, height: 36, borderRadius: radius.sm, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
   about: { gap: 4, paddingLeft: 48, paddingBottom: spacing.md },
