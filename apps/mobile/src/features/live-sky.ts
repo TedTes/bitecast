@@ -7,6 +7,7 @@ import { forecastQuery } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { useConditionResolver } from '@/features/lake-season';
 import { skyPalette } from '@/features/sky';
+import { useNow } from '@/lib/use-now';
 import { useAppStore } from '@/store/use-app-store';
 import type { Lake } from '@/types/app';
 
@@ -57,4 +58,11 @@ export function useSceneSky(subject: Pick<LakeData, 'lake' | 'season' | 'forecas
   const weather = { cloudPct: hour?.cloudPct ?? 20, windKmh: hour?.windKmh ?? 8, rainMm: hour?.precipitationMm ?? 0 };
   const ice = subject?.season === 'ice';
   return { time, place, altitude, hour, weather, ice, palette: skyPalette(altitude, weather.cloudPct, ice) };
+}
+
+/** The app-wide sky: the lake Today leads with, now. */
+export function useLiveSky() {
+  const now = useNow();
+  const best = useRankedLakes(now).data[0];
+  return useSceneSky(best, now);
 }

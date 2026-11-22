@@ -5,9 +5,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { colors, spacing, touch } from '@/constants/theme';
-import { useRankedLakes, useSceneSky, type SceneSky } from '@/features/live-sky';
+import { useLiveSky, type SceneSky } from '@/features/live-sky';
 import { onScene, orbElevation, seeded } from '@/features/sky';
-import { useNow } from '@/lib/use-now';
 import { Icon } from './icon';
 import { ridgePath, treesPath } from './lake-scene';
 import { Row, T } from './ui';
@@ -32,9 +31,7 @@ type Props = {
 
 /** For tab screens: lit by the same lake as Today. */
 export function ShorelineHeader(props: Props) {
-  const now = useNow();
-  const best = useRankedLakes(now).data[0];
-  const sky = useSceneSky(best, now);
+  const sky = useLiveSky();
   return <Shoreline {...props} sky={sky} />;
 }
 

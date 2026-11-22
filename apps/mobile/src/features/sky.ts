@@ -107,6 +107,16 @@ export function skyPalette(altitude: number, cloudPct: number, ice = false) {
 
 export type SkyPalette = ReturnType<typeof skyPalette>;
 
+/** The tab bar’s silt: carries on from where Today’s lake bed ends and darkens with depth. */
+export const tabBed = (palette: SkyPalette) => ({
+  top: palette.sandDark,
+  bottom: mix(palette.sandDark, '#000000', 0.3),
+  grain: mix(palette.sandDark, '#000000', 0.45),
+});
+
+/** How strongly the selected tab’s pill is tinted with the accent. */
+export const TAB_PILL_TINT = 0.14;
+
 /** 0 = resting on the horizon … 1 = as high as the scene allows. */
 export const orbElevation = (altitude: number) => Math.sqrt(clamp(altitude / 40));
 
