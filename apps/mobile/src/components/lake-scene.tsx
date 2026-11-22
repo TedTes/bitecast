@@ -48,6 +48,9 @@ export function LakeScene({ width, height, headerBottom, horizon, contentBottom,
   // Fish roam the whole water column, passing behind the cards.
   const fishTop = waterline + 8;
   const fishBottom = height - 42;
+  // Open water between the last card and the bed, which has its own resident school.
+  const openTop = Math.max(waterline + 16, contentBottom + 4);
+  const bedBottom = height - 28;
   return (
     <View pointerEvents="none" style={[styles.scene, { width, height }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Sky width={width} horizon={horizon} palette={palette} />
@@ -64,9 +67,12 @@ export function LakeScene({ width, height, headerBottom, horizon, contentBottom,
       <Bubbles width={width} active={active} />
       {fishBottom - fishTop > 30 ? (
         // The count is fixed: the score changes how lively fish are, never how many there are.
-        <LakeSchool key={`${width}:${Math.round(fishTop / 24)}:${Math.round(fishBottom / 24)}`} width={width} top={fishTop} bottom={fishBottom} mood={mood} count={11} sizeScale={1.25} visibility={1.3} active={active} />
+        <LakeSchool key={`${width}:${Math.round(fishTop / 24)}:${Math.round(fishBottom / 24)}`} width={width} top={fishTop} bottom={fishBottom} mood={mood} count={9} sizeScale={1.25} visibility={1.3} active={active} />
       ) : null}
-      {ice ? null : <Bobber x={width - 30} waterline={waterline} lineEnd={Math.max(waterline + 16, contentBottom + 8) + 14} windKmh={weather.windKmh} active={active} />}
+      {bedBottom - openTop > 30 ? (
+        <LakeSchool key={`bed:${width}:${Math.round(openTop / 24)}:${Math.round(bedBottom / 24)}`} width={width} top={openTop} bottom={bedBottom} mood={mood} count={9} sizeScale={1.05} visibility={1.3} active={active} />
+      ) : null}
+      {ice ? null : <Bobber x={width - 30} waterline={waterline} lineEnd={openTop + 18} windKmh={weather.windKmh} active={active} />}
       {weather.rainMm >= 0.2 ? <Rain width={width} height={waterline} heavy={weather.rainMm >= 2} active={active} /> : null}
     </View>
   );
