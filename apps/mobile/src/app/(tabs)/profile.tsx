@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { Alert, Pressable, Share, StyleSheet, View } from 'react-native';
-import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import Constants from 'expo-constants';
 import { walleyeProfile } from '@bitecast/engine';
 import { Icon, type IconName } from '@/components/icon';
 import { ShorelineHeader } from '@/components/shoreline-header';
-import { Banner, Card, Divider, ICE_SAFETY_TEXT, LinkButton, ListRow, Row, Screen, Segmented, T, ToggleRow } from '@/components/ui';
+import { Banner, Card, Divider, ICE_SAFETY_TEXT, LinkButton, ListRow, ROW_INSET, Row, Screen, Segmented, T, ToggleRow } from '@/components/ui';
 import { colors, hitSlop, radius, spacing, touch } from '@/constants/theme';
 import { deleteCloudAccount, integrationStatus, restorePurchases } from '@/api/adapters';
 import { DATA_SOURCE_LABEL } from '@/data/forecasts';
 import { catchLogsToCsv } from '@/features/export';
+import { onScene } from '@/features/sky';
 import { haptic } from '@/lib/haptics';
 import { useAppStore } from '@/store/use-app-store';
 
@@ -119,62 +119,57 @@ export default function ProfileScreen() {
 
   const fish = logs.reduce((total, log) => total + (log.caught ? log.count : 0), 0);
   const [aboutOpen, setAboutOpen] = useState(false);
+  // Until there are display names: a nickname. The Account row below says what is linked.
+  const name = linked ? 'Hooked angler' : 'Secret-spot angler';
 
   return (
-    <Screen tab top={<ShorelineHeader title="Profile" subtitle="Account & settings" />}>
-      {/* Angler card: who you are, what you've logged, membership */}
-      <View style={styles.anglerCard} accessible={false}>
-        <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
-          <Defs>
-            <LinearGradient id="angler" x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0" stopColor={colors.deep} />
-              <Stop offset="1" stopColor="#123E48" />
-            </LinearGradient>
-          </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" fill="url(#angler)" />
-        </Svg>
-        <Row justify="space-between" align="flex-start">
-          <View style={{ flex: 1, gap: 2 }} accessible accessibilityLabel={`${linked ? `Linked with ${account.provider === 'apple' ? 'Apple' : 'Google'}` : 'Anonymous angler'}. ${isPro ? 'Pro member' : 'Free plan'}.`}>
-            <T variant="label" color={colors.mint} style={{ fontSize: 12 }}>BiteCast angler</T>
-            <T variant="title" color={colors.onDark}>{linked ? (account.provider === 'apple' ? 'Apple account' : 'Google account') : 'Anonymous angler'}</T>
-            <Row gap={6}>
-              <Icon name={linked ? 'sync-done' : 'device'} size={13} color={colors.onDarkMuted} />
-              <T variant="caption" color={colors.onDarkMuted}>{linked ? 'Logs backed up to your account' : 'Logs saved on this device only'}</T>
-            </Row>
-          </View>
-          <View style={[styles.badge, isPro && styles.badgePro]}>
-            {isPro ? <Icon name="pro" size={12} color={colors.deep} /> : null}
-            <T variant="label" color={isPro ? colors.deep : colors.onDark} style={{ fontSize: 11.5 }}>{isPro ? 'Pro' : 'Free'}</T>
-          </View>
-        </Row>
-
-        <Row style={styles.anglerStats}>
-          <AnglerStat value={followed.length} label={followed.length === 1 ? 'Lake' : 'Lakes'} />
-          <View style={styles.anglerDivider} />
-          <AnglerStat value={logs.length} label={logs.length === 1 ? 'Trip' : 'Trips'} />
-          <View style={styles.anglerDivider} />
-          <AnglerStat value={fish} label="Walleye" />
-        </Row>
-
-        <Row gap={spacing.sm} wrap>
-          {!linked ? <CardAction icon="link" label="Back up logs" onPress={() => router.push('/auth')} /> : null}
-          {!isPro ? <CardAction icon="pro" label="Go Pro" primary onPress={() => router.push('/paywall')} /> : <CardAction icon="restore" label={restoring ? 'Restoring…' : 'Restore'} onPress={restore} />}
-        </Row>
-      </View>
-
+    <Screen
+      tab
+      top={
+        // The tab already says “Profile”, so the header says who you are.
+        <ShorelineHeader
+          title={name}
+          subtitle={`${count(followed.length, 'lake')} · ${count(logs.length, 'trip')} · ${fish} walleye`}
+          right={
+            <View style={[styles.badge, isPro && styles.badgePro]} accessible accessibilityLabel={isPro ? 'Pro member' : 'Free plan'}>
+              {isPro ? <Icon name="pro" size={12} color={colors.deep} /> : null}
+              <T variant="caption" weight="600" color={isPro ? colors.deep : onScene.text}>{isPro ? 'Pro' : 'Free'}</T>
+            </View>
+          }
+        />
+      }
+    >
       {notice ? <Banner tone={notice.tone} title={notice.title} body={notice.body} live /> : null}
+
+      {/* What you can do with the account: settings like any other */}
+      <T variant="label" color={colors.inkMuted} accessibilityRole="header" style={styles.groupLabel}>Account</T>
+      <Card style={styles.group}>
+        {linked ? (
+          <ListRow icon="sync-done" title="Logs backed up" subtitle={`Linked with ${account.provider === 'apple' ? 'Apple' : 'Google'}`} />
+        ) : (
+          <ListRow icon="link" title="Back up logs" subtitle="Not linked to an account" accessibilityHint="Links an Apple or Google account" onPress={() => router.push('/auth')} />
+        )}
+        <Divider inset={ROW_INSET} />
+        {isPro ? null : (
+          <>
+            <ListRow icon="pro" title="BiteCast Pro" accessibilityHint="Shows plans" onPress={() => router.push('/paywall')} right={<Value text="See plans" />} />
+            <Divider inset={ROW_INSET} />
+          </>
+        )}
+        <ListRow icon="restore" title={restoring ? 'Restoring…' : 'Restore purchases'} chevron={false} onPress={restore} />
+      </Card>
 
       {/* Settings */}
       <T variant="label" color={colors.inkMuted} accessibilityRole="header" style={styles.groupLabel}>Fishing</T>
       <Card style={styles.group}>
         <Row gap={spacing.md} style={styles.settingRow}>
           <View style={styles.rowIcon}><Icon name="units" size={16} color={colors.teal} /></View>
-          <T variant="subhead" weight="600" style={{ flex: 1 }}>Units</T>
-          <View style={{ width: 176 }}>
+          <T variant="subhead" weight="500" style={{ flex: 1 }}>Units</T>
+          <View style={{ width: 164 }}>
             <Segmented label="Units" value={settings.units} onChange={setUnits} options={[{ label: 'Metric', value: 'metric', accessibilityLabel: 'Metric: Celsius, metres, centimetres' }, { label: 'Imperial', value: 'imperial', accessibilityLabel: 'Imperial: Fahrenheit, feet, inches' }]} />
           </View>
         </Row>
-        <Divider inset={48} />
+        <Divider inset={ROW_INSET} />
         <ToggleRow
           icon="ice"
           title="Ice fishing"
@@ -183,28 +178,22 @@ export default function ProfileScreen() {
           onValueChange={setIceFishing}
         />
         {manualCount ? (
-          <Row justify="space-between" style={{ paddingLeft: 48 }}>
+          <Row justify="space-between" style={{ paddingLeft: ROW_INSET }}>
             <T variant="caption" color={colors.inkMuted}>{manualCount} lake{manualCount === 1 ? '' : 's'} set by hand</T>
             <LinkButton onPress={resetLakeSeasons}>Reset to typical</LinkButton>
           </Row>
         ) : null}
-        {settings.iceFishing || Object.values(lakeSeasons).includes('ice') ? <T variant="caption" color={colors.warning} style={{ paddingLeft: 48, paddingBottom: spacing.sm }}>{ICE_SAFETY_TEXT}</T> : null}
-        <Divider inset={48} />
+        {settings.iceFishing || Object.values(lakeSeasons).includes('ice') ? <T variant="caption" color={colors.warning} style={{ paddingLeft: ROW_INSET, paddingBottom: spacing.sm }}>{ICE_SAFETY_TEXT}</T> : null}
+        <Divider inset={ROW_INSET} />
         <ListRow icon={settings.alertsEnabled ? 'bell' : 'bell-off'} title="Window alerts" onPress={() => router.push('/profile/alerts')} right={<Value text={settings.alertsEnabled ? `${activeAlerts} of ${followed.length} lakes` : 'Off'} />} />
       </Card>
 
       <T variant="label" color={colors.inkMuted} accessibilityRole="header" style={styles.groupLabel}>Data & help</T>
       <Card style={styles.group}>
         <ListRow icon="export" title={exporting ? 'Preparing export…' : 'Export catch logs'} onPress={exportLogs} right={<Value text={`${logs.length} log${logs.length === 1 ? '' : 's'}${pending ? ` · ${pending} local` : ''}`} />} />
-        {isPro ? null : (
-          <>
-            <Divider inset={48} />
-            <ListRow icon="restore" title={restoring ? 'Restoring…' : 'Restore purchases'} onPress={restore} right={<Value />} />
-          </>
-        )}
-        <Divider inset={48} />
+        <Divider inset={ROW_INSET} />
         <ListRow icon="request" title="Request a lake" onPress={() => router.push('/profile/request-lake')} right={<Value />} />
-        <Divider inset={48} />
+        <Divider inset={ROW_INSET} />
         <ListRow icon="info" title="About BiteCast" onPress={() => setAboutOpen((open) => !open)} right={<Value text={Constants.expoConfig?.version ?? '—'} icon={aboutOpen ? 'chevron-up' : 'chevron-down'} />} />
         {aboutOpen ? (
           <View style={styles.about}>
@@ -227,23 +216,7 @@ export default function ProfileScreen() {
   );
 }
 
-function AnglerStat({ value, label }: { value: number; label: string }) {
-  return (
-    <View style={{ flex: 1, alignItems: 'center' }} accessible accessibilityLabel={`${value} ${label}`}>
-      <T variant="numeralM" color={colors.onDark}>{value}</T>
-      <T variant="caption" color={colors.onDarkMuted} style={{ fontSize: 11 }}>{label}</T>
-    </View>
-  );
-}
-
-function CardAction({ icon, label, onPress, primary }: { icon: IconName; label: string; onPress: () => void; primary?: boolean }) {
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={({ pressed }) => [styles.cardAction, primary && styles.cardActionPrimary, pressed && { opacity: 0.75 }]}>
-      <Icon name={icon} size={14} color={primary ? colors.deep : colors.onDark} />
-      <T variant="caption" weight="600" color={primary ? colors.deep : colors.onDark}>{label}</T>
-    </Pressable>
-  );
-}
+const count = (value: number, noun: string) => `${value} ${noun}${value === 1 ? '' : 's'}`;
 
 /** Right-hand value + disclosure for settings rows. */
 function Value({ text, icon = 'chevron-right' }: { text?: string; icon?: IconName }) {
@@ -265,17 +238,13 @@ function DangerLink({ label, onPress, hint }: { label: string; onPress?: () => v
 }
 
 const styles = StyleSheet.create({
-  anglerCard: { gap: spacing.lg, padding: spacing.lg, borderRadius: radius.lg, overflow: 'hidden' },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.deepLine, backgroundColor: 'rgba(255,255,255,0.08)' },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 3, borderRadius: radius.pill, borderWidth: 1, borderColor: onScene.glassLine, backgroundColor: onScene.glass },
   badgePro: { backgroundColor: colors.mint, borderColor: colors.mint },
-  anglerStats: { paddingVertical: spacing.md, borderRadius: radius.md, backgroundColor: 'rgba(255,255,255,0.07)' },
-  anglerDivider: { width: 1, alignSelf: 'stretch', backgroundColor: colors.deepLine },
-  cardAction: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: touch.min, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
-  cardActionPrimary: { backgroundColor: colors.onDark, borderColor: colors.onDark },
-  groupLabel: { marginTop: spacing.sm, marginBottom: -spacing.sm, paddingHorizontal: spacing.xs },
-  group: { gap: 0, paddingVertical: spacing.xs },
-  settingRow: { minHeight: 56, paddingVertical: spacing.sm },
-  rowIcon: { width: 36, height: 36, borderRadius: radius.sm, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
-  about: { gap: 4, paddingLeft: 48, paddingBottom: spacing.md },
+  groupLabel: { marginBottom: -spacing.sm, paddingHorizontal: spacing.xs },
+  group: { gap: 0, paddingVertical: spacing.xxs },
+  // The 44pt control needs air above and below, or it sits on the divider.
+  settingRow: { paddingVertical: spacing.sm },
+  rowIcon: { width: ROW_INSET - spacing.md, height: ROW_INSET - spacing.md, borderRadius: radius.sm, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
+  about: { gap: 4, paddingLeft: ROW_INSET, paddingBottom: spacing.md },
   danger: { gap: spacing.xs, marginTop: spacing.sm, marginBottom: spacing.lg },
 });

@@ -455,16 +455,20 @@ export function Stepper({ label, value, onChange, min = 0, max = 99, step = 1, u
   );
 }
 
+const ROW_ICON = 30;
+/** Where a row’s text starts: use it to line dividers and notes up with the titles. */
+export const ROW_INSET = ROW_ICON + spacing.md;
+
 export function ListRow({ icon, title, subtitle, onPress, right, destructive, accessibilityHint, chevron = true }: { icon?: IconName; title: string; subtitle?: string; onPress?: () => void; right?: ReactNode; destructive?: boolean; accessibilityHint?: string; chevron?: boolean }) {
   const content = (
     <>
       {icon ? (
         <View style={[styles.rowIcon, destructive && { backgroundColor: colors.dangerTint }]}>
-          <Icon name={icon} size={18} color={destructive ? colors.danger : colors.teal} />
+          <Icon name={icon} size={16} color={destructive ? colors.danger : colors.teal} />
         </View>
       ) : null}
       <View style={{ flex: 1, gap: 2 }}>
-        <T variant="subhead" weight="600" color={destructive ? colors.danger : colors.ink}>{title}</T>
+        <T variant="subhead" weight="500" color={destructive ? colors.danger : colors.ink}>{title}</T>
         {subtitle ? <T variant="caption" color={colors.inkMuted}>{subtitle}</T> : null}
       </View>
       {right ?? (onPress && chevron ? <Icon name="chevron-right" size={16} color={colors.inkFaint} /> : null)}
@@ -483,11 +487,11 @@ export function ToggleRow({ icon, title, subtitle, value, onValueChange, disable
     <View style={[styles.row, disabled && { opacity: 0.55 }]}>
       {icon ? (
         <View style={styles.rowIcon}>
-          <Icon name={icon} size={18} color={colors.teal} />
+          <Icon name={icon} size={16} color={colors.teal} />
         </View>
       ) : null}
       <View style={{ flex: 1, gap: 2 }} importantForAccessibility="no-hide-descendants">
-        <T variant="subhead" weight="600">{title}</T>
+        <T variant="subhead" weight="500">{title}</T>
         {subtitle ? <T variant="caption" color={colors.inkMuted}>{subtitle}</T> : null}
       </View>
       <Switch
@@ -694,8 +698,8 @@ const styles = StyleSheet.create({
   stepValue: { width: 84 },
 
   switch: { alignSelf: 'center' },
-  row: { flexDirection: 'row', alignItems: 'center', minHeight: 56, gap: spacing.md, paddingVertical: spacing.sm },
-  rowIcon: { width: 36, height: 36, borderRadius: radius.sm, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', minHeight: touch.comfortable, gap: spacing.md, paddingVertical: spacing.sm },
+  rowIcon: { width: ROW_ICON, height: ROW_ICON, borderRadius: radius.sm, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
 
   banner: { flexDirection: 'row', gap: spacing.md, padding: spacing.md, paddingRight: spacing.lg, borderRadius: radius.md, borderWidth: 1 },
   iceNotice: { flexDirection: 'row', gap: spacing.md, alignItems: 'center', padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.warningTint, borderWidth: 1, borderColor: colors.warningLine, borderLeftWidth: 4, borderLeftColor: colors.sunrise },
