@@ -1,9 +1,9 @@
-import { useMemo, useState, type PropsWithChildren } from 'react';
+import { useState, type PropsWithChildren } from 'react';
 import { randomUUID } from 'expo-crypto';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/icon';
-import { Banner, Button, Card, ChoiceChips, Divider, EmptyState, Field, IceSafetyNotice, LinkButton, Reveal, Row, Screen, Segmented, SkeletonCard, Stepper, T, ToggleRow } from '@/components/ui';
+import { Banner, Button, Card, ChoiceChips, Divider, EmptyState, Field, IceSafetyNotice, MultiChoiceChips, Reveal, Row, Screen, Segmented, SkeletonCard, Stepper, T, ToggleRow } from '@/components/ui';
 import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { colors, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
 import { lakes, lakeById } from '@/data/lakes';
@@ -12,10 +12,13 @@ import { depthUnit, formatDay, formatDuration, formatTime, formatWind, fromDispl
 import { haptic } from '@/lib/haptics';
 import { resolveLakeCondition } from '@/features/lake-season';
 import { TRAINING_CONSENT_VERSION } from '@/features/catch-log';
+import { baitFields, baitOptions, baitsForSeason, baitsOf, type TripLog } from '@/features/trip-baits';
+import { methodFields, methodLabels, methodOptions, methodsForSeason, methodsOf, type Method } from '@/features/trip-methods';
 import { useAppStore } from '@/store/use-app-store';
 import type { CatchLog } from '@/types/app';
 
 const OTHER = '__other__';
+const UNSURE = '__unsure__';
 const NOTES_MAX = 500;
 const presets = {
   open_water: ['Jig + minnow', 'Crankbait', 'Worm harness', 'Blade bait'],
@@ -47,7 +50,7 @@ export function LogForm({ editId }: { editId?: string }) {
   return <LogFormInner key={editId ?? 'new'} previous={previous} />;
 }
 
-function LogFormInner({ previous }: { previous?: CatchLog }) {
+function LogFormInner({ previous }: { previous?: TripLog }) {
   const params = useLocalSearchParams<{ lakeId?: string; score?: string }>();
   const logs = useAppStore((state) => state.catchLogs);
   const followed = useAppStore((state) => state.followedLakeIds);
@@ -55,20 +58,24 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
   const lakeSeasons = useAppStore((state) => state.lakeSeasons);
   const units = useAppStore((state) => state.settings.units);
   const add = useAppStore((state) => state.addCatchLog);
-  const last = logs[0];
+  const last: TripLog | undefined = logs[0];
   const seasonOf = (id: string) => resolveLakeCondition(id, { iceFishing }, lakeSeasons).season;
 
   // Defaults: the last trip's setup, so a typical entry is lake ✓ → result → save.
   const [lakeId, setLakeId] = useState(previous?.lakeId ?? params.lakeId ?? last?.lakeId ?? followed[0] ?? lakes[0].id);
-  const [caught, setCaught] = useState(previous?.caught ?? true);
-  const [count, setCount] = useState(previous?.count || 1);
+  // The count is the result: zero is a no-catch trip. A new trip starts at zero, so a catch is never logged by default.
+  const [count, setCount] = useState(previous?.caught ? Math.max(1, previous.count) : 0);
+  const caught = count > 0;
   const season = seasonOf(lakeId);
-  const recentBaits = useMemo(() => Array.from(new Set(logs.map((log) => log.bait.trim()).filter(Boolean))).slice(0, 4), [logs]);
-  const baitOptions = useMemo(() => Array.from(new Set([...recentBaits, ...presets[season]])).slice(0, 6), [recentBaits, season]);
-  const initialBait = previous?.bait ?? last?.bait ?? presets[season][0];
-  const [baitChoice, setBaitChoice] = useState(baitOptions.includes(initialBait) ? initialBait : OTHER);
-  const [customBait, setCustomBait] = useState(baitOptions.includes(initialBait) ? '' : initialBait);
-  const [method, setMethod] = useState<CatchLog['method']>(previous?.method ?? last?.method ?? (season === 'ice' ? 'tip-up' : 'jig'));
+  const recordedBaits = previous ? baitsOf(previous) : [];
+  const [baits, setBaits] = useState<string[]>(previous ? recordedBaits : baitsForSeason(logs, season, presets[season]));
+  const [customBait, setCustomBait] = useState('');
+  // Holds a chip's value, so it follows the custom name as it's typed.
+  const [caughtOnBait, setCaughtOnBait] = useState<string | undefined>(previous?.caughtOnBait);
+  const recordedMethods = previous ? methodsOf(previous) : [];
+  const [methods, setMethods] = useState<Method[]>(previous ? recordedMethods : methodsForSeason(season, last ? methodsOf(last) : []));
+  const [caughtOn, setCaughtOn] = useState<Method | undefined>(previous?.caughtOnMethod);
+  const methodChoices = methodOptions(season, recordedMethods);
   const [length, setLength] = useState(previous?.lengthCm ? String(toDisplayLength(previous.lengthCm, units)) : '');
   const [depth, setDepth] = useState(previous?.depthM !== undefined ? String(toDisplayDepth(previous.depthM, units)) : '');
   const [waterDepth, setWaterDepth] = useState(previous?.waterDepthM !== undefined ? String(toDisplayDepth(previous.waterDepthM, units)) : '');
@@ -81,15 +88,15 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const forecast = useMemo(() => getForecast(lakeId, season), [lakeId, season]);
+  const forecast = getForecast(lakeId, season);
   const hour = forecast.hours[0];
   const keepPrevious = previous && previous.lakeId === lakeId;
   const score = keepPrevious ? previous.scoreAtTime : Number(params.score) || hour.score;
   const lightCondition: CatchLog['lightCondition'] = keepPrevious ? previous.lightCondition : hour.light < 0.25 ? 'Low light' : hour.light < 0.55 ? 'Mid light' : 'Bright';
   const lakeChoices = lakes.filter((lake) => followed.includes(lake.id) || lake.id === lakeId || lake.id === last?.lakeId);
-  const bait = baitChoice === OTHER ? customBait.trim() : baitChoice;
-  // Switching to a lake in the other season changes the presets; the bait that will be saved stays visible.
-  const baitChips = baitChoice === OTHER || baitOptions.includes(baitChoice) ? baitOptions : [baitChoice, ...baitOptions];
+  // What will be saved always stays visible; an edited log's baits stay offered even when unticked.
+  const baitChips = baitOptions(logs, season, presets[season], [...recordedBaits, ...baits.filter((item) => item !== OTHER)]);
+  const baitName = (choice: string) => (choice === OTHER ? customBait.trim() : choice);
 
   const parse = (value: string) => (value.trim() === '' ? undefined : Number(value.replace(',', '.')));
   const lengthValue = parse(length);
@@ -97,14 +104,17 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
   const waterDepthValue = parse(waterDepth);
   const range = limits[units];
   const errors = {
-    bait: baitChoice === OTHER && !customBait.trim() ? 'Enter a bait or lure, or pick one above.' : customBait.length > 60 ? 'Keep it under 60 characters.' : null,
-    length: lengthValue !== undefined && (Number.isNaN(lengthValue) || lengthValue < range.length[0] || lengthValue > range.length[1]) ? `Enter a length between ${range.length[0]} and ${range.length[1]} ${lengthUnit(units)}.` : null,
+    baits: baits.length ? null : 'Pick at least one bait or lure.',
+    bait: !baits.includes(OTHER) ? null : !customBait.trim() ? 'Enter a bait or lure, or untick Other.' : customBait.length > 60 ? 'Keep it under 60 characters.' : null,
+    // Hidden at zero, so it can't be allowed to block saving there.
+    length: caught && lengthValue !== undefined && (Number.isNaN(lengthValue) || lengthValue < range.length[0] || lengthValue > range.length[1]) ? `Enter a length between ${range.length[0]} and ${range.length[1]} ${lengthUnit(units)}.` : null,
     depth: depthValue !== undefined && (Number.isNaN(depthValue) || depthValue < range.depth[0] || depthValue > range.depth[1]) ? `Enter a depth between ${range.depth[0]} and ${range.depth[1]} ${depthUnit(units)}.` : null,
     waterDepth: waterDepthValue !== undefined && (Number.isNaN(waterDepthValue) || waterDepthValue < range.depth[0] || waterDepthValue > range.depth[1]) ? `Enter a water depth between ${range.depth[0]} and ${range.depth[1]} ${depthUnit(units)}.` : null,
+    methods: methods.length ? null : 'Pick at least one method.',
     notes: notes.length > NOTES_MAX ? `Notes are limited to ${NOTES_MAX} characters.` : null,
   };
   const errorCount = Object.values(errors).filter(Boolean).length;
-  const shown = (key: keyof typeof errors) => (attempted || (key !== 'bait' && key !== 'notes') ? errors[key] : null);
+  const shown = (key: keyof typeof errors) => (attempted || (key !== 'bait' && key !== 'baits' && key !== 'notes' && key !== 'methods') ? errors[key] : null);
 
   const save = async () => {
     setAttempted(true);
@@ -119,7 +129,7 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
     const start = new Date(end.getTime() - effortMinutes * 60_000);
     const now = new Date().toISOString();
     const consentChanged = previous?.trainingConsent !== trainingConsent;
-    const log: CatchLog = {
+    const log: TripLog = {
       id: previous?.id ?? randomUUID(),
       lakeId,
       caughtAt: previous?.caughtAt ?? new Date(end.getTime() - (caught ? 60_000 : 0)).toISOString(),
@@ -133,9 +143,8 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
       lengthCm: caught && lengthValue !== undefined ? fromDisplayLength(lengthValue, units) : undefined,
       depthM: depthValue !== undefined ? fromDisplayDepth(depthValue, units) : undefined,
       waterDepthM: waterDepthValue !== undefined ? fromDisplayDepth(waterDepthValue, units) : undefined,
-      bait,
-      baitCategory: bait.toLowerCase(),
-      method,
+      ...baitFields(baits.map(baitName), caughtOnBait && baits.includes(caughtOnBait) ? baitName(caughtOnBait) : undefined, caught),
+      ...methodFields(methods, caughtOn, caught),
       clarity,
       notes: notes.trim(),
       scoreAtTime: score,
@@ -178,21 +187,15 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
               Check {errorCount} field{errorCount > 1 ? 's' : ''} before saving
             </T>
           ) : null}
-          <Button loading={saving} loadingLabel="Saving…" onPress={save}>{previous ? 'Save changes' : 'Save trip'}</Button>
+          <Row gap={spacing.sm}>
+            <Button variant="secondary" disabled={saving} onPress={() => router.back()} style={styles.action}>Cancel</Button>
+            {/* Same size as Cancel: the dark fill alone makes it the main action. */}
+            <Button loading={saving} loadingLabel="Saving…" onPress={save} style={styles.action}>Save</Button>
+          </Row>
           <T variant="caption" color={colors.inkMuted} align="center">Saves to this phone first · works offline</T>
         </>
       }
     >
-      <Stack.Screen
-        options={{
-          headerLeft: () =>
-            saving ? null : (
-              <View style={styles.cancel}>
-                <LinkButton onPress={() => router.back()}>Cancel</LinkButton>
-              </View>
-            ),
-        }}
-      />
       {saveError ? <Banner tone="danger" title="Not saved" body={saveError} action={{ label: 'Try again', onPress: save }} live /> : null}
       {previous ? (
         <T variant="caption" color={colors.inkMuted}>Logged {formatDay(previous.caughtAt)} at {formatTime(previous.caughtAt)}</T>
@@ -209,6 +212,12 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
             onChange={(id) => {
               setLakeId(id);
               setClarity(lakeById(id).clarity);
+              // A new trip follows the lake's season; an edited one keeps what was recorded.
+              const nextSeason = seasonOf(id);
+              if (!previous && nextSeason !== season) {
+                setMethods(methodsForSeason(nextSeason, methods));
+                setBaits(baitsForSeason(logs, nextSeason, presets[nextSeason]));
+              }
             }}
             options={lakeChoices.map((lake) => ({ label: lake.name, value: lake.id }))}
           />
@@ -218,21 +227,8 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
       {/* 2 · What happened */}
       <Section title="How did it go?">
         <Card style={styles.group}>
-          <View style={styles.block}>
-            <Segmented
-              label="Result"
-              value={caught ? 'caught' : 'none'}
-              onChange={(result) => setCaught(result === 'caught')}
-              options={[{ label: 'Caught walleye', value: 'caught' }, { label: 'No catch', value: 'none' }]}
-            />
-            {caught ? null : <T variant="caption" color={colors.inkMuted}>No-catch trips matter — they show when conditions didn’t deliver.</T>}
-          </View>
-          {caught ? (
-            <>
-              <Stepper label="Walleye caught" value={count} onChange={setCount} min={1} max={99} />
-              <Divider />
-            </>
-          ) : null}
+          <Stepper label="Walleye caught" hint={caught ? undefined : 'No catch'} value={count} onChange={setCount} min={0} max={99} unit="walleye" />
+          <Divider />
           <Stepper label="Time fished" value={effortMinutes} onChange={setEffortMinutes} min={15} max={720} step={15} unit="minutes" format={(minutes) => formatDuration(minutes * 60_000)} />
         </Card>
       </Section>
@@ -241,24 +237,43 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
       <Section title="Setup">
         <Card style={styles.group}>
           <View style={styles.block}>
-            <T variant="caption" color={colors.inkMuted}>Bait or lure</T>
-            <ChoiceChips
-              label="Bait or lure"
-              value={baitChoice}
-              onChange={setBaitChoice}
+            <Row justify="space-between">
+              <T variant="caption" color={colors.inkMuted}>Bait or lure</T>
+              <T variant="caption" color={colors.inkMuted}>Pick all you used</T>
+            </Row>
+            <MultiChoiceChips
+              label="Baits and lures used"
+              values={baits}
+              onChange={setBaits}
               options={[...baitChips.map((item) => ({ label: item, value: item })), { label: 'Other…', value: OTHER }]}
             />
-            {baitChoice === OTHER ? <Field label="Bait or lure name" value={customBait} onChangeText={setCustomBait} placeholder="e.g. Purple hair jig" autoFocus={!previous} error={shown('bait')} maxLength={80} returnKeyType="done" /> : null}
+            {shown('baits') ? <T variant="caption" color={colors.danger} accessibilityLiveRegion="polite">{errors.baits}</T> : null}
+            {baits.includes(OTHER) ? <Field label="Bait or lure name" value={customBait} onChangeText={setCustomBait} placeholder="e.g. Purple hair jig" autoFocus error={shown('bait')} maxLength={80} returnKeyType="done" /> : null}
+            {caught && baits.length > 1 ? (
+              <CaughtOn
+                label="Caught on which bait?"
+                value={caughtOnBait && baits.includes(caughtOnBait) ? caughtOnBait : undefined}
+                onChange={setCaughtOnBait}
+                options={baits.map((value) => ({ label: baitName(value) || 'Other', value }))}
+              />
+            ) : null}
           </View>
           <Divider />
           <View style={styles.block}>
-            <T variant="caption" color={colors.inkMuted}>Method</T>
-            <Segmented
-              label="Method"
-              value={method}
-              onChange={setMethod}
-              options={[{ label: 'Jig', value: 'jig' }, { label: 'Troll', value: 'troll' }, { label: 'Tip-up', value: 'tip-up' }, { label: 'Cast', value: 'cast' }]}
-            />
+            <Row justify="space-between">
+              <T variant="caption" color={colors.inkMuted}>Method</T>
+              <T variant="caption" color={colors.inkMuted}>Pick all you used</T>
+            </Row>
+            <MultiChoiceChips label="Methods used" values={methods} onChange={setMethods} options={methodChoices.map((value) => ({ label: methodLabels[value], value }))} />
+            {shown('methods') ? <T variant="caption" color={colors.danger} accessibilityLiveRegion="polite">{errors.methods}</T> : null}
+            {caught && methods.length > 1 ? (
+              <CaughtOn
+                label="Caught on which method?"
+                value={caughtOn && methods.includes(caughtOn) ? caughtOn : undefined}
+                onChange={setCaughtOn}
+                options={methodChoices.filter((value) => methods.includes(value)).map((value) => ({ label: methodLabels[value], value }))}
+              />
+            ) : null}
           </View>
         </Card>
       </Section>
@@ -337,6 +352,21 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
   );
 }
 
+/** A follow-up asked only when there's more than one answer. It starts at “Not sure”, so nothing is guessed. */
+function CaughtOn<V extends string>({ label, options, value, onChange }: { label: string; options: { label: string; value: V }[]; value: V | undefined; onChange: (value: V | undefined) => void }) {
+  return (
+    <View style={styles.followUp}>
+      <T variant="caption" color={colors.inkMuted}>{label}</T>
+      <ChoiceChips<V | typeof UNSURE>
+        label={label}
+        value={value ?? UNSURE}
+        onChange={(next) => onChange(next === UNSURE ? undefined : (next as V))}
+        options={[...options, { label: 'Not sure', value: UNSURE }]}
+      />
+    </View>
+  );
+}
+
 function Section({ title, children }: PropsWithChildren<{ title: string }>) {
   return (
     <View style={{ gap: spacing.xs }}>
@@ -348,12 +378,15 @@ function Section({ title, children }: PropsWithChildren<{ title: string }>) {
 
 const styles = StyleSheet.create({
   form: { paddingTop: spacing.xs },
-  cancel: { paddingHorizontal: spacing.sm },
+  // Equal halves, so neither button shifts when Save turns into “Saving…”.
+  action: { flexGrow: 1, flexBasis: 0, paddingHorizontal: spacing.sm },
   // Bleeds to the screen edges so a long list of lakes scrolls under them.
   lakes: { marginHorizontal: -spacing.xl },
   lakesContent: { paddingHorizontal: spacing.xl },
   group: { gap: 0, paddingVertical: 0 },
   block: { gap: spacing.xs, paddingVertical: spacing.md },
+  // Indented behind a rule, so it reads as a question about the chips above, not more chips.
+  followUp: { gap: spacing.xs, marginTop: spacing.sm, paddingLeft: spacing.md, borderLeftWidth: 2, borderLeftColor: colors.tealTint },
   disclosure: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: touch.min, paddingVertical: spacing.sm },
   details: { gap: spacing.lg, paddingBottom: spacing.md },
   attached: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },

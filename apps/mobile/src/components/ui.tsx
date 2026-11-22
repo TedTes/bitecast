@@ -354,29 +354,60 @@ export function Segmented<V extends string>({ options, value, onChange, label, t
 export function ChoiceChips<V extends string>({ options, value, onChange, label }: { options: Option<V>[]; value: V | null; onChange: (value: V) => void; label?: string }) {
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label} style={styles.choiceWrap}>
+      {options.map((option) => (
+        <ChoicePill
+          key={option.value}
+          role="radio"
+          option={option}
+          active={value === option.value}
+          onPress={() => {
+            if (value !== option.value) haptic.select();
+            onChange(option.value);
+          }}
+        />
+      ))}
+    </View>
+  );
+}
+
+/** The same chips for picking any number. Each is a checkbox to screen readers. */
+export function MultiChoiceChips<V extends string>({ options, values, onChange, label }: { options: Option<V>[]; values: V[]; onChange: (values: V[]) => void; label?: string }) {
+  return (
+    <View accessibilityLabel={label} style={styles.choiceWrap}>
       {options.map((option) => {
-        const active = value === option.value;
-        const fg = active ? colors.tealDeep : colors.ink;
+        const active = values.includes(option.value);
         return (
-          <Pressable
+          <ChoicePill
             key={option.value}
-            accessibilityRole="radio"
-            accessibilityLabel={option.accessibilityLabel ?? option.label}
-            accessibilityState={{ checked: active, selected: active }}
+            role="checkbox"
+            option={option}
+            active={active}
             onPress={() => {
-              if (!active) haptic.select();
-              onChange(option.value);
+              haptic.select();
+              onChange(active ? values.filter((value) => value !== option.value) : [...values, option.value]);
             }}
-            style={({ pressed }) => [styles.choiceTouch, pressed && styles.pressed]}
-          >
-            <View style={[styles.choicePill, active && styles.choicePillActive]}>
-              {option.icon ? <Icon name={option.icon} size={15} color={active ? fg : colors.teal} /> : active ? <Icon name="check" size={12} color={fg} /> : null}
-              <T variant="callout" weight={active ? '600' : '400'} color={fg}>{option.label}</T>
-            </View>
-          </Pressable>
+          />
         );
       })}
     </View>
+  );
+}
+
+function ChoicePill<V extends string>({ option, active, role, onPress }: { option: Option<V>; active: boolean; role: 'radio' | 'checkbox'; onPress: () => void }) {
+  const fg = active ? colors.tealDeep : colors.ink;
+  return (
+    <Pressable
+      accessibilityRole={role}
+      accessibilityLabel={option.accessibilityLabel ?? option.label}
+      accessibilityState={role === 'radio' ? { checked: active, selected: active } : { checked: active }}
+      onPress={onPress}
+      style={({ pressed }) => [styles.choiceTouch, pressed && styles.pressed]}
+    >
+      <View style={[styles.choicePill, active && styles.choicePillActive]}>
+        {option.icon ? <Icon name={option.icon} size={15} color={active ? fg : colors.teal} /> : active ? <Icon name="check" size={12} color={fg} /> : null}
+        <T variant="callout" weight={active ? '600' : '400'} color={fg}>{option.label}</T>
+      </View>
+    </Pressable>
   );
 }
 
@@ -424,7 +455,7 @@ export function Field({ label, helper, error, suffix, optional, style, ...props 
  * Form row with its label on the left and a small −/+ stepper on the right (44pt targets).
  * Adjustable for screen readers, which hear `unit` in place of the formatted value.
  */
-export function Stepper({ label, value, onChange, min = 0, max = 99, step = 1, unit, format = String }: { label: string; value: number; onChange: (value: number) => void; min?: number; max?: number; step?: number; unit?: string; format?: (value: number) => string }) {
+export function Stepper({ label, hint, value, onChange, min = 0, max = 99, step = 1, unit, format = String }: { label: string; /** A word under the label on what the value means. */ hint?: string; value: number; onChange: (value: number) => void; min?: number; max?: number; step?: number; unit?: string; format?: (value: number) => string }) {
   const set = (next: number) => {
     const clamped = Math.min(max, Math.max(min, next));
     if (clamped !== value) haptic.select();
@@ -442,12 +473,15 @@ export function Stepper({ label, value, onChange, min = 0, max = 99, step = 1, u
       accessible
       accessibilityRole="adjustable"
       accessibilityLabel={label}
-      accessibilityValue={{ min, max, now: value, text: unit ? `${value} ${unit}` : format(value) }}
+      accessibilityValue={{ min, max, now: value, text: `${unit ? `${value} ${unit}` : format(value)}${hint ? `, ${hint}` : ''}` }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(event: AccessibilityActionEvent) => set(value + (event.nativeEvent.actionName === 'increment' ? step : -step))}
       style={styles.stepper}
     >
-      <T variant="callout" style={{ flex: 1 }}>{label}</T>
+      <View style={{ flex: 1 }}>
+        <T variant="callout">{label}</T>
+        {hint ? <T variant="caption" color={colors.inkMuted}>{hint}</T> : null}
+      </View>
       {button('minus', value - step, value <= min)}
       <T variant="subhead" align="center" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={styles.stepValue}>{format(value)}</T>
       {button('plus', value + step, value >= max)}

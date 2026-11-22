@@ -8,7 +8,9 @@ import { WalleyeArt } from '@/components/walleye';
 import { colors, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
 import { integrationsReady } from '@/api/config';
 import { lakeById } from '@/data/lakes';
-import { capitalize, formatDay, formatTime, lengthUnit, startOfDay, toDisplayLength } from '@/lib/format';
+import { baitsText } from '@/features/trip-baits';
+import { methodsText } from '@/features/trip-methods';
+import { formatDay, formatTime, lengthUnit, startOfDay, toDisplayLength } from '@/lib/format';
 import { useNow } from '@/lib/use-now';
 import { useAppStore } from '@/store/use-app-store';
 import type { CatchLog } from '@/types/app';
@@ -161,7 +163,7 @@ function Entry({ log, justSaved, units }: { log: CatchLog; justSaved: boolean; u
       <Pressable
         onPress={() => router.push({ pathname: '/log/[id]', params: { id: log.id } })}
         accessibilityRole="button"
-        accessibilityLabel={`${lake.name}, ${formatTime(log.caughtAt)}. ${result}. ${log.method}, ${log.bait || 'no bait noted'}. Bite score ${log.scoreAtTime} at the time, ${log.lightCondition}. ${syncText}.${justSaved ? ' Just saved.' : ''}`}
+        accessibilityLabel={`${lake.name}, ${formatTime(log.caughtAt)}. ${result}. ${methodsText(log)}, ${baitsText(log)}. Bite score ${log.scoreAtTime} at the time, ${log.lightCondition}. ${syncText}.${justSaved ? ' Just saved.' : ''}`}
         accessibilityHint="Edit this log"
         style={({ pressed }) => [styles.entry, justSaved && styles.entrySaved, pressed && { opacity: 0.85 }]}
       >
@@ -175,7 +177,7 @@ function Entry({ log, justSaved, units }: { log: CatchLog; justSaved: boolean; u
             <T variant="caption" color={colors.inkMuted}>{formatTime(log.caughtAt)}</T>
           </Row>
           <T variant="caption" color={colors.inkSoft} numberOfLines={1}>
-            {capitalize(log.method)} · {log.bait || 'No bait noted'}{log.lengthCm ? ` · biggest ${toDisplayLength(log.lengthCm, units)} ${lengthUnit(units)}` : ''}
+            {methodsText(log)} · {baitsText(log)}{log.lengthCm ? ` · biggest ${toDisplayLength(log.lengthCm, units)} ${lengthUnit(units)}` : ''}
           </T>
           <Row gap={spacing.md}>
             <Row gap={4}>
