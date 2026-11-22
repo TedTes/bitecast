@@ -94,6 +94,8 @@ export const elevation = {
 } as const;
 
 const serif = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, "Iowan Old Style", serif' });
+/** Serif for large numbers: Georgia's old-style digits drop below the line (“30m” reads as “3om”). */
+export const numeralSerif = Platform.select({ ios: 'ui-serif', default: serif });
 
 /**
  * Type scale. Display/title use a serif for the “field journal” voice; everything

@@ -15,7 +15,7 @@ import { ConfidenceBars } from '@/components/score-ring';
 import { Toast } from '@/components/toast';
 import { Button, EmptyState, ErrorState, IceSafetyNotice, OfflineBanner, Reveal, Row, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
-import { colors, hitSlop, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
+import { colors, hitSlop, numeralSerif, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
 import { forecastQuery, forecastSource, freshness, type Freshness } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { seasonLabel, useConditionResolver } from '@/features/lake-season';
@@ -251,7 +251,7 @@ function Header({ now, fresh, refreshing, onRefresh, aboutOpen, onAbout }: { now
 
 function Ticket({ entry, now }: { entry: LakeData; now: number }) {
   const { lake, season, next, live, forecast } = entry;
-  const kind = forecast.predictionGranularity === 'time_block' ? 'block' : 'window';
+  const kind = forecast.predictionGranularity === 'time_block' ? 'time block' : 'window';
   const range = next ? shortRange(next.start, windowEnd(next)) : '';
   const wait = next ? formatDuration(new Date(live ? windowEnd(next) : next.start).getTime() - now) : '';
   const detail = !next ? 'No window this week' : live ? `Current ${kind}` : `Next ${kind} · ${dayLabel(next.start)}`;
@@ -298,7 +298,8 @@ function OrbScore({ score, caption, top, palette }: { score: number; caption: st
   const { ink } = palette.orb;
   return (
     <View style={[styles.orb, { top }]} accessible accessibilityRole="text" accessibilityLabel={`${caption} bite score ${score} out of 100, ${band.label}`}>
-      <T variant="label" color={ink} maxFontSizeMultiplier={1.1} style={styles.orbCaption}>{caption}</T>
+      {/* “Block” means nothing on its own; say what the number is. */}
+      <T variant="label" color={ink} maxFontSizeMultiplier={1.1} style={styles.orbCaption}>{caption === 'Block' ? 'Bite score' : caption}</T>
       <T variant="title" color={ink} maxFontSizeMultiplier={1.1} style={styles.orbScore}>{score}</T>
       <T variant="caption" weight="800" color={ink} maxFontSizeMultiplier={1.1}>{band.label}</T>
     </View>
@@ -411,7 +412,7 @@ function SignLake({ entry, now }: { entry: LakeData; now: number }) {
         <T variant="caption" weight="700" color={onScene.accent} numberOfLines={1}>{when}</T>
         <Row gap={5}>
           <Icon name={reasonIcon(reason)} size={11} color={onScene.soft} />
-          <T variant="caption" color={onScene.soft} numberOfLines={1} style={{ flex: 1 }}>{reason}</T>
+          <T variant="caption" color={onScene.soft} numberOfLines={2} style={{ flex: 1 }}>{reason}</T>
           <ConfidenceBars level={confidence} tone="dark" bare />
         </Row>
       </View>
@@ -454,23 +455,24 @@ const styles = StyleSheet.create({
   about: { marginTop: spacing.sm, padding: spacing.md, borderRadius: radius.md, ...glass },
   ticket: { flexDirection: 'row', marginTop: spacing.sm, borderRadius: radius.lg, ...glass },
   ticketMain: { flex: 1, gap: 2, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
-  when: { fontSize: 28, lineHeight: 34 },
+  when: { fontFamily: numeralSerif, fontSize: 28, lineHeight: 34 },
   perforation: { justifyContent: 'space-evenly', paddingVertical: 4 },
   perforationDot: { width: 2, height: 4, borderRadius: 1, backgroundColor: onScene.glassLine },
   ticketStub: { width: 100, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.sm, gap: 2 },
-  wait: { fontSize: 21, lineHeight: 26 },
+  wait: { fontFamily: numeralSerif, fontSize: 21, lineHeight: 26 },
   liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: onScene.accent },
   skySpace: { height: SKY_SPACE },
   orb: { position: 'absolute', alignSelf: 'center', width: ORB, height: ORB, alignItems: 'center', justifyContent: 'center' },
-  orbCaption: { fontSize: 10, lineHeight: 12 },
-  orbScore: { fontSize: 46, lineHeight: 50 },
+  orbCaption: { fontSize: 9, lineHeight: 12, letterSpacing: 0.8 },
+  orbScore: { fontFamily: numeralSerif, fontSize: 46, lineHeight: 50 },
   timeline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: SHORE },
   timelineNow: { position: 'absolute', left: 0, top: 3 },
   timelineEdge: { position: 'absolute', top: 3, width: 72, marginLeft: -36, textAlign: 'center' },
   timelineEnd: { position: 'absolute', right: 0, top: 3 },
   timelineWindow: { position: 'absolute', bottom: 0, height: 3, borderRadius: 2, backgroundColor: onScene.accent },
   water: { marginTop: SURFACE + spacing.sm, gap: spacing.md },
-  conditions: { gap: spacing.md, padding: spacing.md, borderRadius: radius.lg, ...glass },
+  // Nearly opaque: the fishing line and light rays pass behind it, not through the text.
+  conditions: { gap: spacing.md, padding: spacing.md, borderRadius: radius.lg, ...glass, backgroundColor: onScene.deepGlass },
   reason: { flex: 1, fontSize: 16, lineHeight: 21, fontStyle: 'italic' },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tile: { flexGrow: 1, flexBasis: 64, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 4, paddingHorizontal: 3, paddingVertical: 6, borderRadius: radius.sm, borderWidth: 1, borderColor: onScene.glassLine },

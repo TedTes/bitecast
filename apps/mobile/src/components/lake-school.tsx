@@ -39,8 +39,9 @@ function roomiest(fish: Fish[], self: Fish, width: number, top: number, room: nu
     let nearest = Number.MAX_VALUE;
     for (const other of fish) {
       if (other === self || other.alpha < 0.1) continue;
-      const dx = (other.x - x) / Math.max(1, width);
-      const dy = (other.y - y) / Math.max(1, room + 1);
+      // Measured in points: scaling by the band would stack fish in a column when the band is shallow.
+      const dx = other.x - x;
+      const dy = other.y - y;
       nearest = Math.min(nearest, dx * dx + dy * dy * 3);
     }
     if (nearest > bestScore) { bestScore = nearest; bestX = x; bestY = y; }
@@ -114,13 +115,14 @@ export function LakeSchool({ width, top, bottom, mood, count = 10, sizeScale = 1
           f.targetY = top + d * room;
         }
 
-        // Personal space: ease apart vertically from close neighbours (no stacked pairs).
+        // Personal space: ease apart from close neighbours, sideways too as a shallow band has no height to spare.
         for (const other of fish) {
           if (other === f || other.alpha < 0.2) continue;
           const dx = Math.abs(other.x - f.x);
           const dy = other.y - f.y;
           if (dx < (f.size + other.size) * 0.55 && Math.abs(dy) < (h + other.size * FISH_ASPECT) * 0.8) {
             f.targetY = Math.min(top + room, Math.max(top, f.targetY - Math.sign(dy || 1) * 14 * dt * 10));
+            f.x += Math.sign(f.x - other.x) * 7 * dt;
           }
         }
 

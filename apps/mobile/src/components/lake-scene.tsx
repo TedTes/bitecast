@@ -16,9 +16,9 @@ export const SKY_SPACE = 160;
 /** Dark shore at the horizon that carries the timeline labels. */
 export const SHORE = 26;
 /** Visible water surface between the horizon and the waterline. */
-export const SURFACE = 52;
+export const SURFACE = 44;
 /** Minimum open water and bed kept below the last card. */
-export const LAKE_FLOOR = 116;
+export const LAKE_FLOOR = 108;
 export const ORB = 116;
 
 /** Top of the sun or moon inside the sky space. */
@@ -50,7 +50,7 @@ export function LakeScene({ width, height, headerBottom, horizon, contentBottom,
   return (
     <View pointerEvents="none" style={[styles.scene, { width, height }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Sky width={width} horizon={horizon} palette={palette} />
-      <Clouds width={width} top={headerBottom} horizon={horizon} palette={palette} weather={weather} active={active} scrollY={scrollY} />
+      <Clouds width={width} top={Math.max(headerBottom, horizon - SKY_SPACE)} horizon={horizon} palette={palette} weather={weather} active={active} scrollY={scrollY} />
       <Orb width={width} horizon={horizon} {...orb} palette={palette} moon={moon} />
       <Shore width={width} horizon={horizon} palette={palette} birds={!palette.night && weather.cloudPct < 85 && weather.rainMm < 0.2} />
       <Surface width={width} horizon={horizon} palette={palette} windKmh={weather.windKmh} ice={ice} />
@@ -118,7 +118,8 @@ function Clouds({ width, top, horizon, palette, weather, active, scrollY }: { wi
   const count = weather.cloudPct < 10 ? 0 : Math.ceil(weather.cloudPct / 11);
   const puffs = Array.from({ length: count }, () => {
     const x = random() * width;
-    const y = top + random() * Math.max(1, horizon - top - 50);
+    // Keep whole clouds below the ticket, so they don't smudge through its glass.
+    const y = top + 42 + random() * Math.max(1, horizon - top - 92);
     const span = 70 + random() * 100;
     // Many soft, flattened puffs along a flat base read as one natural cloud.
     return Array.from({ length: 7 }, (_, i) => {
@@ -177,11 +178,14 @@ function Orb({ width, horizon, x, y, palette, moon }: { width: number; horizon: 
 function ridgePath(width: number, base: number, rise: number, seed: number) {
   const random = seeded(seed);
   const phase = random() * 6;
+  // Uneven sides, so the hills don't form a symmetrical bowl.
+  const left = rise * (0.35 + random() * 0.65);
+  const right = rise * (0.35 + random() * 0.65);
   let path = `M0 ${base + SHORE}`;
   for (let x = 0; x <= width + 6; x += 6) {
     const side = Math.abs((x / width) * 2 - 1);
     const roll = (Math.sin(x / 37 + phase) + Math.sin(x / 17 + phase * 2) * 0.4 + 1.4) * 3;
-    path += ` L${x} ${base - side * side * rise - roll - random() * 1.5}`;
+    path += ` L${x} ${base - side * side * (x < width / 2 ? left : right) - roll - random() * 1.5}`;
   }
   return `${path} L${width + 6} ${base + SHORE} Z`;
 }
@@ -236,7 +240,7 @@ function Surface({ width, horizon, palette, windKmh, ice }: { width: number; hor
           <Stop offset="1" stopColor={palette.surfaceNear} />
         </LinearGradient>
         <LinearGradient id="shoreReflection" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor={palette.nearShore} stopOpacity={ice ? 0.12 : 0.6} />
+          <Stop offset="0" stopColor={palette.nearShore} stopOpacity={ice ? 0.12 : 0.4} />
           <Stop offset="1" stopColor={palette.nearShore} stopOpacity={0} />
         </LinearGradient>
       </Defs>
@@ -318,11 +322,18 @@ function LightShafts({ width, top, height, strength, active }: { width: number; 
       <Svg width={width} height={height}>
         <Defs>
           <LinearGradient id="sceneShaft" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#C8EEE4" stopOpacity={0.16} />
+            <Stop offset="0" stopColor="#C8EEE4" stopOpacity={0.045} />
             <Stop offset="1" stopColor="#C8EEE4" stopOpacity={0} />
           </LinearGradient>
         </Defs>
-        {shafts.map(({ x, w, lean }, i) => <Path key={i} d={`M${x} 4 h${w} L${x + lean + w * 2.4} ${height * 0.8} L${x + lean} ${height * 0.8} Z`} fill="url(#sceneShaft)" />)}
+        {/* Nested faint layers give each ray a soft edge */}
+        {shafts.flatMap(({ x, w, lean }, i) =>
+          [1, 0.7, 0.4].map((spread) => {
+            const near = w * spread;
+            const far = w * 2.4 * spread;
+            return <Path key={`${i}:${spread}`} d={`M${x - near / 2} 4 h${near} L${x + lean + far / 2} ${height * 0.8} L${x + lean - far / 2} ${height * 0.8} Z`} fill="url(#sceneShaft)" />;
+          }),
+        )}
       </Svg>
     </Animated.View>
   );
