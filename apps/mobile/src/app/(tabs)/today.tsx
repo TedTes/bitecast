@@ -6,7 +6,6 @@ import type { ForecastHour } from '@bitecast/engine';
 import { Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import * as SunCalc from 'suncalc';
 import { conditionLabel, hoursFromNow, windowEnd } from '@/components/forecast';
 import { Icon, type IconName } from '@/components/icon';
@@ -21,7 +20,7 @@ import { forecastSource, freshness, type Freshness } from '@/data/forecasts';
 import { seasonLabel } from '@/features/lake-season';
 import { useRankedLakes, useSceneSky, useSkyPreviewTime, type LakeData } from '@/features/live-sky';
 import { onScene, type SkyPalette } from '@/features/sky';
-import { capitalize, formatDay, formatDuration, formatWind, reasonIcon, shortClock, shortRange } from '@/lib/format';
+import { capitalize, formatDay, formatDuration, formatWind, shortClock, shortRange } from '@/lib/format';
 import { useNow } from '@/lib/use-now';
 import { useAppStore } from '@/store/use-app-store';
 import type { AppSettings } from '@/types/app';
@@ -29,7 +28,7 @@ import type { AppSettings } from '@/types/app';
 /*
  * Today, top to bottom: when (ticket in the sky) → how good (the sun or moon) → where that
  * falls in the next 24 h (shoreline) → why, how sure and what it’s like (water) → other lakes
- * (sign). The scene follows the lake’s sun altitude and forecast weather. Fish show mood only.
+ * (glass). The scene follows the lake’s sun altitude and forecast weather. Fish show mood only.
  */
 
 const HEADER = 44;
@@ -158,7 +157,7 @@ export default function TodayScreen() {
                   <Conditions {...outlook(best, now)} units={units} />
                   {seasons.includes('ice') ? <IceSafetyNotice compact /> : null}
                   <OfflineBanner />
-                  <Signpost best={best} others={data.slice(1)} now={now} />
+                  {data.length > 1 ? <OtherLakes lakes={data.slice(1)} now={now} /> : null}
                 </>
               ) : (
                 <View style={styles.plainBlock}>
@@ -361,23 +360,20 @@ const pressureTrend = (hours: ForecastHour[]) => {
   return delta > 1 ? 'Rising' : delta < -1 ? 'Falling' : 'Steady';
 };
 
-/* ───────────── Wooden sign: other lakes and the full forecast ───────────── */
+/* ───────────── Other lakes: the same glass as the rest, a step quieter ───────────── */
 
-function Signpost({ best, others, now }: { best: LakeData; others: LakeData[]; now: number }) {
+function OtherLakes({ lakes, now }: { lakes: LakeData[]; now: number }) {
   return (
-    <View style={styles.sign}>
-      <WoodGrain />
-      {others.map((entry) => <SignLake key={entry.lake.id} entry={entry} now={now} />)}
-      <Pressable onPress={() => openLake(best.lake.id)} accessibilityRole="button" style={({ pressed }) => [styles.signRow, pressed && styles.pressed]}>
-        <T variant="callout" weight="600" color={onScene.text} numberOfLines={1} style={{ flex: 1 }}>{`Full forecast · ${best.lake.name}`}</T>
-        <Icon name="chevron-right" size={14} color={onScene.text} />
-      </Pressable>
-      {[styles.nailTopLeft, styles.nailTopRight, styles.nailBottomLeft, styles.nailBottomRight].map((position, i) => <View key={i} style={[styles.nail, position]} />)}
+    <View style={styles.others}>
+      <T variant="label" color={onScene.text} accessibilityRole="header" style={styles.othersLabel}>{lakes.length === 1 ? 'Other lake' : 'Other lakes'}</T>
+      <View style={styles.othersCard}>
+        {lakes.map((entry, index) => <OtherLake key={entry.lake.id} entry={entry} now={now} divided={index > 0} />)}
+      </View>
     </View>
   );
 }
 
-function SignLake({ entry, now }: { entry: LakeData; now: number }) {
+function OtherLake({ entry, now, divided }: { entry: LakeData; now: number; divided: boolean }) {
   const { lake, next, live, season } = entry;
   const { score, reason, confidence, caption } = outlook(entry, now);
   const band = scoreBands[scoreBand(score)];
@@ -387,43 +383,21 @@ function SignLake({ entry, now }: { entry: LakeData; now: number }) {
       onPress={() => openLake(lake.id)}
       accessibilityRole="button"
       accessibilityHint="Opens the lake forecast"
-      accessibilityLabel={`Also ${lake.name}, ${seasonLabel(season).toLowerCase()}. ${when}. ${caption} bite score ${score}, ${band.label}. ${reason}. ${confidence} confidence.`}
-      style={({ pressed }) => [styles.signRow, styles.signLake, pressed && styles.pressed]}
+      accessibilityLabel={`${lake.name}, ${seasonLabel(season).toLowerCase()}. ${when}. ${caption} bite score ${score}, ${band.label}. ${reason}. ${confidence} confidence.`}
+      style={({ pressed }) => [styles.otherRow, divided && styles.otherDivider, pressed && styles.pressed]}
     >
       <ScoreBadge score={score} caption={caption} tone="dark" />
-      <View style={{ flex: 1, gap: 1 }}>
-        <T variant="callout" weight="600" color={onScene.text} numberOfLines={1}>{lake.name}</T>
-        <T variant="caption" weight="600" color={onScene.accent} numberOfLines={1}>{when}</T>
-        <Row gap={5}>
-          <Icon name={reasonIcon(reason)} size={11} color={onScene.soft} />
-          <T variant="caption" color={onScene.soft} numberOfLines={2} style={{ flex: 1 }}>{reason}</T>
-          <ConfidenceBars level={confidence} tone="dark" bare />
+      <View style={styles.otherText}>
+        <Row gap={spacing.sm}>
+          <T variant="callout" weight="600" color={onScene.text} numberOfLines={1} style={{ flex: 1 }}>{lake.name}</T>
+          <ConfidenceBars level={confidence} tone="dark" />
+          <Icon name="chevron-right" size={13} color={onScene.text} />
         </Row>
+        <T variant="caption" weight="600" color={onScene.accent} numberOfLines={1}>{when}</T>
+        {/* One line here: the whole reason is in the accessibility label and on the lake's screen */}
+        <T variant="caption" color={onScene.soft} numberOfLines={1}>{reason}</T>
       </View>
-      <Icon name="chevron-right" size={14} color={onScene.text} />
     </Pressable>
-  );
-}
-
-function WoodGrain() {
-  const lines = Array.from({ length: 16 }, (_, i) => {
-    const y = 3 + i * 6.2;
-    const wobble = Math.sin(i * 2.1) * 3;
-    return `M0 ${y} C80 ${y + wobble} 130 ${y - wobble} 190 ${y + wobble / 2} S270 ${y - wobble} 300 ${y}`;
-  }).join(' ');
-  return (
-    <View style={styles.grain} pointerEvents="none">
-      <Svg width="100%" height="100%" viewBox="0 0 300 100" preserveAspectRatio="none">
-        <Defs>
-          <LinearGradient id="signWood" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={onScene.woodLight} />
-            <Stop offset="1" stopColor={onScene.woodDark} />
-          </LinearGradient>
-        </Defs>
-        <Rect width={300} height={100} fill="url(#signWood)" />
-        <Path d={lines} stroke="#2E1C11" strokeWidth={0.6} opacity={0.5} fill="none" />
-      </Svg>
-    </View>
   );
 }
 
@@ -461,16 +435,14 @@ const styles = StyleSheet.create({
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tile: { flexGrow: 1, flexBasis: 64, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 4, paddingHorizontal: 3, paddingVertical: 6, borderRadius: radius.sm, borderWidth: 1, borderColor: onScene.glassLine },
   tileText: { fontSize: 11.5, lineHeight: 14 },
-  // Narrower than the page so the fishing line stays clear on the right.
-  sign: { width: '88%', borderRadius: radius.xs, overflow: 'hidden', backgroundColor: onScene.woodDark },
-  grain: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  signRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: touch.min, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
-  signLake: { borderBottomWidth: 1, borderBottomColor: '#35210F' },
-  nail: { position: 'absolute', width: 5, height: 5, borderRadius: 3, backgroundColor: '#2A2A28', borderTopWidth: 1, borderTopColor: '#A59A8C' },
-  nailTopLeft: { top: 6, left: 6 },
-  nailTopRight: { top: 6, right: 6 },
-  nailBottomLeft: { bottom: 6, left: 6 },
-  nailBottomRight: { bottom: 6, right: 6 },
+  others: { gap: spacing.xs },
+  // Sits straight on the water, so a soft shadow holds it up when a pale fish swims behind.
+  othersLabel: { paddingHorizontal: spacing.md, textShadowColor: 'rgba(3,17,26,0.7)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4 },
+  // The ticket's glass and edge: without both, the card disappears into the water.
+  othersCard: { borderRadius: radius.lg, overflow: 'hidden', ...glass },
+  otherRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: touch.min, padding: spacing.md },
+  otherDivider: { borderTopWidth: 1, borderTopColor: onScene.glassLine },
+  otherText: { flex: 1, gap: 1 },
   floor: { flexGrow: 1, minHeight: LAKE_FLOOR },
   plainBlock: { gap: spacing.lg, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.paper },
 });

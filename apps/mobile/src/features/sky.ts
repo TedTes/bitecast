@@ -11,8 +11,6 @@ export const onScene = {
   glass: 'rgba(7,24,32,0.72)',
   deepGlass: 'rgba(8,30,38,0.86)',
   glassLine: 'rgba(255,255,255,0.22)',
-  woodLight: '#694630',
-  woodDark: '#4B301F',
 } as const;
 
 const clamp = (value: number, min = 0, max = 1) => Math.min(max, Math.max(min, value));

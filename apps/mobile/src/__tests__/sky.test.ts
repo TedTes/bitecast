@@ -62,8 +62,10 @@ describe('Today scene contrast', () => {
     ).toEqual([]);
   });
 
-  it('keeps text readable on the wooden sign', () => {
-    for (const color of [onScene.text, onScene.soft, onScene.accent]) expect(contrast(color, onScene.woodLight)).toBeGreaterThanOrEqual(AA);
+  it('keeps the Other lakes label readable on the water, even where light rays overlap', () => {
+    expect(
+      failures((sky) => Math.min(...[sky.underTop, sky.underDeep].flatMap((water) => [contrast(onScene.text, water), contrast(onScene.text, mix(water, '#C8EEE4', 0.135))]))),
+    ).toEqual([]);
   });
 });
 

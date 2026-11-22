@@ -72,7 +72,8 @@ export function LakeScene({ width, height, headerBottom, horizon, contentBottom,
       {bedBottom - openTop > 30 ? (
         <LakeSchool key={`bed:${width}:${Math.round(openTop / 24)}:${Math.round(bedBottom / 24)}`} width={width} top={openTop} bottom={bedBottom} mood={mood} count={9} sizeScale={1.05} visibility={1.3} active={active} />
       ) : null}
-      {ice ? null : <Bobber x={width - 30} waterline={waterline} lineEnd={openTop + 18} windKmh={weather.windKmh} active={active} />}
+      {/* In the 20pt gutter, so the line runs beside the cards and never through their text */}
+      {ice ? null : <Bobber x={width - 10} waterline={waterline} lineEnd={openTop + 18} windKmh={weather.windKmh} active={active} />}
       {weather.rainMm >= 0.2 ? <Rain width={width} height={waterline} heavy={weather.rainMm >= 2} active={active} /> : null}
     </View>
   );
