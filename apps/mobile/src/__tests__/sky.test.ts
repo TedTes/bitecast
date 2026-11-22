@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mix, moonShadowPath, onScene, orbElevation, seeded, skyPalette } from '@/features/sky';
+import { mix, moonShadowPath, onScene, orbElevation, seeded, skyPalette, skyPhase } from '@/features/sky';
 
 const luminance = (hex: string) =>
   [1, 3, 5]
@@ -58,6 +58,10 @@ describe('sky geometry', () => {
     expect(skyPalette(-20, 0).stars).toBe(1);
     expect(skyPalette(-20, 100).stars).toBe(0);
     expect(skyPalette(30, 0).stars).toBe(0);
+  });
+
+  it('shows the sun only while it is up, then afterglow, then the moon', () => {
+    expect([10, -0.2, -0.4, -3.9, -4.1].map(skyPhase)).toEqual(['sun', 'sun', 'afterglow', 'afterglow', 'moon']);
   });
 
   it('keeps the orb between the horizon and the top of its space', () => {

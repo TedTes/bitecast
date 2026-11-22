@@ -46,8 +46,13 @@ function clearSky(altitude: number) {
   return { top: mix(a.top, b.top, t), upper: mix(a.upper, b.upper, t), mid: mix(a.mid, b.mid, t), low: mix(a.low, b.low, t) };
 }
 
-/** Below this the sun has gone and the scene shows the moon. */
+/** Apparent (refraction-corrected) altitude of the sun’s centre at sunrise and sunset. */
+const SUN_SET = -0.3;
+/** Below this the afterglow has gone and the scene shows the moon. */
 const NIGHT = -4;
+
+export type SkyPhase = 'sun' | 'afterglow' | 'moon';
+export const skyPhase = (altitude: number): SkyPhase => (altitude < NIGHT ? 'moon' : altitude < SUN_SET ? 'afterglow' : 'sun');
 
 export function skyPalette(altitude: number, cloudPct: number, ice = false) {
   const day = clamp((altitude + 10) / 18);
@@ -58,11 +63,13 @@ export function skyPalette(altitude: number, cloudPct: number, ice = false) {
   const mid = mix(clear.mid, mix('#222C36', '#83919B', day), grey);
   const low = mix(clear.low, mix('#2D3841', '#B3BCC0', day), grey);
   const near = mix('#060C10', '#1D3029', day);
-  const night = altitude < NIGHT;
+  const phase = skyPhase(altitude);
+  const night = phase === 'moon';
   const high = clamp(altitude / 25);
   const veil = grey * 0.8;
 
   return {
+    phase,
     night,
     top,
     upper,
@@ -83,6 +90,9 @@ export function skyPalette(altitude: number, cloudPct: number, ice = false) {
     weed: mix('#0C1D18', '#2F5D45', day),
     orb: night
       ? { core: '#EEF0E8', edge: '#C9CEC8', glow: '#AEBFD2', ink: '#14202A' }
+      : phase === 'afterglow'
+      ? // The sun is down: a dim dusky disc still carries the score, without posing as the sun.
+        { core: mix(mid, '#14182A', 0.7), edge: mix(low, '#14182A', 0.74), glow: low, ink: onScene.text }
       : {
           core: mix(mix('#FFE3A6', '#FFFBEA', high), '#E1E3DE', veil),
           edge: mix(mix('#F0A057', '#F8DE98', high), '#C5CBC9', veil),

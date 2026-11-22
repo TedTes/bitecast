@@ -12,6 +12,7 @@ import { conditionLabel, upcomingWindows, windowEnd } from '@/components/forecas
 import { Icon, type IconName } from '@/components/icon';
 import { LAKE_FLOOR, LakeScene, ORB, SHORE, SKY_SPACE, SURFACE, orbTop } from '@/components/lake-scene';
 import { ConfidenceBars } from '@/components/score-ring';
+import { SkyPreview } from '@/components/sky-preview';
 import { Toast } from '@/components/toast';
 import { Button, EmptyState, ErrorState, IceSafetyNotice, OfflineBanner, Reveal, Row, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
@@ -85,6 +86,10 @@ export default function TodayScreen() {
   const [horizon, setHorizon] = useState(0);
   const [contentBottom, setContentBottom] = useState(0);
   const now = useNow(30_000);
+  // Development only: scrub the sky through the day (long-press the title).
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewTime, setPreviewTime] = useState<number | null>(null);
+  const skyTime = (__DEV__ ? previewTime : null) ?? now;
   // Tabs stay mounted: the lake only animates while Today is on screen.
   const focused = useIsFocused();
   const scrollY = useSharedValue(0);
@@ -119,7 +124,7 @@ export default function TodayScreen() {
   const nowHour = best ? fromNow(best.forecast.hours, now)[0] : undefined;
 
   const place = best?.lake ?? DEFAULT_PLACE;
-  const altitude = SunCalc.getPosition(new Date(now), place.latitude, place.longitude).altitude; // degrees
+  const altitude = SunCalc.getPosition(new Date(skyTime), place.latitude, place.longitude).altitude; // degrees
   const ice = best?.season === 'ice';
   const weather = { cloudPct: nowHour?.cloudPct ?? 20, windKmh: nowHour?.windKmh ?? 8, rainMm: nowHour?.precipitationMm ?? 0 };
   const palette = skyPalette(altitude, weather.cloudPct, ice);
@@ -148,7 +153,7 @@ export default function TodayScreen() {
               altitude={altitude}
               palette={palette}
               weather={weather}
-              moon={SunCalc.getMoonIllumination(new Date(now))}
+              moon={SunCalc.getMoonIllumination(new Date(skyTime))}
               ice={ice}
               mood={nowScore >= 60 ? 'active' : nowScore >= 40 ? 'idle' : 'sleepy'}
               active={focused}
@@ -157,7 +162,7 @@ export default function TodayScreen() {
           ) : null}
 
           <View style={[styles.content, { paddingTop: insets.top }]}>
-            <Header now={now} fresh={fresh} refreshing={refreshing} onRefresh={refresh} aboutOpen={aboutOpen} onAbout={() => setAboutOpen((open) => !open)} />
+            <Header onTitleLongPress={__DEV__ ? () => setPreviewOpen(true) : undefined} now={now} fresh={fresh} refreshing={refreshing} onRefresh={refresh} aboutOpen={aboutOpen} onAbout={() => setAboutOpen((open) => !open)} />
             {aboutOpen ? (
               <Reveal style={styles.about}>
                 <T variant="caption" color={onScene.text}>
@@ -212,17 +217,30 @@ export default function TodayScreen() {
         </View>
       </Animated.ScrollView>
 
+      {__DEV__ && previewOpen ? (
+        <SkyPreview
+          now={now}
+          value={previewTime}
+          latitude={place.latitude}
+          longitude={place.longitude}
+          onChange={setPreviewTime}
+          onClose={() => {
+            setPreviewOpen(false);
+            setPreviewTime(null);
+          }}
+        />
+      ) : null}
       <Toast trigger={refreshErrorAt} icon="sync-error" message="Couldn’t refresh. Showing the forecast saved on this device." actionLabel="Retry" onAction={refresh} />
     </View>
   );
 }
 
-function Header({ now, fresh, refreshing, onRefresh, aboutOpen, onAbout }: { now: number; fresh?: Freshness; refreshing: boolean; onRefresh: () => void; aboutOpen: boolean; onAbout: () => void }) {
+function Header({ onTitleLongPress, now, fresh, refreshing, onRefresh, aboutOpen, onAbout }: { onTitleLongPress?: () => void; now: number; fresh?: Freshness; refreshing: boolean; onRefresh: () => void; aboutOpen: boolean; onAbout: () => void }) {
   const stale = fresh?.state === 'stale';
   const date = new Date(now).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
   return (
     <Row justify="space-between" align="center" style={{ minHeight: HEADER }}>
-      <T variant="display" color={onScene.text} accessibilityRole="header" accessibilityLabel={`Today, ${date}`}>Today</T>
+      <T variant="display" color={onScene.text} onLongPress={onTitleLongPress} suppressHighlighting accessibilityRole="header" accessibilityLabel={`Today, ${date}`}>Today</T>
       <Row gap={spacing.md} align="center" style={{ flexShrink: 1 }}>
         {fresh ? (
           <Pressable

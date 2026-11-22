@@ -58,7 +58,7 @@ export function LakeScene({ width, height, headerBottom, horizon, contentBottom,
       <Orb width={width} horizon={horizon} {...orb} palette={palette} moon={moon} />
       <Shore width={width} horizon={horizon} palette={palette} birds={!palette.night && weather.cloudPct < 85 && weather.rainMm < 0.2} />
       <Surface width={width} horizon={horizon} palette={palette} windKmh={weather.windKmh} ice={ice} />
-      {ice || palette.haze > 0.7 ? null : <Glitter width={width} top={horizon} color={palette.orb.edge} active={active} />}
+      {ice || palette.haze > 0.7 || palette.phase === 'afterglow' ? null : <Glitter width={width} top={horizon} color={palette.orb.edge} active={active} />}
       <Underwater width={width} top={waterline} height={height - waterline} palette={palette} />
       <LightShafts width={width} top={waterline} height={height - waterline} strength={palette.daylight * (1 - palette.haze * 0.6)} active={active} />
       <Particles width={width} top={fishTop} height={Math.max(0, fishBottom - fishTop)} active={active} />
@@ -159,13 +159,14 @@ function Clouds({ width, top, horizon, palette, weather, active, scrollY }: { wi
 function Orb({ width, horizon, x, y, palette, moon }: { width: number; horizon: number; x: number; y: number; palette: SkyPalette; moon: SceneProps['moon'] }) {
   const { core, edge, glow } = palette.orb;
   const r = ORB / 2;
-  const halo = r * (palette.night ? 1.9 : 2.8);
+  const halo = r * (palette.phase === 'sun' ? 2.8 : 1.9);
+  const shine = (palette.phase === 'afterglow' ? 0.2 : 1) * (1 - palette.haze * 0.6);
   return (
     <Svg width={width} height={horizon} style={at(0, 0)}>
       <Defs>
         <RadialGradient id="orbGlow">
-          <Stop offset="0.25" stopColor={glow} stopOpacity={0.5 * (1 - palette.haze * 0.6)} />
-          <Stop offset="0.55" stopColor={glow} stopOpacity={0.16} />
+          <Stop offset="0.25" stopColor={glow} stopOpacity={0.5 * shine} />
+          <Stop offset="0.55" stopColor={glow} stopOpacity={0.16 * shine} />
           <Stop offset="1" stopColor={glow} stopOpacity={0} />
         </RadialGradient>
         <RadialGradient id="orbFace">
