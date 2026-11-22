@@ -368,13 +368,15 @@ function Bed({ width, top, palette }: { width: number; top: number; palette: Sky
   const random = seeded(113);
   const rocks = Array.from({ length: 13 }, () => ({ x: random() * width, w: 7 + random() ** 2 * 32, y: 38 + random() * 20 }));
   let grains = '';
-  for (let i = 0; i < 150; i += 1) grains += `M${random() * width} ${40 + random() * 34} h${0.3 + random()} `;
+  for (let i = 0; i < 150; i += 1) grains += `M${random() * width} ${40 + random() * 22} h${0.3 + random()} `;
   return (
     <Svg width={width} height={74} style={at(0, top)}>
       <Defs>
         <LinearGradient id="sceneSilt" x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor={palette.sandLight} />
-          <Stop offset="1" stopColor={palette.sandDark} />
+          <Stop offset="0.6" stopColor={palette.sandDark} />
+          {/* The bed falls away into the deep water of the tab bar */}
+          <Stop offset="1" stopColor={palette.underDeep} />
         </LinearGradient>
         <LinearGradient id="sceneRock" x1="0" y1="0" x2="0.4" y2="1">
           <Stop offset="0" stopColor={mix(palette.sandLight, '#9AA6A0', 0.3)} />

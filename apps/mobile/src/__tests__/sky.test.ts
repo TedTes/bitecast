@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mix, moonShadowPath, onScene, orbElevation, seeded, skyPalette, skyPhase, TAB_PILL_TINT, tabBed } from '@/features/sky';
+import { mix, moonShadowPath, onScene, orbElevation, seeded, skyPalette, skyPhase, TAB_PILL_TINT, tabWater } from '@/features/sky';
 
 const luminance = (hex: string) =>
   [1, 3, 5]
@@ -47,15 +47,15 @@ describe('Today scene contrast', () => {
     for (const color of [onScene.text, onScene.soft, onScene.accent]) expect(contrast(color, hex)).toBeGreaterThanOrEqual(AA);
   });
 
-  it('keeps tab icons and labels readable on the lake bed, including the selected pill', () => {
+  it('keeps tab icons and labels readable on the deep-water bar, including the selected pill', () => {
     expect(
       failures((sky) => {
-        const { top, bottom } = tabBed(sky);
+        const { top, bottom } = tabWater(sky);
         return Math.min(
-          ...[top, bottom].flatMap((silt) => [
-            contrast(onScene.soft, silt),
-            contrast(onScene.accent, silt),
-            contrast(onScene.accent, mix(silt, onScene.accent, TAB_PILL_TINT)),
+          ...[top, bottom].flatMap((water) => [
+            contrast(onScene.soft, water),
+            contrast(onScene.accent, water),
+            contrast(onScene.accent, mix(water, onScene.accent, TAB_PILL_TINT)),
           ]),
         );
       }),

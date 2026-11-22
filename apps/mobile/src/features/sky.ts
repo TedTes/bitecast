@@ -107,11 +107,10 @@ export function skyPalette(altitude: number, cloudPct: number, ice = false) {
 
 export type SkyPalette = ReturnType<typeof skyPalette>;
 
-/** The tab bar’s silt: carries on from where Today’s lake bed ends and darkens with depth. */
-export const tabBed = (palette: SkyPalette) => ({
-  top: palette.sandDark,
-  bottom: mix(palette.sandDark, '#000000', 0.3),
-  grain: mix(palette.sandDark, '#000000', 0.45),
+/** The tab bar’s deep water. Today’s lake bed fades into its top colour. */
+export const tabWater = (palette: SkyPalette) => ({
+  top: palette.underDeep,
+  bottom: mix(palette.underDeep, '#000000', 0.3),
 });
 
 /** How strongly the selected tab’s pill is tinted with the accent. */

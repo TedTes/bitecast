@@ -10,6 +10,7 @@ import { onScene, orbElevation, seeded } from '@/features/sky';
 import { Icon } from './icon';
 import { ridgePath, treesPath } from './lake-scene';
 import { Row, T } from './ui';
+import { wavePath } from './waterline';
 
 /*
  * Today’s family feature on the calm screens: a short, still strip of the same live sky, treeline
@@ -27,6 +28,8 @@ type Props = {
   subtitle?: string;
   /** Beside the title, or beside the back button when there is one. */
   right?: ReactNode;
+  /** The page colour the wave runs into; null where the water meets the content directly (the map). */
+  page?: string | null;
 };
 
 /** For tab screens: lit by the same lake as Today. */
@@ -35,7 +38,7 @@ export function ShorelineHeader(props: Props) {
   return <Shoreline {...props} sky={sky} />;
 }
 
-export function Shoreline({ title, subtitle, right, back, sky }: Props & { back?: boolean; sky: SceneSky }) {
+export function Shoreline({ title, subtitle, right, back, sky, page = colors.cream }: Props & { back?: boolean; sky: SceneSky }) {
   const insets = useSafeAreaInsets();
   const [size, setSize] = useState({ width: 0, height: 0 });
   useFocusEffect(
@@ -46,7 +49,9 @@ export function Shoreline({ title, subtitle, right, back, sky }: Props & { back?
   );
   return (
     <View style={{ backgroundColor: sky.palette.upper }} onLayout={({ nativeEvent: { layout } }) => setSize({ width: layout.width, height: layout.height })}>
-      {size.width ? <Scenery {...size} sky={sky} /> : null}
+      {size.width ? <Scenery {...size} sky={sky} page={page} /> : null}
+      {/* Covers the sub-pixel sliver of sky colour under the drawing */}
+      <View style={[styles.seam, { backgroundColor: page ?? sky.palette.surfaceNear }]} />
       <View style={[styles.content, { paddingTop: insets.top }]}>
         {back ? (
           <Row justify="space-between" style={styles.nav}>
@@ -72,7 +77,7 @@ export function Shoreline({ title, subtitle, right, back, sky }: Props & { back?
   );
 }
 
-function Scenery({ width, height, sky: { palette, altitude, weather, ice } }: { width: number; height: number; sky: SceneSky }) {
+function Scenery({ width, height, page, sky: { palette, altitude, weather, ice } }: { width: number; height: number; page: string | null; sky: SceneSky }) {
   const horizon = height - WATER;
   const textEnd = Math.max(0, height - SHORELINE) / horizon;
   const orb = { x: width * 0.78, y: horizon - 13 - orbElevation(altitude) * 10 };
@@ -112,7 +117,7 @@ function Scenery({ width, height, sky: { palette, altitude, weather, ice } }: { 
         <Path d={ripples} stroke={palette.cloudLight} strokeWidth={0.8} opacity={0.4} />
         {ice || palette.phase === 'afterglow' ? null : <Path d={glitter} stroke={palette.orb.edge} strokeWidth={1} opacity={0.8} />}
         {/* The page begins at the water’s edge */}
-        <Path d={`M0 ${height - 3} Q${width * 0.25} ${height - 6} ${width * 0.5} ${height - 3} T${width} ${height - 3} V${height} H0 Z`} fill={colors.cream} />
+        {page ? <Path d={`${wavePath(width, height - 3)} V${height} H0 Z`} fill={page} /> : null}
       </Svg>
     </View>
   );
@@ -123,4 +128,5 @@ const styles = StyleSheet.create({
   nav: { minHeight: touch.min },
   back: { width: touch.min, height: touch.min, borderRadius: touch.min / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: onScene.glass, borderWidth: 1, borderColor: onScene.glassLine },
   titleRow: { minHeight: touch.min },
+  seam: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 1 },
 });

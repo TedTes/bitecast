@@ -62,6 +62,7 @@ export default function MapScreen() {
       style={styles.screen}
       top={
         <ShorelineHeader
+          page={view === 'map' && !iceNotice ? null : undefined}
           title="Lake map"
           subtitle={view === 'list' ? 'Best window in the next 24 hours' : mode === 'cached' ? 'Offline chart · not to scale · not for navigation' : 'Ontario + Great Lakes · not for navigation'}
           right={

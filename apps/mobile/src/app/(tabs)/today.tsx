@@ -100,7 +100,7 @@ export default function TodayScreen() {
   const nowScore = nowHour?.score ?? 50;
 
   return (
-    <View style={{ flex: 1, backgroundColor: palette.sandDark }}>
+    <View style={{ flex: 1, backgroundColor: palette.underDeep }}>
       {/* What shows when the scroll view is pulled past the top */}
       <View style={[styles.overscroll, { backgroundColor: palette.top }]} />
       <Animated.ScrollView
