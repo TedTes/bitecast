@@ -9,7 +9,7 @@ export const onScene = {
   soft: '#E3EBEA',
   accent: '#FFCB9E',
   glass: 'rgba(7,24,32,0.72)',
-  deepGlass: 'rgba(8,30,38,0.97)',
+  deepGlass: 'rgba(8,30,38,0.86)',
   glassLine: 'rgba(255,255,255,0.22)',
   woodLight: '#694630',
   woodDark: '#4B301F',

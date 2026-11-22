@@ -45,7 +45,8 @@ type SceneProps = {
 export function LakeScene({ width, height, headerBottom, horizon, contentBottom, altitude, palette, weather, moon, ice, mood, active, scrollY }: SceneProps) {
   const waterline = horizon + SURFACE;
   const orb = { x: width / 2, y: horizon - SKY_SPACE + orbTop(altitude) + ORB / 2 };
-  const fishTop = Math.max(waterline + 16, contentBottom + 8);
+  // Fish roam the whole water column, passing behind the cards.
+  const fishTop = waterline + 8;
   const fishBottom = height - 42;
   return (
     <View pointerEvents="none" style={[styles.scene, { width, height }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -63,9 +64,9 @@ export function LakeScene({ width, height, headerBottom, horizon, contentBottom,
       <Bubbles width={width} active={active} />
       {fishBottom - fishTop > 30 ? (
         // The count is fixed: the score changes how lively fish are, never how many there are.
-        <LakeSchool key={`${width}:${Math.round(fishTop / 24)}:${Math.round(fishBottom / 24)}`} width={width} top={fishTop} bottom={fishBottom} mood={mood} count={8} sizeScale={1.25} visibility={1.3} active={active} />
+        <LakeSchool key={`${width}:${Math.round(fishTop / 24)}:${Math.round(fishBottom / 24)}`} width={width} top={fishTop} bottom={fishBottom} mood={mood} count={11} sizeScale={1.25} visibility={1.3} active={active} />
       ) : null}
-      {ice ? null : <Bobber x={width - 30} waterline={waterline} lineEnd={fishTop + 14} windKmh={weather.windKmh} active={active} />}
+      {ice ? null : <Bobber x={width - 30} waterline={waterline} lineEnd={Math.max(waterline + 16, contentBottom + 8) + 14} windKmh={weather.windKmh} active={active} />}
       {weather.rainMm >= 0.2 ? <Rain width={width} height={waterline} heavy={weather.rainMm >= 2} active={active} /> : null}
     </View>
   );

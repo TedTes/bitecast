@@ -21,6 +21,9 @@ type Fish = {
   fading: boolean;
 };
 
+/** Furthest a fish changes depth per decision (pt), and how fast it may do so (pt/s). */
+const MAX_HOP = 90;
+const MAX_CLIMB = 14;
 const FISH_ASPECT = 110 / 240; // WalleyeArt viewBox
 function lifespan() {
   'worklet';
@@ -99,7 +102,8 @@ export function LakeSchool({ width, top, bottom, mood, count = 10, sizeScale = 1
     const dt = Math.min(0.05, (frame.timeSincePreviousFrame ?? 16) / 1000);
     const a = activity.get(); // 0 sleepy … 2 active
     const pace = 0.2 + a * 0.55;
-    const preferred = 0.7 - a * 0.3; // active → upper water, sleepy → lower (still in view)
+    // Lively fish use the whole water column; sleepy ones favour the bottom.
+    const depthBias = 0.45 + a * 0.2;
     school.modify((fish) => {
       'worklet';
       for (const f of fish) {
@@ -111,8 +115,9 @@ export function LakeSchool({ width, top, bottom, mood, count = 10, sizeScale = 1
         if (f.turnIn <= 0) {
           f.turnIn = 4 + Math.random() * 10;
           if (Math.random() < 0.3) f.dir = -f.dir;
-          const d = Math.min(1, Math.max(0, preferred * 0.6 + Math.random() * 0.55 - 0.15));
-          f.targetY = top + d * room;
+          const wander = top + Math.random() ** depthBias * room;
+          // Short hops, so a fish meanders through a tall band instead of diving across it.
+          f.targetY = Math.min(f.y + MAX_HOP, Math.max(f.y - MAX_HOP, wander));
         }
 
         // Personal space: ease apart from close neighbours, sideways too as a shallow band has no height to spare.
@@ -130,7 +135,7 @@ export function LakeSchool({ width, top, bottom, mood, count = 10, sizeScale = 1
         f.facing += (f.dir - f.facing) * Math.min(1, dt * 2.2);
         const turning = 1 - Math.abs(f.facing);
         f.x += f.facing * f.speed * pace * (1 - turning * 0.7) * dt;
-        f.y += (f.targetY - f.y) * Math.min(1, dt * 0.35);
+        f.y += Math.min(MAX_CLIMB, Math.max(-MAX_CLIMB, (f.targetY - f.y) * 0.35)) * dt;
         f.phase += dt * (1 + a * 2);
 
         // Lifespan: dwindle away in place, then reappear somewhere roomy.

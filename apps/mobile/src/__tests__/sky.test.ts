@@ -39,8 +39,9 @@ describe('Today scene contrast', () => {
     ).toEqual([]);
   });
 
-  it('keeps glass-card text readable even over pure white', () => {
-    const [r, g, b, alpha] = onScene.glass.match(/[\d.]+/g)!.map(Number);
+  // Pure white is the worst case for anything passing behind: clouds, light rays or pale fish.
+  it.each(['glass', 'deepGlass'] as const)('keeps %s text readable even over pure white', (surface) => {
+    const [r, g, b, alpha] = onScene[surface].match(/[\d.]+/g)!.map(Number);
     const hex = `#${[r, g, b].map((c) => Math.round(c * alpha + 255 * (1 - alpha)).toString(16).padStart(2, '0')).join('')}`;
     for (const color of [onScene.text, onScene.soft, onScene.accent]) expect(contrast(color, hex)).toBeGreaterThanOrEqual(AA);
   });

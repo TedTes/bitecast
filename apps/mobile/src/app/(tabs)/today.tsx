@@ -206,7 +206,7 @@ export default function TodayScreen() {
               )}
             </View>
 
-            {/* Open water below the last card: where the fish and the lake bed are */}
+            {/* Open water below the last card: where the lure and the lake bed are */}
             <View style={styles.floor} onLayout={({ nativeEvent: { layout } }) => setContentBottom(layout.y)} />
           </View>
         </View>
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
   timelineEnd: { position: 'absolute', right: 0, top: 3 },
   timelineWindow: { position: 'absolute', bottom: 0, height: 3, borderRadius: 2, backgroundColor: onScene.accent },
   water: { marginTop: SURFACE + spacing.sm, gap: spacing.md },
-  // Nearly opaque: the fishing line and light rays pass behind it, not through the text.
+  // Dark enough for the text, clear enough that fish show faintly as they pass behind.
   conditions: { gap: spacing.md, padding: spacing.md, borderRadius: radius.lg, ...glass, backgroundColor: onScene.deepGlass },
   reason: { flex: 1, fontSize: 16, lineHeight: 21, fontStyle: 'italic' },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
