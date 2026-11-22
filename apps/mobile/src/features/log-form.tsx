@@ -1,14 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type PropsWithChildren } from 'react';
 import { randomUUID } from 'expo-crypto';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/icon';
-import { Banner, Button, Card, ChoiceChips, EmptyState, Field, IceSafetyNotice, Reveal, Row, Screen, Segmented, SkeletonCard, Stepper, T, ToggleRow } from '@/components/ui';
-import { ConfidenceMeter, ScoreReadout } from '@/components/forecast';
-import { colors, elevation, radius, spacing, touch } from '@/constants/theme';
+import { Banner, Button, Card, ChoiceChips, Divider, EmptyState, Field, IceSafetyNotice, LinkButton, Reveal, Row, Screen, Segmented, SkeletonCard, Stepper, T, ToggleRow } from '@/components/ui';
+import { ConfidenceBars, ScoreTile } from '@/components/score-ring';
+import { colors, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
 import { lakes, lakeById } from '@/data/lakes';
 import { getForecast } from '@/data/forecasts';
-import { depthUnit, formatDay, formatTime, formatWind, fromDisplayDepth, fromDisplayLength, lengthUnit, toDisplayDepth, toDisplayLength } from '@/lib/format';
+import { depthUnit, formatDay, formatDuration, formatTime, formatWind, fromDisplayDepth, fromDisplayLength, lengthUnit, toDisplayDepth, toDisplayLength } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { resolveLakeCondition } from '@/features/lake-season';
 import { TRAINING_CONSENT_VERSION } from '@/features/catch-log';
@@ -88,6 +88,8 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
   const lightCondition: CatchLog['lightCondition'] = keepPrevious ? previous.lightCondition : hour.light < 0.25 ? 'Low light' : hour.light < 0.55 ? 'Mid light' : 'Bright';
   const lakeChoices = lakes.filter((lake) => followed.includes(lake.id) || lake.id === lakeId || lake.id === last?.lakeId);
   const bait = baitChoice === OTHER ? customBait.trim() : baitChoice;
+  // Switching to a lake in the other season changes the presets; the bait that will be saved stays visible.
+  const baitChips = baitChoice === OTHER || baitOptions.includes(baitChoice) ? baitOptions : [baitChoice, ...baitOptions];
 
   const parse = (value: string) => (value.trim() === '' ? undefined : Number(value.replace(',', '.')));
   const lengthValue = parse(length);
@@ -160,9 +162,15 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
     }
   };
 
+  const attachedReasons = keepPrevious ? previous.conditions.summary : hour.reasons.slice(0, 2).join(' · ') || 'Mixed conditions';
+  const attachedWind = season === 'ice' ? '' : ` · wind ${formatWind(keepPrevious ? previous.conditions.windKmh : hour.windKmh, units)}`;
+  const attachedSummary = `${lightCondition} · ${attachedReasons}${attachedWind}`;
+  const attachedSource = keepPrevious ? 'From when this trip was logged' : 'From the forecast saved on this device';
+
   return (
     <Screen
       header
+      style={styles.form}
       footer={
         <>
           {attempted && errorCount ? (
@@ -170,21 +178,33 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
               Check {errorCount} field{errorCount > 1 ? 's' : ''} before saving
             </T>
           ) : null}
-          <Button icon="device" loading={saving} loadingLabel="Saving…" onPress={save}>{previous ? 'Save changes' : 'Save to this device'}</Button>
-          <T variant="caption" color={colors.inkMuted} align="center">Works offline · syncs later</T>
+          <Button size="md" loading={saving} loadingLabel="Saving…" onPress={save}>{previous ? 'Save changes' : 'Save trip'}</Button>
+          <T variant="caption" color={colors.inkMuted} align="center">Saves to this phone first · works offline</T>
         </>
       }
     >
+      <Stack.Screen
+        options={{
+          headerLeft: () =>
+            saving ? null : (
+              <View style={styles.cancel}>
+                <LinkButton onPress={() => router.back()}>Cancel</LinkButton>
+              </View>
+            ),
+        }}
+      />
       {saveError ? <Banner tone="danger" title="Not saved" body={saveError} action={{ label: 'Try again', onPress: save }} live /> : null}
       {previous ? (
         <T variant="caption" color={colors.inkMuted}>Logged {formatDay(previous.caughtAt)} at {formatTime(previous.caughtAt)}</T>
       ) : null}
 
-      {/* 1 · Lake */}
-      <View style={{ gap: spacing.sm }}>
-        <T variant="label" color={colors.inkMuted}>Lake</T>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -spacing.xl }} contentContainerStyle={{ paddingHorizontal: spacing.xl, gap: spacing.sm }}>
+      {/* Hierarchy: section title → field label → value. Save is the only filled dark control. */}
+
+      {/* 1 · Where */}
+      <Section title="Lake">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.lakes} contentContainerStyle={styles.lakesContent}>
           <ChoiceChips
+            compact
             label="Lake"
             value={lakeId}
             onChange={(id) => {
@@ -194,94 +214,100 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
             options={lakeChoices.map((lake) => ({ label: lake.name, value: lake.id }))}
           />
         </ScrollView>
-      </View>
+      </Section>
 
-      {/* 2 · Result */}
-      <View style={{ gap: spacing.sm }}>
-        <T variant="label" color={colors.inkMuted}>Result</T>
-        <Row gap={spacing.sm} accessibilityRole="radiogroup">
-          <ResultOption active={caught} icon="lure" label="Caught walleye" onPress={() => setCaught(true)} />
-          <ResultOption active={!caught} icon="close" label="No catch" onPress={() => setCaught(false)} />
-        </Row>
-        {!caught ? <T variant="caption" color={colors.inkMuted}>No-catch trips matter — they show when conditions didn’t deliver.</T> : null}
-      </View>
-
-      {caught ? (
-        <Reveal>
-          <Card style={{ paddingVertical: spacing.md }}>
-            <Stepper label="Walleye caught" value={count} onChange={setCount} min={1} max={99} unit="walleye" />
-          </Card>
-        </Reveal>
-      ) : null}
-
-      {/* 3 · Bait */}
-      <Card style={{ paddingVertical: spacing.md }}>
-        <Stepper label="Trip duration" value={effortMinutes} onChange={setEffortMinutes} min={15} max={720} step={15} unit="minutes" />
-      </Card>
-
-      {/* 3 · Bait */}
-      <View style={{ gap: spacing.sm }}>
-        <T variant="label" color={colors.inkMuted}>Bait or lure</T>
-        <ChoiceChips
-          label="Bait or lure"
-          value={baitChoice}
-          onChange={setBaitChoice}
-          options={[...baitOptions.map((item) => ({ label: item, value: item })), { label: 'Other…', value: OTHER }]}
-        />
-        {baitChoice === OTHER ? <Field label="Bait or lure name" value={customBait} onChangeText={setCustomBait} placeholder="e.g. Purple hair jig" autoFocus={!previous} error={shown('bait')} maxLength={80} returnKeyType="done" /> : null}
-      </View>
-
-      {/* 4 · Method */}
-      <View style={{ gap: spacing.sm }}>
-        <T variant="label" color={colors.inkMuted}>Method</T>
-        <Segmented
-          label="Method"
-          value={method}
-          onChange={setMethod}
-          options={[{ label: 'Jig', value: 'jig' }, { label: 'Troll', value: 'troll' }, { label: 'Tip-up', value: 'tip-up' }, { label: 'Cast', value: 'cast' }]}
-        />
-      </View>
-
-      {/* 5 · Optional details */}
-      <Pressable
-        onPress={() => setShowDetails((value) => !value)}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: showDetails }}
-        style={styles.disclosure}
-      >
-        <View style={{ flex: 1 }}>
-          <T variant="subhead">More details</T>
-          <T variant="caption" color={colors.inkMuted}>Length, depth, clarity and notes — all optional</T>
-        </View>
-        <Icon name={showDetails ? 'chevron-up' : 'chevron-down'} size={18} color={colors.inkMuted} />
-      </Pressable>
-      {showDetails ? (
-        <Reveal style={{ gap: spacing.lg }}>
-          <Row gap={spacing.md} align="flex-start">
-            {caught ? (
-              <View style={{ flex: 1 }}>
-                <Field label="Biggest" value={length} onChangeText={setLength} keyboardType="decimal-pad" placeholder="—" suffix={lengthUnit(units)} error={shown('length')} returnKeyType="done" />
-              </View>
-            ) : null}
-            <View style={{ flex: 1 }}>
-              <Field label="Depth" value={depth} onChangeText={setDepth} keyboardType="decimal-pad" placeholder="—" suffix={depthUnit(units)} error={shown('depth')} returnKeyType="done" />
-            </View>
-          </Row>
-          <Field label="Water depth" value={waterDepth} onChangeText={setWaterDepth} keyboardType="decimal-pad" placeholder="—" suffix={depthUnit(units)} error={shown('waterDepth')} returnKeyType="done" />
-          <View style={{ gap: spacing.sm }}>
-            <T variant="callout" weight="700">Water clarity</T>
-            <Segmented label="Water clarity" value={clarity} onChange={setClarity} options={[{ label: 'Clear', value: 'clear' }, { label: 'Stained', value: 'stained' }, { label: 'Murky', value: 'murky' }]} />
+      {/* 2 · What happened */}
+      <Section title="How did it go?">
+        <Card style={styles.group}>
+          <View style={styles.block}>
+            <Segmented
+              compact
+              label="Result"
+              value={caught ? 'caught' : 'none'}
+              onChange={(result) => setCaught(result === 'caught')}
+              options={[{ label: 'Caught walleye', value: 'caught' }, { label: 'No catch', value: 'none' }]}
+            />
+            {caught ? null : <T variant="caption" color={colors.inkMuted}>No-catch trips matter — they show when conditions didn’t deliver.</T>}
           </View>
-          <Field
-            label="Notes"
-            value={notes}
-            onChangeText={setNotes}
-            multiline
-            placeholder="Structure, colour, presentation…"
-            helper={`${notes.length}/${NOTES_MAX} · Describe patterns, not exact spots`}
-            error={shown('notes')}
-          />
-          <Card variant="sunken" style={{ padding: 0 }}>
+          {caught ? (
+            <>
+              <Stepper label="Walleye caught" value={count} onChange={setCount} min={1} max={99} />
+              <Divider />
+            </>
+          ) : null}
+          <Stepper label="Time fished" value={effortMinutes} onChange={setEffortMinutes} min={15} max={720} step={15} unit="minutes" format={(minutes) => formatDuration(minutes * 60_000)} />
+        </Card>
+      </Section>
+
+      {/* 3 · How */}
+      <Section title="Setup">
+        <Card style={styles.group}>
+          <View style={styles.block}>
+            <T variant="caption" color={colors.inkMuted}>Bait or lure</T>
+            <ChoiceChips
+              compact
+              label="Bait or lure"
+              value={baitChoice}
+              onChange={setBaitChoice}
+              options={[...baitChips.map((item) => ({ label: item, value: item })), { label: 'Other…', value: OTHER }]}
+            />
+            {baitChoice === OTHER ? <Field label="Bait or lure name" value={customBait} onChangeText={setCustomBait} placeholder="e.g. Purple hair jig" autoFocus={!previous} error={shown('bait')} maxLength={80} returnKeyType="done" /> : null}
+          </View>
+          <Divider />
+          <View style={styles.block}>
+            <T variant="caption" color={colors.inkMuted}>Method</T>
+            <Segmented
+              compact
+              label="Method"
+              value={method}
+              onChange={setMethod}
+              options={[{ label: 'Jig', value: 'jig' }, { label: 'Troll', value: 'troll' }, { label: 'Tip-up', value: 'tip-up' }, { label: 'Cast', value: 'cast' }]}
+            />
+          </View>
+        </Card>
+      </Section>
+
+      {/* 4 · Optional details, opening inside their own group */}
+      <Card style={styles.group}>
+        <Pressable
+          onPress={() => setShowDetails((value) => !value)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: showDetails }}
+          style={({ pressed }) => [styles.disclosure, pressed && { opacity: 0.6 }]}
+        >
+          <View style={{ flex: 1 }}>
+            <T variant="callout" weight="600">More details</T>
+            <T variant="caption" color={colors.inkMuted}>Length, depth, clarity and notes — all optional</T>
+          </View>
+          <Icon name={showDetails ? 'chevron-up' : 'chevron-down'} size={14} color={colors.inkMuted} />
+        </Pressable>
+        {showDetails ? (
+          <Reveal style={styles.details}>
+            <Row gap={spacing.md} align="flex-start">
+              {caught ? (
+                <View style={{ flex: 1 }}>
+                  <Field label="Biggest" value={length} onChangeText={setLength} keyboardType="decimal-pad" placeholder="—" suffix={lengthUnit(units)} error={shown('length')} returnKeyType="done" />
+                </View>
+              ) : null}
+              <View style={{ flex: 1 }}>
+                <Field label="Depth" value={depth} onChangeText={setDepth} keyboardType="decimal-pad" placeholder="—" suffix={depthUnit(units)} error={shown('depth')} returnKeyType="done" />
+              </View>
+            </Row>
+            <Field label="Water depth" value={waterDepth} onChangeText={setWaterDepth} keyboardType="decimal-pad" placeholder="—" suffix={depthUnit(units)} error={shown('waterDepth')} returnKeyType="done" />
+            <View style={{ gap: spacing.sm }}>
+              <T variant="callout" weight="700">Water clarity</T>
+              <Segmented compact label="Water clarity" value={clarity} onChange={setClarity} options={[{ label: 'Clear', value: 'clear' }, { label: 'Stained', value: 'stained' }, { label: 'Murky', value: 'murky' }]} />
+            </View>
+            <Field
+              label="Notes"
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              placeholder="Structure, colour, presentation…"
+              helper={`${notes.length}/${NOTES_MAX} · Describe patterns, not exact spots`}
+              error={shown('notes')}
+            />
+            <Divider />
             <ToggleRow
               icon="chart"
               title="Help improve BiteCast"
@@ -289,55 +315,50 @@ function LogFormInner({ previous }: { previous?: CatchLog }) {
               value={trainingConsent}
               onValueChange={setTrainingConsent}
             />
-          </Card>
-        </Reveal>
-      ) : null}
-
-      {/* Attached conditions */}
-      <Card variant="sunken" style={{ gap: spacing.md }}>
-        <Row gap={spacing.md}>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Row gap={6}>
-              <Icon name="success" size={14} color={colors.success} />
-              <T variant="subhead">Conditions attached</T>
-            </Row>
-            <T variant="caption" color={colors.inkMuted}>{keepPrevious ? 'From when this trip was logged' : 'From the forecast saved on this device'}</T>
-          </View>
-          <ScoreReadout score={score} size="sm" />
-        </Row>
-        <T variant="callout" color={colors.inkSoft}>
-          {lightCondition}
-          {keepPrevious ? ` · ${previous.conditions.summary}` : ` · ${hour.reasons.slice(0, 2).join(' · ') || 'Mixed conditions'}`}
-          {season === 'ice' ? '' : ` · wind ${formatWind(keepPrevious ? previous.conditions.windKmh : hour.windKmh, units)}`}
-        </T>
-        {!keepPrevious ? <ConfidenceMeter value={hour.confidence} /> : null}
+          </Reveal>
+        ) : null}
       </Card>
+
+      {/* 5 · Filled in automatically, so it reads as a quiet receipt rather than a card */}
+      <View
+        style={styles.attached}
+        accessible
+        accessibilityLabel={`Conditions attached. ${attachedSource}. Bite score ${score}, ${scoreBands[scoreBand(score)].label}. ${attachedSummary}.${keepPrevious ? '' : ` ${hour.confidence} confidence.`}`}
+      >
+        <ScoreTile score={score} size={44} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Row justify="space-between" wrap>
+            <T variant="caption" weight="600" color={colors.inkSoft}>Conditions attached</T>
+            {keepPrevious ? null : <ConfidenceBars level={hour.confidence} long />}
+          </Row>
+          <T variant="caption" color={colors.inkMuted}>{attachedSummary}</T>
+          <T variant="caption" color={colors.inkMuted}>{attachedSource}</T>
+        </View>
+      </View>
 
       {season === 'ice' ? <IceSafetyNotice compact /> : null}
     </Screen>
   );
 }
 
-function ResultOption({ active, icon, label, onPress }: { active: boolean; icon: 'lure' | 'close'; label: string; onPress: () => void }) {
+function Section({ title, children }: PropsWithChildren<{ title: string }>) {
   return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ checked: active }}
-      accessibilityLabel={label}
-      onPress={() => {
-        if (!active) haptic.select();
-        onPress();
-      }}
-      style={({ pressed }) => [styles.result, active && styles.resultActive, pressed && { opacity: 0.85 }]}
-    >
-      <Icon name={icon} size={22} color={active ? colors.onDark : colors.teal} />
-      <T variant="subhead" color={active ? colors.onDark : colors.ink} align="center">{label}</T>
-    </Pressable>
+    <View style={{ gap: spacing.xs }}>
+      <T variant="subhead" accessibilityRole="header">{title}</T>
+      {children}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  result: { flex: 1, minHeight: touch.large + 16, alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: radius.lg, borderWidth: 1.5, borderColor: colors.lineStrong, backgroundColor: colors.paper, padding: spacing.md },
-  resultActive: { backgroundColor: colors.deep, borderColor: colors.deep, ...elevation.low },
-  disclosure: { flexDirection: 'row', alignItems: 'center', minHeight: touch.comfortable + 8, paddingHorizontal: spacing.lg, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper },
+  form: { paddingTop: spacing.xs },
+  cancel: { paddingHorizontal: spacing.sm },
+  // Bleeds to the screen edges so a long list of lakes scrolls under them.
+  lakes: { marginHorizontal: -spacing.xl },
+  lakesContent: { paddingHorizontal: spacing.xl },
+  group: { gap: 0, paddingVertical: 0 },
+  block: { gap: spacing.xs, paddingVertical: spacing.md },
+  disclosure: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: touch.min, paddingVertical: spacing.sm },
+  details: { gap: spacing.lg, paddingBottom: spacing.md },
+  attached: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
 });

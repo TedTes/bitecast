@@ -311,13 +311,25 @@ export function Chip({ label, tone = 'neutral', icon, accessibilityLabel }: { la
 
 type Option<V extends string> = { label: string; value: V; icon?: IconName; accessibilityLabel?: string };
 
-/** Single-choice segmented control. Exposed to screen readers as a radio group. */
-export function Segmented<V extends string>({ options, value, onChange, label, tone = 'light' }: { options: Option<V>[]; value: V; onChange: (value: V) => void; label?: string; tone?: 'light' | 'dark' }) {
+/**
+ * Single-choice segmented control. Exposed to screen readers as a radio group. `compact` draws a
+ * 36pt pill inside a full-height touch target, for dense forms.
+ */
+export function Segmented<V extends string>({ options, value, onChange, label, tone = 'light', compact }: { options: Option<V>[]; value: V; onChange: (value: V) => void; label?: string; tone?: 'light' | 'dark'; compact?: boolean }) {
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[styles.segmented, tone === 'dark' && { backgroundColor: colors.deepRaised }]}>
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[styles.segmented, compact && styles.segmentedCompact, tone === 'dark' && { backgroundColor: colors.deepRaised }]}>
       {options.map((option) => {
         const active = value === option.value;
         const fg = tone === 'dark' ? (active ? colors.deep : colors.onDarkMuted) : active ? colors.ink : colors.inkMuted;
+        const selected = active && (tone === 'dark' ? styles.segmentActiveDark : styles.segmentActive);
+        const content = (
+          <>
+            {option.icon ? <Icon name={option.icon} size={16} color={fg} /> : null}
+            <T variant="callout" weight={!compact ? '700' : active ? '600' : '400'} color={fg} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+              {option.label}
+            </T>
+          </>
+        );
         return (
           <Pressable
             key={option.value}
@@ -328,12 +340,9 @@ export function Segmented<V extends string>({ options, value, onChange, label, t
               if (!active) haptic.select();
               onChange(option.value);
             }}
-            style={[styles.segment, active && (tone === 'dark' ? styles.segmentActiveDark : styles.segmentActive)]}
+            style={compact ? styles.segmentTouch : [styles.segment, selected]}
           >
-            {option.icon ? <Icon name={option.icon} size={16} color={fg} /> : null}
-            <T variant="callout" weight="700" color={fg} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-              {option.label}
-            </T>
+            {compact ? <View style={[styles.segmentPill, selected]}>{content}</View> : content}
           </Pressable>
         );
       })}
@@ -341,12 +350,22 @@ export function Segmented<V extends string>({ options, value, onChange, label, t
   );
 }
 
-/** Wrapping single-choice chips — better than segmented when options > 3 or labels vary. */
-export function ChoiceChips<V extends string>({ options, value, onChange, label }: { options: Option<V>[]; value: V | null; onChange: (value: V) => void; label?: string }) {
+/**
+ * Wrapping single-choice chips — better than segmented when options > 3 or labels vary. `compact`
+ * draws smaller, quietly tinted pills inside full-height touch targets, so a form's main button leads.
+ */
+export function ChoiceChips<V extends string>({ options, value, onChange, label, compact }: { options: Option<V>[]; value: V | null; onChange: (value: V) => void; label?: string; compact?: boolean }) {
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={styles.choiceWrap}>
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[styles.choiceWrap, compact && styles.choiceWrapCompact]}>
       {options.map((option) => {
         const active = value === option.value;
+        const fg = !active ? colors.ink : compact ? colors.tealDeep : colors.onDark;
+        const content = (
+          <>
+            {option.icon ? <Icon name={option.icon} size={16} color={active ? fg : colors.teal} /> : active ? <Icon name="check" size={compact ? 12 : 14} color={fg} /> : null}
+            <T variant="callout" weight={!compact ? '700' : active ? '600' : '400'} color={fg}>{option.label}</T>
+          </>
+        );
         return (
           <Pressable
             key={option.value}
@@ -357,10 +376,9 @@ export function ChoiceChips<V extends string>({ options, value, onChange, label 
               if (!active) haptic.select();
               onChange(option.value);
             }}
-            style={({ pressed }) => [styles.choice, active && styles.choiceActive, pressed && styles.pressed]}
+            style={({ pressed }) => [compact ? styles.choiceTouch : [styles.choice, active && styles.choiceActive], pressed && styles.pressed]}
           >
-            {option.icon ? <Icon name={option.icon} size={16} color={active ? colors.onDark : colors.teal} /> : active ? <Icon name="check" size={14} color={colors.onDark} /> : null}
-            <T variant="callout" weight="700" color={active ? colors.onDark : colors.ink}>{option.label}</T>
+            {compact ? <View style={[styles.choicePill, active && styles.choicePillActive]}>{content}</View> : content}
           </Pressable>
         );
       })}
@@ -408,33 +426,37 @@ export function Field({ label, helper, error, suffix, optional, style, ...props 
   );
 }
 
-/** Large thumb-friendly −/+ stepper, adjustable for screen readers. */
-export function Stepper({ label, value, onChange, min = 0, max = 99, step = 1, unit }: { label: string; value: number; onChange: (value: number) => void; min?: number; max?: number; step?: number; unit?: string }) {
+/**
+ * Form row with its label on the left and a small −/+ stepper on the right (44pt targets).
+ * Adjustable for screen readers, which hear `unit` in place of the formatted value.
+ */
+export function Stepper({ label, value, onChange, min = 0, max = 99, step = 1, unit, format = String }: { label: string; value: number; onChange: (value: number) => void; min?: number; max?: number; step?: number; unit?: string; format?: (value: number) => string }) {
   const set = (next: number) => {
     const clamped = Math.min(max, Math.max(min, next));
     if (clamped !== value) haptic.select();
     onChange(clamped);
   };
+  const button = (icon: 'minus' | 'plus', next: number, disabled: boolean) => (
+    <Pressable onPress={() => set(next)} disabled={disabled} style={({ pressed }) => [styles.stepTouch, pressed && styles.pressed, disabled && styles.disabled]} importantForAccessibility="no">
+      <View style={styles.stepButton}>
+        <Icon name={icon} size={14} color={colors.tealDeep} />
+      </View>
+    </Pressable>
+  );
   return (
     <View
       accessible
       accessibilityRole="adjustable"
       accessibilityLabel={label}
-      accessibilityValue={{ min, max, now: value, text: `${value}${unit ? ` ${unit}` : ''}` }}
+      accessibilityValue={{ min, max, now: value, text: unit ? `${value} ${unit}` : format(value) }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(event: AccessibilityActionEvent) => set(value + (event.nativeEvent.actionName === 'increment' ? step : -step))}
       style={styles.stepper}
     >
-      <Pressable onPress={() => set(value - step)} disabled={value <= min} style={({ pressed }) => [styles.stepButton, pressed && styles.pressed, value <= min && styles.disabled]} importantForAccessibility="no">
-        <Icon name="minus" size={22} color={colors.ink} />
-      </Pressable>
-      <View style={{ alignItems: 'center', minWidth: 64 }}>
-        <T variant="numeralL">{value}</T>
-        {unit ? <T variant="caption" color={colors.inkMuted}>{unit}</T> : null}
-      </View>
-      <Pressable onPress={() => set(value + step)} disabled={value >= max} style={({ pressed }) => [styles.stepButton, styles.stepButtonPlus, pressed && styles.pressed, value >= max && styles.disabled]} importantForAccessibility="no">
-        <Icon name="plus" size={22} color={colors.onDark} />
-      </Pressable>
+      <T variant="callout" style={{ flex: 1 }}>{label}</T>
+      {button('minus', value - step, value <= min)}
+      <T variant="subhead" align="center" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={styles.stepValue}>{format(value)}</T>
+      {button('plus', value + step, value >= max)}
     </View>
   );
 }
@@ -654,10 +676,18 @@ const styles = StyleSheet.create({
   segment: { flex: 1, flexDirection: 'row', gap: 6, minHeight: touch.min, paddingHorizontal: spacing.sm, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill },
   segmentActive: { backgroundColor: colors.paper, ...elevation.low },
   segmentActiveDark: { backgroundColor: colors.onDark },
+  segmentedCompact: { paddingVertical: 0 },
+  segmentTouch: { flex: 1, minHeight: touch.min, justifyContent: 'center' },
+  segmentPill: { flexDirection: 'row', gap: 6, minHeight: 36, paddingHorizontal: spacing.sm, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill },
 
   choiceWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   choice: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: touch.min, paddingHorizontal: spacing.lg, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.lineStrong, backgroundColor: colors.paper },
   choiceActive: { backgroundColor: colors.teal, borderColor: colors.teal },
+  // The touch targets already leave space between rows of pills.
+  choiceWrapCompact: { rowGap: 0, columnGap: 6 },
+  choiceTouch: { minWidth: touch.min, minHeight: touch.min, justifyContent: 'center' },
+  choicePill: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 34, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper },
+  choicePillActive: { backgroundColor: colors.tealTint, borderColor: colors.teal },
 
   fieldWrap: { gap: spacing.sm },
   field: { flexDirection: 'row', alignItems: 'center', minHeight: touch.comfortable + 4, borderRadius: radius.md, borderWidth: 1, borderColor: colors.lineStrong, backgroundColor: colors.paper },
@@ -666,9 +696,10 @@ const styles = StyleSheet.create({
   input: { flex: 1, minHeight: touch.comfortable + 2, paddingHorizontal: spacing.lg, color: colors.ink, fontSize: 16 },
   inputMultiline: { minHeight: 100, paddingTop: spacing.md, paddingBottom: spacing.md, textAlignVertical: 'top' },
 
-  stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
-  stepButton: { width: touch.large, height: touch.large, borderRadius: touch.large / 2, backgroundColor: colors.fog, alignItems: 'center', justifyContent: 'center' },
-  stepButtonPlus: { backgroundColor: colors.deep },
+  stepper: { flexDirection: 'row', alignItems: 'center', minHeight: 52 },
+  stepTouch: { width: touch.min, height: touch.min, alignItems: 'center', justifyContent: 'center' },
+  stepButton: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.tealTint, alignItems: 'center', justifyContent: 'center' },
+  stepValue: { width: 84 },
 
   row: { flexDirection: 'row', alignItems: 'center', minHeight: 56, gap: spacing.md, paddingVertical: spacing.sm },
   rowIcon: { width: 36, height: 36, borderRadius: radius.sm, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
