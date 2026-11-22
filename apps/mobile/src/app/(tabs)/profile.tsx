@@ -5,6 +5,7 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import Constants from 'expo-constants';
 import { walleyeProfile } from '@bitecast/engine';
 import { Icon, type IconName } from '@/components/icon';
+import { ShorelineHeader } from '@/components/shoreline-header';
 import { Banner, Card, Divider, ICE_SAFETY_TEXT, LinkButton, ListRow, Row, Screen, Segmented, T, ToggleRow } from '@/components/ui';
 import { colors, hitSlop, radius, spacing, touch } from '@/constants/theme';
 import { deleteCloudAccount, integrationStatus, restorePurchases } from '@/api/adapters';
@@ -120,12 +121,7 @@ export default function ProfileScreen() {
   const [aboutOpen, setAboutOpen] = useState(false);
 
   return (
-    <Screen tab>
-      <View style={{ gap: 2 }}>
-        <T variant="label" color={colors.teal}>Account & settings</T>
-        <T variant="title" accessibilityRole="header">Profile</T>
-      </View>
-
+    <Screen tab top={<ShorelineHeader title="Profile" subtitle="Account & settings" />}>
       {/* Angler card: who you are, what you've logged, membership */}
       <View style={styles.anglerCard} accessible={false}>
         <Svg style={StyleSheet.absoluteFill} pointerEvents="none">

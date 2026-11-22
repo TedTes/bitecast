@@ -1,14 +1,14 @@
 import { useCallback, useState } from 'react';
 import { router, useFocusEffect, useIsFocused } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
-import { useQueries, useQueryClient } from '@tanstack/react-query';
-import type { ForecastHour, ForecastWindow, LakeForecast, Season } from '@bitecast/engine';
+import { useQueryClient } from '@tanstack/react-query';
+import type { ForecastHour } from '@bitecast/engine';
 import { Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import * as SunCalc from 'suncalc';
-import { conditionLabel, hoursFromNow, upcomingWindows, windowEnd } from '@/components/forecast';
+import { conditionLabel, hoursFromNow, windowEnd } from '@/components/forecast';
 import { Icon, type IconName } from '@/components/icon';
 import { LAKE_FLOOR, LakeScene, ORB, SHORE, SKY_SPACE, SURFACE, orbTop } from '@/components/lake-scene';
 import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
@@ -17,14 +17,14 @@ import { Toast } from '@/components/toast';
 import { Button, EmptyState, ErrorState, IceSafetyNotice, OfflineBanner, Reveal, Row, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
 import { colors, hitSlop, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
-import { forecastQuery, forecastSource, freshness, type Freshness } from '@/data/forecasts';
-import { lakeById } from '@/data/lakes';
-import { seasonLabel, useConditionResolver } from '@/features/lake-season';
-import { onScene, skyPalette, type SkyPalette } from '@/features/sky';
+import { forecastSource, freshness, type Freshness } from '@/data/forecasts';
+import { seasonLabel } from '@/features/lake-season';
+import { useRankedLakes, useSceneSky, useSkyPreviewTime, type LakeData } from '@/features/live-sky';
+import { onScene, type SkyPalette } from '@/features/sky';
 import { capitalize, formatDay, formatDuration, formatWind, reasonIcon, shortClock, shortRange } from '@/lib/format';
 import { useNow } from '@/lib/use-now';
 import { useAppStore } from '@/store/use-app-store';
-import type { AppSettings, Lake } from '@/types/app';
+import type { AppSettings } from '@/types/app';
 
 /*
  * Today, top to bottom: when (ticket in the sky) → how good (the sun or moon) → where that
@@ -34,18 +34,6 @@ import type { AppSettings, Lake } from '@/types/app';
 
 const HEADER = 44;
 const HOUR = 3_600_000;
-/** Southern Ontario: lights the scene before any lake is followed. */
-const DEFAULT_PLACE = { latitude: 44.2, longitude: -78.4 };
-
-type LakeData = { lake: Lake; season: Season; forecast: LakeForecast; updatedAt: number; next?: ForecastWindow; live: boolean };
-
-/** The window to act on for a lake: one open now, else the soonest upcoming. */
-function actionable(windows: ForecastWindow[], now: number) {
-  const upcoming = upcomingWindows(windows, now);
-  const open = upcoming.find((w) => new Date(w.start).getTime() <= now);
-  return { next: open ?? upcoming[0], live: Boolean(open) };
-}
-
 /** What a lake’s forecast says for its window, or for right now when there is none. */
 function outlook({ next, forecast }: LakeData, now: number) {
   const current = hoursFromNow(forecast.hours, now)[0];
@@ -67,10 +55,7 @@ const dayLabel = (value: string) => {
 const openLake = (id: string) => router.push({ pathname: '/lake/[id]', params: { id } });
 
 export default function TodayScreen() {
-  const ids = useAppStore((state) => state.followedLakeIds);
   const units = useAppStore((state) => state.settings.units);
-  const resolve = useConditionResolver();
-  const seasons = ids.map((id) => resolve(id).season);
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
@@ -82,8 +67,8 @@ export default function TodayScreen() {
   const now = useNow(30_000);
   // Development only: scrub the sky through the day (long-press the title).
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewTime, setPreviewTime] = useState<number | null>(null);
-  const skyTime = (__DEV__ ? previewTime : null) ?? now;
+  const previewTime = useSkyPreviewTime((state) => state.time);
+  const setPreviewTime = useSkyPreviewTime((state) => state.setTime);
   // Tabs stay mounted: the lake only animates while Today is on screen.
   const focused = useIsFocused();
   const scrollY = useSharedValue(0);
@@ -97,7 +82,7 @@ export default function TodayScreen() {
       return () => setStatusBarStyle('dark');
     }, []),
   );
-  const queries = useQueries({ queries: ids.map((id, index) => forecastQuery(id, seasons[index])) });
+  const { ids, seasons, queries, data } = useRankedLakes(now);
 
   const refresh = async () => {
     setRefreshing(true);
@@ -105,23 +90,13 @@ export default function TodayScreen() {
     setRefreshing(false);
   };
 
-  const data: LakeData[] = queries
-    .flatMap((query, index) => (query.data ? [{ lake: lakeById(ids[index]), season: seasons[index], forecast: query.data, updatedAt: query.dataUpdatedAt, ...actionable(query.data.windows, now) }] : []))
-    // Open windows first, then by strength of the next window.
-    .sort((a, b) => Number(b.live) - Number(a.live) || (b.next?.peakScore ?? 0) - (a.next?.peakScore ?? 0));
   const loading = queries.some((query) => query.isPending);
   const failed = queries.length > 0 && queries.every((query) => query.isError && !query.data);
   // Latest refresh failure; drives a transient toast instead of a sticky banner.
   const refreshErrorAt = Math.max(0, ...queries.filter((query) => query.isRefetchError).map((query) => query.errorUpdatedAt));
   const fresh = data.length ? freshness(Math.min(...data.map((entry) => entry.updatedAt)), now) : undefined;
   const best = data[0];
-  const nowHour = best ? hoursFromNow(best.forecast.hours, now)[0] : undefined;
-
-  const place = best?.lake ?? DEFAULT_PLACE;
-  const altitude = SunCalc.getPosition(new Date(skyTime), place.latitude, place.longitude).altitude; // degrees
-  const ice = best?.season === 'ice';
-  const weather = { cloudPct: nowHour?.cloudPct ?? 20, windKmh: nowHour?.windKmh ?? 8, rainMm: nowHour?.precipitationMm ?? 0 };
-  const palette = skyPalette(altitude, weather.cloudPct, ice);
+  const { time: skyTime, place, altitude, hour: nowHour, weather, ice, palette } = useSceneSky(best, now);
   const nowScore = nowHour?.score ?? 50;
 
   return (
@@ -457,7 +432,7 @@ const glass = { backgroundColor: onScene.glass, borderWidth: 1, borderColor: onS
 const styles = StyleSheet.create({
   overscroll: { position: 'absolute', top: 0, left: 0, right: 0, height: '50%' },
   page: { flexGrow: 1 },
-  content: { flexGrow: 1, paddingHorizontal: spacing.lg, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  content: { flexGrow: 1, paddingHorizontal: spacing.xl, width: '100%', maxWidth: 640, alignSelf: 'center' },
   pressed: { opacity: 0.75 },
   freshness: { flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, ...glass },
   info: { minWidth: 28, minHeight: 28, alignItems: 'center', justifyContent: 'center' },

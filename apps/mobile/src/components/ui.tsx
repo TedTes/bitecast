@@ -113,9 +113,11 @@ type ScreenProps = PropsWithChildren<{
   onRefresh?: () => void;
   style?: StyleProp<ViewStyle>;
   background?: string;
+  /** Fixed above the content, bleeding under the status bar (the shoreline header). */
+  top?: ReactNode;
 }>;
 
-export function Screen({ children, scroll = true, header = false, tab = false, footer, refreshing, onRefresh, style, background = colors.cream }: ScreenProps) {
+export function Screen({ children, scroll = true, header = false, tab = false, footer, refreshing, onRefresh, style, background = colors.cream, top }: ScreenProps) {
   const insets = useSafeAreaInsets();
   const keyboard = useAnimatedKeyboard();
   const bottomInset = tab ? 0 : insets.bottom;
@@ -129,7 +131,8 @@ export function Screen({ children, scroll = true, header = false, tab = false, f
     <View style={[styles.screenContent, { paddingBottom: footer ? spacing.xl : spacing.xxl + bottomInset + (tab ? TAB_BUTTON_RISE : 0) }, style]}>{children}</View>
   );
   return (
-    <Animated.View style={[{ flex: 1, backgroundColor: background, paddingTop: header ? 0 : insets.top }, lift]}>
+    <Animated.View style={[{ flex: 1, backgroundColor: background, paddingTop: header || top ? 0 : insets.top }, lift]}>
+      {top}
       {scroll ? (
         <ScrollView
           contentContainerStyle={styles.scroll}

@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import type { ForecastHour, ForecastWindow } from '@bitecast/engine';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { ForecastFootnote, HourlyChart, SevenDayOutlook, conditionLabel, formatWindow, hoursFromNow, upcomingWindows, windowEnd } from '@/components/forecast';
 import { Icon } from '@/components/icon';
 import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
+import { Shoreline } from '@/components/shoreline-header';
 import { Banner, Button, Card, Divider, EmptyState, IceSafetyNotice, LinkButton, ListRow, OfflineBanner, Reveal, Row, Screen, SectionHeader, Segmented, T } from '@/components/ui';
 import { colors, hitSlop, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
 import { forecastSource, freshness, useForecast } from '@/data/forecasts';
 import { lakes } from '@/data/lakes';
 import { sourceLabel, useLakeCondition } from '@/features/lake-season';
 import { capitalize, formatDay, formatDuration, reasonIcon } from '@/lib/format';
+import { useSceneSky } from '@/features/live-sky';
+import { onScene } from '@/features/sky';
 import { haptic } from '@/lib/haptics';
 import { useNow } from '@/lib/use-now';
 import { useAppStore } from '@/store/use-app-store';
@@ -41,10 +44,11 @@ export default function LakeForecastScreen() {
   const query = useForecast(lake?.id ?? '', season);
   const [showAll, setShowAll] = useState(false);
   const now = useNow();
+  const sky = useSceneSky(lake ? { lake, season, forecast: query.data } : undefined, now);
 
   if (!lake) {
     return (
-      <Screen header>
+      <Screen>
         <EmptyState icon="lake" title="Lake not found" body="This lake may have been removed from coverage. Pick another from the map." action={<Button onPress={() => router.replace('/(tabs)/map')}>Open the map</Button>} />
       </Screen>
     );
@@ -76,21 +80,23 @@ export default function LakeForecastScreen() {
       accessibilityHint={atLimit ? 'You already follow 5 lakes' : 'Shows this lake on Today'}
       style={({ pressed }) => [styles.follow, isFollowing && styles.following, atLimit && { opacity: 0.5 }, pressed && { opacity: 0.7 }]}
     >
-      <Icon name={isFollowing ? 'check' : 'plus'} size={13} color={isFollowing ? colors.onDark : colors.teal} />
-      <T variant="caption" weight="600" color={isFollowing ? colors.onDark : colors.teal}>{isFollowing ? 'Following' : 'Follow'}</T>
+      <Icon name={isFollowing ? 'check' : 'plus'} size={13} color={isFollowing ? colors.deep : onScene.text} />
+      <T variant="caption" weight="600" color={isFollowing ? colors.deep : onScene.text}>{isFollowing ? 'Following' : 'Follow'}</T>
     </Pressable>
   );
 
   return (
-    <Screen header refreshing={query.isRefetching} onRefresh={() => query.refetch()}>
-      <Stack.Screen options={{ title: lake.name, headerRight: () => follow }} />
+    <Screen
+      top={<Shoreline back title={lake.name} subtitle={`${lake.region} · ${capitalize(lake.clarity)} water`} right={follow} sky={sky} />}
+      refreshing={query.isRefetching}
+      onRefresh={() => query.refetch()}
+    >
 
       <Reveal index={0}>
         <Hero
           score={current.score}
           reasons={current.reasons}
           confidence={current.confidence}
-          meta={`${lake.region} · ${capitalize(lake.clarity)} water`}
           updated={`${fresh.label} · ${forecastSource(forecast)}`}
           stale={fresh.state === 'stale'}
           next={next}
@@ -189,11 +195,10 @@ export default function LakeForecastScreen() {
 
 /* ───────────── Hero: now → why → how sure → next window ───────────── */
 
-function Hero({ score, reasons, confidence, meta, updated, stale, next, now, broad, onWindow }: {
+function Hero({ score, reasons, confidence, updated, stale, next, now, broad, onWindow }: {
   score: number;
   reasons: string[];
   confidence: ForecastHour['confidence'];
-  meta: string;
   updated: string;
   stale: boolean;
   next?: ForecastWindow;
@@ -223,7 +228,6 @@ function Hero({ score, reasons, confidence, meta, updated, stale, next, now, bro
 
       <Row gap={spacing.lg} align="center">
         <View style={{ flex: 1, gap: spacing.xs }}>
-          <T variant="label" color={colors.teal} numberOfLines={1}>{meta}</T>
           <T variant="title" style={{ fontSize: 26, lineHeight: 31 }} accessibilityRole="header">{conditionLabel(score)}</T>
           <Row gap={6}>
             <Icon name={stale ? 'warning' : 'clock'} size={12} color={stale ? colors.warning : colors.inkMuted} />
@@ -293,8 +297,8 @@ function WindowRow({ window, now, onPress }: { window: ForecastWindow; now: numb
 }
 
 const styles = StyleSheet.create({
-  follow: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 32, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.teal },
-  following: { backgroundColor: colors.teal },
+  follow: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 36, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderColor: onScene.glassLine, backgroundColor: onScene.glass },
+  following: { backgroundColor: colors.onDark, borderColor: colors.onDark },
   hero: { gap: spacing.lg, padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.paper, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth * 2, borderColor: colors.line },
   wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 130 },
   next: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 44, paddingHorizontal: spacing.md, borderRadius: radius.md, backgroundColor: colors.sunriseTint },

@@ -183,7 +183,7 @@ function Orb({ width, horizon, x, y, palette, moon }: { width: number; horizon: 
 }
 
 /** Rolling ridge with small irregularities; rises toward the edges to frame the sun. */
-function ridgePath(width: number, base: number, rise: number, seed: number) {
+export function ridgePath(width: number, base: number, rise: number, seed: number) {
   const random = seeded(seed);
   const phase = random() * 6;
   // Uneven sides, so the hills don't form a symmetrical bowl.
@@ -199,13 +199,13 @@ function ridgePath(width: number, base: number, rise: number, seed: number) {
 }
 
 /** Spruce and pine silhouettes: low in the middle, taller toward both edges. */
-function treesPath(width: number, base: number) {
+export function treesPath(width: number, base: number, scale = 1) {
   const random = seeded(37);
   let path = '';
-  for (let x = -4; x < width + 8; x += 2.5 + random() * 4) {
+  for (let x = -4; x < width + 8; x += (2.5 + random() * 4) * Math.max(0.6, scale)) {
     const side = Math.abs((x / width) * 2 - 1);
-    const h = 4 + random() * 8 + side * side * (10 + random() * 20);
-    const w = 2 + h * 0.2;
+    const h = (4 + random() * 8 + side * side * (10 + random() * 20)) * scale;
+    const w = 2 * scale + h * 0.2;
     const y = base + 2 - h;
     path += `M${x} ${y} L${x + w * 0.45} ${y + h * 0.36} L${x + w * 0.2} ${y + h * 0.34} L${x + w * 0.8} ${y + h * 0.68} L${x + w * 0.35} ${y + h * 0.65} L${x + w} ${base + 3} L${x - w} ${base + 3} L${x - w * 0.35} ${y + h * 0.65} L${x - w * 0.8} ${y + h * 0.68} L${x - w * 0.2} ${y + h * 0.34} L${x - w * 0.45} ${y + h * 0.36} Z`;
   }

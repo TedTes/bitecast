@@ -22,7 +22,8 @@ const failures = (check: (sky: ReturnType<typeof skyPalette>) => number) => skie
 
 describe('Today scene contrast', () => {
   it('keeps header text readable on every sky', () => {
-    expect(failures((sky) => Math.min(contrast(onScene.text, sky.top), contrast(onScene.text, sky.upper)))).toEqual([]);
+    // Shoreline headers put text anywhere on the gradient between these two colours.
+    expect(failures((sky) => Math.min(...[0, 0.25, 0.5, 0.75, 1].map((t) => contrast(onScene.text, mix(sky.top, sky.upper, t)))))).toEqual([]);
   });
 
   it('keeps timeline labels readable on the shore', () => {

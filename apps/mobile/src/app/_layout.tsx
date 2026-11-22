@@ -35,7 +35,8 @@ export default function RootLayout() {
         <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="paywall" options={{ presentation: 'modal', headerShown: false, animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="lake/[id]" options={{ title: '' }} />
+        {/* Draws its own shoreline header */}
+        <Stack.Screen name="lake/[id]" options={{ headerShown: false }} />
         <Stack.Screen name="lake/[id]/window/[start]" options={{ title: 'Window detail' }} />
         <Stack.Screen name="lake/[id]/regulations" options={{ title: 'Regulations' }} />
         <Stack.Screen name="log/new" options={{ title: 'Log a trip', presentation: 'modal' }} />

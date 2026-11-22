@@ -7,7 +7,8 @@ import { ReasonLine, bestWindowWithin, formatWindow, hoursFromNow } from '@/comp
 import { Icon } from '@/components/icon';
 import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { LakeMap, useMapMode, type MapLakePin } from '@/components/map/lake-map';
-import { Banner, Button, Card, Chip, IceSafetyNotice, Row, Screen, Segmented, T } from '@/components/ui';
+import { ShorelineHeader } from '@/components/shoreline-header';
+import { Banner, Button, Card, IceSafetyNotice, Row, Screen, Segmented, T } from '@/components/ui';
 import { colors, spacing, TAB_BUTTON_RISE } from '@/constants/theme';
 import { integrationsReady } from '@/api/config';
 import { forecastQuery } from '@/data/forecasts';
@@ -46,6 +47,8 @@ export default function MapScreen() {
   const isFollowing = followed.includes(selected.lake.id);
   const atLimit = !isFollowing && followed.length >= 5;
 
+  const iceNotice = view === 'map' ? resolve(selected.lake.id).season === 'ice' : lakes.some((lake) => resolve(lake.id).season === 'ice');
+
   const follow = () => {
     if (atLimit) { haptic.warning(); return; }
     haptic.select();
@@ -53,25 +56,27 @@ export default function MapScreen() {
   };
 
   return (
-    <Screen tab scroll={false} style={styles.screen}>
-      <View style={styles.header}>
-        <Row justify="space-between" align="flex-end">
-          <View style={{ gap: 2 }}>
-            <T variant="label" color={colors.teal}>Ontario + Great Lakes</T>
-            <T variant="title" accessibilityRole="header">Lake map</T>
-          </View>
-          <Chip
-            label={mode === 'cached' ? 'Offline chart' : 'Live map'}
-            icon={mode === 'cached' ? 'device' : 'map'}
-            tone={mode === 'cached' ? 'neutral' : 'teal'}
-            accessibilityLabel={mode === 'cached' ? 'Offline chart. Lake positions are stored on this device.' : 'Live map'}
-          />
-        </Row>
-        <Segmented label="View" value={view} onChange={setView} options={[{ label: 'Map', value: 'map', icon: 'map' }, { label: 'List', value: 'list', icon: 'filter' }]} />
-        {view === 'map' ? <T variant="caption" color={colors.inkMuted}>{mode === 'cached' ? 'Offline chart · not to scale · not for navigation' : 'Not for navigation'}</T> : null}
-        {view === 'map' && resolve(selected.lake.id).season === 'ice' ? <IceSafetyNotice compact /> : null}
-        {view === 'list' && lakes.some((lake) => resolve(lake.id).season === 'ice') ? <IceSafetyNotice compact /> : null}
-      </View>
+    <Screen
+      tab
+      scroll={false}
+      style={styles.screen}
+      top={
+        <ShorelineHeader
+          title="Lake map"
+          subtitle={view === 'list' ? 'Best window in the next 24 hours' : mode === 'cached' ? 'Offline chart · not to scale · not for navigation' : 'Ontario + Great Lakes · not for navigation'}
+          right={
+            <View style={styles.views}>
+              <Segmented tone="dark" label="View" value={view} onChange={setView} options={[{ label: 'Map', value: 'map' }, { label: 'List', value: 'list' }]} />
+            </View>
+          }
+        />
+      }
+    >
+      {iceNotice ? (
+        <View style={styles.notice}>
+          <IceSafetyNotice compact />
+        </View>
+      ) : null}
 
       {view === 'map' ? (
         <>
@@ -150,8 +155,9 @@ function windowText({ forecast, window, waiting }: { forecast?: LakeForecast; wi
 }
 
 const styles = StyleSheet.create({
-  screen: { paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0, gap: 0, maxWidth: undefined },
-  header: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.md, gap: spacing.md },
+  screen: { flex: 1, paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0, gap: 0, maxWidth: undefined },
+  views: { width: 140 },
+  notice: { paddingHorizontal: spacing.xl, paddingVertical: spacing.sm },
   sheet: { backgroundColor: colors.paper, paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.md + TAB_BUTTON_RISE, gap: spacing.sm + 2, borderTopWidth: StyleSheet.hairlineWidth * 2, borderTopColor: colors.line },
-  list: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xxl + TAB_BUTTON_RISE, gap: spacing.md },
+  list: { paddingTop: spacing.lg, paddingHorizontal: spacing.xl, paddingBottom: spacing.xxl + TAB_BUTTON_RISE, gap: spacing.md },
 });

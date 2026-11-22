@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/icon';
 import { Banner, Button, Card, EmptyState, ProgressBar, Reveal, Row, Screen, Segmented, SkeletonCard, T } from '@/components/ui';
+import { ShorelineHeader } from '@/components/shoreline-header';
 import { WalleyeArt } from '@/components/walleye';
 import { colors, hitSlop, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
 import { integrationsReady } from '@/api/config';
@@ -53,17 +54,15 @@ export default function LogListScreen() {
   };
 
   return (
-    <Screen tab>
-      <View style={{ gap: 2 }}>
-        <T variant="label" color={colors.teal}>Your field notes</T>
-        <T variant="title" accessibilityRole="header">Catch log</T>
-        {logs.length ? (
-          <T variant="caption" color={colors.inkMuted}>
-            {logs.length} trip{logs.length === 1 ? '' : 's'} · last {formatDayInline(logs[0].caughtAt)}
-          </T>
-        ) : null}
-      </View>
-
+    <Screen
+      tab
+      top={
+        <ShorelineHeader
+          title="Catch log"
+          subtitle={logs.length ? `${logs.length} trip${logs.length === 1 ? '' : 's'} · last ${formatDayInline(logs[0].caughtAt)}` : 'Your field notes'}
+        />
+      }
+    >
       {!hydrated ? (
         <>
           <SkeletonCard lines={2} />
