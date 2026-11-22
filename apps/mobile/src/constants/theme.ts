@@ -107,6 +107,8 @@ export const wordmarkFont = Platform.select({ ios: 'Georgia', android: 'serif', 
 export const type = {
   display: { fontSize: 32, lineHeight: 39, fontWeight: '700', maxScale: 1.35 },
   title: { fontSize: 25, lineHeight: 31, fontWeight: '600', maxScale: 1.4 },
+  /** Titles on the sky. Apple’s rounded cut of SF Pro softens the angler talk; Android keeps Roboto. */
+  screenTitle: { fontFamily: Platform.select({ ios: 'ui-rounded' }), fontSize: 22, lineHeight: 28, fontWeight: '600', maxScale: 1.4 },
   headline: { fontSize: 19, lineHeight: 25, fontWeight: '600', maxScale: 1.6 },
   subhead: { fontSize: 16, lineHeight: 22, fontWeight: '600', maxScale: 1.8 },
   body: { fontSize: 16, lineHeight: 23, fontWeight: '400', maxScale: 2 },

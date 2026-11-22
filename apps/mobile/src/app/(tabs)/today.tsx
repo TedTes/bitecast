@@ -209,7 +209,7 @@ function Header({ onTitleLongPress, now, fresh, refreshing, onRefresh, aboutOpen
   const date = new Date(now).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
   return (
     <Row justify="space-between" align="center" style={{ minHeight: HEADER }}>
-      <T variant="display" color={onScene.text} onLongPress={onTitleLongPress} suppressHighlighting accessibilityRole="header" accessibilityLabel={`Today, ${date}`}>Today</T>
+      <T variant="screenTitle" color={onScene.text} onLongPress={onTitleLongPress} suppressHighlighting accessibilityRole="header" accessibilityLabel={`Today’s cast, ${date}`}>Today’s cast</T>
       <Row gap={spacing.md} align="center" style={{ flexShrink: 1 }}>
         {fresh ? (
           <Pressable

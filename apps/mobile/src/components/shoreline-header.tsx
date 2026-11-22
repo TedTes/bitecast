@@ -4,7 +4,7 @@ import { setStatusBarStyle } from 'expo-status-bar';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { colors, spacing, touch } from '@/constants/theme';
+import { colors, spacing, touch, type } from '@/constants/theme';
 import { useLiveSky, type SceneSky } from '@/features/live-sky';
 import { onScene, orbElevation, seeded } from '@/features/sky';
 import { Icon } from './icon';
@@ -66,11 +66,14 @@ export function Shoreline({ title, subtitle, right, back, sky, page = colors.cre
             {right}
           </Row>
         ) : null}
-        <Row gap={spacing.md} style={styles.titleRow}>
-          <T variant="display" color={onScene.text} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ flex: 1 }}>{title}</T>
-          {back ? null : right}
+        <Row gap={spacing.md} align="flex-start">
+          {/* Title and small line read as one block */}
+          <View style={styles.heading}>
+            <T variant="screenTitle" color={onScene.text} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{title}</T>
+            {subtitle ? <T variant="caption" color={onScene.text}>{subtitle}</T> : null}
+          </View>
+          {!back && right ? <View style={styles.right}>{right}</View> : null}
         </Row>
-        {subtitle ? <T variant="caption" color={onScene.text}>{subtitle}</T> : null}
       </View>
       <View style={{ height: SHORELINE }} />
     </View>
@@ -127,6 +130,8 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: spacing.xl, width: '100%', maxWidth: 640, alignSelf: 'center' },
   nav: { minHeight: touch.min },
   back: { width: touch.min, height: touch.min, borderRadius: touch.min / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: onScene.glass, borderWidth: 1, borderColor: onScene.glassLine },
-  titleRow: { minHeight: touch.min },
+  // The title centres in the first 44pt, level with Today’s title and with whatever is on the right.
+  heading: { flex: 1, paddingTop: (touch.min - type.screenTitle.lineHeight) / 2 },
+  right: { minHeight: touch.min, justifyContent: 'center' },
   seam: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 1 },
 });
