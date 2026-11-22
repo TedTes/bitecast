@@ -15,7 +15,7 @@ import { ConfidenceBars } from '@/components/score-ring';
 import { Toast } from '@/components/toast';
 import { Button, EmptyState, ErrorState, IceSafetyNotice, OfflineBanner, Reveal, Row, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
-import { colors, hitSlop, numeralSerif, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
+import { colors, hitSlop, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
 import { forecastQuery, forecastSource, freshness, type Freshness } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { seasonLabel, useConditionResolver } from '@/features/lake-season';
@@ -222,7 +222,7 @@ function Header({ now, fresh, refreshing, onRefresh, aboutOpen, onAbout }: { now
   const date = new Date(now).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
   return (
     <Row justify="space-between" align="center" style={{ minHeight: HEADER }}>
-      <T variant="title" color={onScene.text} accessibilityRole="header" accessibilityLabel={`Today, ${date}`}>Today</T>
+      <T variant="display" color={onScene.text} accessibilityRole="header" accessibilityLabel={`Today, ${date}`}>Today</T>
       <Row gap={spacing.md} align="center" style={{ flexShrink: 1 }}>
         {fresh ? (
           <Pressable
@@ -234,7 +234,7 @@ function Header({ now, fresh, refreshing, onRefresh, aboutOpen, onAbout }: { now
             style={({ pressed }) => [styles.freshness, pressed && styles.pressed]}
           >
             {stale ? <Icon name="refresh" size={12} color={onScene.accent} /> : null}
-            <T variant="caption" weight="700" color={stale ? onScene.accent : onScene.text} numberOfLines={1} style={{ flexShrink: 1 }}>
+            <T variant="caption" weight="600" color={stale ? onScene.accent : onScene.text} numberOfLines={1} style={{ flexShrink: 1 }}>
               {refreshing ? 'Refreshing…' : fresh.label.replace(/^Forecast is /, '')}
             </T>
           </Pressable>
@@ -301,7 +301,7 @@ function OrbScore({ score, caption, top, palette }: { score: number; caption: st
       {/* “Block” means nothing on its own; say what the number is. */}
       <T variant="label" color={ink} maxFontSizeMultiplier={1.1} style={styles.orbCaption}>{caption === 'Block' ? 'Bite score' : caption}</T>
       <T variant="title" color={ink} maxFontSizeMultiplier={1.1} style={styles.orbScore}>{score}</T>
-      <T variant="caption" weight="800" color={ink} maxFontSizeMultiplier={1.1}>{band.label}</T>
+      <T variant="caption" weight="600" color={ink} maxFontSizeMultiplier={1.1}>{band.label}</T>
     </View>
   );
 }
@@ -317,16 +317,16 @@ function ShoreTimeline({ entry: { next }, now }: { entry: LakeData; now: number 
   const edge = start <= 0 ? to : from;
   return (
     <View style={styles.timeline} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
-      <T variant="caption" weight="700" color={onScene.text} maxFontSizeMultiplier={1.15} style={styles.timelineNow}>Now</T>
+      <T variant="caption" weight="600" color={onScene.text} maxFontSizeMultiplier={1.15} style={styles.timelineNow}>Now</T>
       {next && start < 1 ? (
         <>
-          <T variant="caption" weight="700" color={onScene.accent} maxFontSizeMultiplier={1.15} numberOfLines={1} style={[styles.timelineEdge, { left: `${Math.min(0.64, Math.max(0.24, edge)) * 100}%` }]}>
+          <T variant="caption" weight="600" color={onScene.accent} maxFontSizeMultiplier={1.15} numberOfLines={1} style={[styles.timelineEdge, { left: `${Math.min(0.64, Math.max(0.24, edge)) * 100}%` }]}>
             {shortClock(start <= 0 ? windowEnd(next) : next.start)}
           </T>
           <View style={[styles.timelineWindow, { left: `${from * 100}%`, width: `${Math.max(0.02, to - from) * 100}%` }]} />
         </>
       ) : null}
-      <T variant="caption" weight="700" color={onScene.text} maxFontSizeMultiplier={1.15} style={styles.timelineEnd}>Tomorrow</T>
+      <T variant="caption" weight="600" color={onScene.text} maxFontSizeMultiplier={1.15} style={styles.timelineEnd}>Tomorrow</T>
     </View>
   );
 }
@@ -341,7 +341,7 @@ function Conditions({ reason, confidence, span, units }: { reason: string; confi
   return (
     <View style={styles.conditions} accessible accessibilityLabel={`${reason}. ${confidence} confidence. Wind ${formatWind(wind, units)}, ${rainLabel(rain)}, ${cloud}, pressure ${pressure.toLowerCase()}.`}>
       <Row gap={spacing.sm} align="center">
-        <T variant="title" color={onScene.text} numberOfLines={2} style={styles.reason}>{reason}</T>
+        <T color={onScene.text} numberOfLines={2} style={styles.reason}>{reason}</T>
         <ConfidenceBars level={confidence} tone="dark" />
       </Row>
       <View style={styles.tiles}>
@@ -359,7 +359,7 @@ function Tile({ icon, text, warn }: { icon: IconName; text: string; warn?: boole
   return (
     <View style={[styles.tile, warn && { borderColor: onScene.accent }]}>
       <Icon name={icon} size={17} color={color} />
-      <T variant="caption" weight="700" color={color} align="center" numberOfLines={2} style={styles.tileText}>{text}</T>
+      <T variant="caption" weight="500" color={color} align="center" numberOfLines={2} style={styles.tileText}>{text}</T>
     </View>
   );
 }
@@ -382,7 +382,7 @@ function Signpost({ best, others, now }: { best: LakeData; others: LakeData[]; n
       <WoodGrain />
       {others.map((entry) => <SignLake key={entry.lake.id} entry={entry} now={now} />)}
       <Pressable onPress={() => openLake(best.lake.id)} accessibilityRole="button" style={({ pressed }) => [styles.signRow, pressed && styles.pressed]}>
-        <T variant="callout" weight="700" color={onScene.text} numberOfLines={1} style={{ flex: 1 }}>{`Full forecast · ${best.lake.name}`}</T>
+        <T variant="callout" weight="600" color={onScene.text} numberOfLines={1} style={{ flex: 1 }}>{`Full forecast · ${best.lake.name}`}</T>
         <Icon name="chevron-right" size={14} color={onScene.text} />
       </Pressable>
       {[styles.nailTopLeft, styles.nailTopRight, styles.nailBottomLeft, styles.nailBottomRight].map((position, i) => <View key={i} style={[styles.nail, position]} />)}
@@ -404,12 +404,12 @@ function SignLake({ entry, now }: { entry: LakeData; now: number }) {
       style={({ pressed }) => [styles.signRow, styles.signLake, pressed && styles.pressed]}
     >
       <View style={[styles.signScore, { borderColor: band.onDark }]}>
-        <T variant="callout" weight="800" color={onScene.text} maxFontSizeMultiplier={1.2}>{score}</T>
-        <T variant="caption" weight="700" color={onScene.text} maxFontSizeMultiplier={1.2} style={styles.signBand}>{band.label}</T>
+        <T variant="callout" weight="600" color={onScene.text} maxFontSizeMultiplier={1.2}>{score}</T>
+        <T variant="caption" weight="600" color={onScene.text} maxFontSizeMultiplier={1.2} style={styles.signBand}>{band.label}</T>
       </View>
       <View style={{ flex: 1, gap: 1 }}>
-        <T variant="callout" weight="700" color={onScene.text} numberOfLines={1}>{lake.name}</T>
-        <T variant="caption" weight="700" color={onScene.accent} numberOfLines={1}>{when}</T>
+        <T variant="callout" weight="600" color={onScene.text} numberOfLines={1}>{lake.name}</T>
+        <T variant="caption" weight="600" color={onScene.accent} numberOfLines={1}>{when}</T>
         <Row gap={5}>
           <Icon name={reasonIcon(reason)} size={11} color={onScene.soft} />
           <T variant="caption" color={onScene.soft} numberOfLines={2} style={{ flex: 1 }}>{reason}</T>
@@ -455,16 +455,16 @@ const styles = StyleSheet.create({
   about: { marginTop: spacing.sm, padding: spacing.md, borderRadius: radius.md, ...glass },
   ticket: { flexDirection: 'row', marginTop: spacing.sm, borderRadius: radius.lg, ...glass },
   ticketMain: { flex: 1, gap: 2, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
-  when: { fontFamily: numeralSerif, fontSize: 28, lineHeight: 34 },
+  when: { fontSize: 28, lineHeight: 34 },
   perforation: { justifyContent: 'space-evenly', paddingVertical: 4 },
   perforationDot: { width: 2, height: 4, borderRadius: 1, backgroundColor: onScene.glassLine },
   ticketStub: { width: 100, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.sm, gap: 2 },
-  wait: { fontFamily: numeralSerif, fontSize: 21, lineHeight: 26 },
+  wait: { fontSize: 21, lineHeight: 26 },
   liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: onScene.accent },
   skySpace: { height: SKY_SPACE },
   orb: { position: 'absolute', alignSelf: 'center', width: ORB, height: ORB, alignItems: 'center', justifyContent: 'center' },
-  orbCaption: { fontSize: 9, lineHeight: 12, letterSpacing: 0.8 },
-  orbScore: { fontFamily: numeralSerif, fontSize: 46, lineHeight: 50 },
+  orbCaption: { fontSize: 12, lineHeight: 14, fontWeight: '500' },
+  orbScore: { fontSize: 46, lineHeight: 50 },
   timeline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: SHORE },
   timelineNow: { position: 'absolute', left: 0, top: 3 },
   timelineEdge: { position: 'absolute', top: 3, width: 72, marginLeft: -36, textAlign: 'center' },
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   water: { marginTop: SURFACE + spacing.sm, gap: spacing.md },
   // Dark enough for the text, clear enough that fish show faintly as they pass behind.
   conditions: { gap: spacing.md, padding: spacing.md, borderRadius: radius.lg, ...glass, backgroundColor: onScene.deepGlass },
-  reason: { flex: 1, fontSize: 16, lineHeight: 21, fontStyle: 'italic' },
+  reason: { flex: 1, lineHeight: 21, fontWeight: '500' },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tile: { flexGrow: 1, flexBasis: 64, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 4, paddingHorizontal: 3, paddingVertical: 6, borderRadius: radius.sm, borderWidth: 1, borderColor: onScene.glassLine },
   tileText: { fontSize: 11.5, lineHeight: 14 },

@@ -166,13 +166,13 @@ export default function PaywallScreen() {
                   <Row gap={spacing.sm} wrap>
                     <T variant="headline">{offering.title}</T>
                     {offering.id === 'annual' ? (
-                      <View style={styles.badge}><T variant="label" color={colors.sunriseInk} style={{ fontSize: 10 }}>Best value</T></View>
+                      <View style={styles.badge}><T variant="label" color={colors.sunriseInk} style={{ fontSize: 11.5 }}>Best value</T></View>
                     ) : null}
                   </Row>
                   <T variant="callout" color={colors.inkSoft}>{offering.price}</T>
                   {offering.perMonth ? <T variant="caption" color={colors.inkMuted}>{offering.perMonth}</T> : null}
                 </View>
-                {offering.isPlaceholder ? <View style={styles.devTag}><T variant="label" color={colors.warning} style={{ fontSize: 9 }}>Dev</T></View> : null}
+                {offering.isPlaceholder ? <View style={styles.devTag}><T variant="label" color={colors.warning} style={{ fontSize: 10.5 }}>Dev</T></View> : null}
               </Pressable>
             );
           })

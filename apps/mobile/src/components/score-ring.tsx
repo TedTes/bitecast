@@ -42,7 +42,7 @@ export function ScoreRing({ score, caption, size = 92 }: { score: number; captio
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </Svg>
-      <T variant="label" color={colors.inkMuted} style={{ fontSize: 8.5, lineHeight: 10 }}>{caption}</T>
+      <T variant="label" color={colors.inkMuted} style={{ fontSize: 10, lineHeight: 12 }}>{caption}</T>
       <T variant="numeralL" style={{ lineHeight: 36 }}>{score}</T>
       <T variant="caption" weight="800" color={band.color} style={{ fontSize: 11, lineHeight: 13 }}>{band.label}</T>
     </View>

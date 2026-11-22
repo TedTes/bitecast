@@ -144,7 +144,7 @@ export default function ProfileScreen() {
 
         <Row justify="space-between" align="flex-start">
           <View style={{ flex: 1, gap: 2 }} accessible accessibilityLabel={`${linked ? `Linked with ${account.provider === 'apple' ? 'Apple' : 'Google'}` : 'Anonymous angler'}. ${isPro ? 'Pro member' : 'Free plan'}.`}>
-            <T variant="label" color={colors.mint} style={{ fontSize: 10 }}>BiteCast angler</T>
+            <T variant="label" color={colors.mint} style={{ fontSize: 12 }}>BiteCast angler</T>
             <T variant="title" color={colors.onDark}>{linked ? (account.provider === 'apple' ? 'Apple account' : 'Google account') : 'Anonymous angler'}</T>
             <Row gap={6}>
               <Icon name={linked ? 'sync-done' : 'device'} size={13} color={colors.onDarkMuted} />
@@ -153,7 +153,7 @@ export default function ProfileScreen() {
           </View>
           <View style={[styles.badge, isPro && styles.badgePro]}>
             {isPro ? <Icon name="pro" size={12} color={colors.deep} /> : null}
-            <T variant="label" color={isPro ? colors.deep : colors.onDark} style={{ fontSize: 10 }}>{isPro ? 'Pro' : 'Free'}</T>
+            <T variant="label" color={isPro ? colors.deep : colors.onDark} style={{ fontSize: 11.5 }}>{isPro ? 'Pro' : 'Free'}</T>
           </View>
         </Row>
 

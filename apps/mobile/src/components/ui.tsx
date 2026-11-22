@@ -71,7 +71,7 @@ export function Body({ children, muted = false, style, align }: PropsWithChildre
   return <T color={muted ? colors.inkMuted : colors.ink} style={style} align={align}>{children}</T>;
 }
 
-/** Screen intro: eyebrow, serif title, optional lede. */
+/** Screen intro: eyebrow, title, optional lede. */
 export function PageHeader({ eyebrow, title, lede, right }: { eyebrow?: string; title: string; lede?: string; right?: ReactNode }) {
   return (
     <View style={styles.pageHeader}>

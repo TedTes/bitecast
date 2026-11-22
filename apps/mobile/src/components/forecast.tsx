@@ -57,7 +57,7 @@ export function ScoreReadout({ score, size = 'md', tone = 'light', caption = 'Bi
       accessibilityLabel={`${caption} ${score} out of 100, ${band.label}`}
       style={[styles.readout, { minWidth: s.minWidth, padding: s.pad }, dark ? styles.readoutDark : styles.readoutLight]}
     >
-      {size !== 'sm' ? <T variant="label" color={dark ? colors.onDarkMuted : colors.inkMuted} style={{ fontSize: 9, letterSpacing: 1 }}>{caption}</T> : null}
+      {size !== 'sm' ? <T variant="label" color={dark ? colors.onDarkMuted : colors.inkMuted} style={{ fontSize: 10.5 }}>{caption}</T> : null}
       <T variant={s.numeral} color={dark ? colors.onDark : colors.ink}>{score}</T>
       {s.meter ? (
         <View style={styles.meter}>

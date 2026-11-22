@@ -93,28 +93,27 @@ export const elevation = {
   }),
 } as const;
 
-const serif = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, "Iowan Old Style", serif' });
-/** Serif for large numbers: Georgia's old-style digits drop below the line (“30m” reads as “3om”). */
-export const numeralSerif = Platform.select({ ios: 'ui-serif', default: serif });
+/** The BiteCast wordmark is the only serif. Interface text uses the platform font. */
+export const wordmarkFont = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, serif' });
 
 /**
- * Type scale. Display/title use a serif for the “field journal” voice; everything
- * operational uses the system sans for legibility outdoors. `maxScale` caps Dynamic
- * Type growth only where layout would otherwise break (large numerals, display).
+ * Type scale in the platform’s own font (SF Pro on iOS, Roboto on Android), so the app reads
+ * like a native one: sentence case, no italics, no added tracking on text, semibold for
+ * emphasis. `maxScale` caps Dynamic Type growth only where layout would otherwise break.
  */
 export const type = {
-  display: { fontFamily: serif, fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.4, maxScale: 1.35 },
-  title: { fontFamily: serif, fontSize: 25, lineHeight: 31, fontWeight: '700', letterSpacing: -0.2, maxScale: 1.4 },
-  headline: { fontSize: 19, lineHeight: 25, fontWeight: '700', letterSpacing: -0.2, maxScale: 1.6 },
-  subhead: { fontSize: 16, lineHeight: 22, fontWeight: '700', maxScale: 1.8 },
+  display: { fontSize: 32, lineHeight: 39, fontWeight: '700', maxScale: 1.35 },
+  title: { fontSize: 25, lineHeight: 31, fontWeight: '600', maxScale: 1.4 },
+  headline: { fontSize: 19, lineHeight: 25, fontWeight: '600', maxScale: 1.6 },
+  subhead: { fontSize: 16, lineHeight: 22, fontWeight: '600', maxScale: 1.8 },
   body: { fontSize: 16, lineHeight: 23, fontWeight: '400', maxScale: 2 },
   callout: { fontSize: 14, lineHeight: 20, fontWeight: '400', maxScale: 2 },
-  caption: { fontSize: 12.5, lineHeight: 17, fontWeight: '500', maxScale: 1.8 },
-  label: { fontSize: 11, lineHeight: 14, fontWeight: '700', letterSpacing: 1.1, textTransform: 'uppercase', maxScale: 1.5 },
-  numeralXL: { fontSize: 56, lineHeight: 60, fontWeight: '700', letterSpacing: -1.5, fontVariant: ['tabular-nums'], maxScale: 1.2 },
-  numeralL: { fontSize: 34, lineHeight: 38, fontWeight: '700', letterSpacing: -0.8, fontVariant: ['tabular-nums'], maxScale: 1.25 },
-  numeralM: { fontSize: 22, lineHeight: 26, fontWeight: '700', letterSpacing: -0.3, fontVariant: ['tabular-nums'], maxScale: 1.3 },
-  numeralS: { fontSize: 15, lineHeight: 18, fontWeight: '700', fontVariant: ['tabular-nums'], maxScale: 1.4 },
+  caption: { fontSize: 12.5, lineHeight: 17, fontWeight: '400', maxScale: 1.8 },
+  label: { fontSize: 13, lineHeight: 17, fontWeight: '600', maxScale: 1.5 },
+  numeralXL: { fontSize: 56, lineHeight: 60, fontWeight: '600', letterSpacing: -0.5, fontVariant: ['tabular-nums'], maxScale: 1.2 },
+  numeralL: { fontSize: 34, lineHeight: 38, fontWeight: '600', fontVariant: ['tabular-nums'], maxScale: 1.25 },
+  numeralM: { fontSize: 22, lineHeight: 26, fontWeight: '600', fontVariant: ['tabular-nums'], maxScale: 1.3 },
+  numeralS: { fontSize: 15, lineHeight: 18, fontWeight: '600', fontVariant: ['tabular-nums'], maxScale: 1.4 },
 } satisfies Record<string, TextStyle & { maxScale: number }>;
 export type TypeVariant = keyof typeof type;
 
