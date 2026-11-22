@@ -1,7 +1,7 @@
 import { Tabs, router } from 'expo-router';
 import { Pressable, StyleSheet, View, type ColorValue } from 'react-native';
 import { Icon, type IconName } from '@/components/icon';
-import { colors, elevation } from '@/constants/theme';
+import { colors, elevation, TAB_BUTTON_RISE } from '@/constants/theme';
 import { haptic } from '@/lib/haptics';
 
 const tabIcon = (name: IconName) => function TabIcon({ color }: { color: ColorValue }) {
@@ -52,5 +52,5 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   centre: { flex: 1, alignItems: 'center' },
-  button: { width: 58, height: 58, marginTop: -20, borderRadius: 29, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.deep, borderWidth: 4, borderColor: colors.paper, ...elevation.raised },
+  button: { width: 54, height: 54, marginTop: -TAB_BUTTON_RISE, borderRadius: 27, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.deep, borderWidth: 4, borderColor: colors.paper, ...elevation.raised },
 });

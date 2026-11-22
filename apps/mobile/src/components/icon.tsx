@@ -82,6 +82,7 @@ const registry = {
   request: { ios: 'plus.bubble', android: 'add_comment' },
   pro: { ios: 'star.circle', android: 'workspace_premium' },
   apple: { ios: 'apple.logo', android: 'phone_iphone' },
+  expand: { ios: 'arrow.up.left.and.arrow.down.right', android: 'fit_screen' },
   settings: { ios: 'gearshape', android: 'settings' },
   plug: { ios: 'powerplug', android: 'power' },
 } as const satisfies Record<string, Pair>;

@@ -1,12 +1,12 @@
-import { useMemo, useRef, type ComponentType } from 'react';
+import { useEffect, useMemo, useRef, type ComponentType } from 'react';
 import { Platform, StyleSheet, TurboModuleRegistry, View } from 'react-native';
 import Constants from 'expo-constants';
 import type MapViewType from 'react-native-maps';
 import type { Region } from 'react-native-maps';
-import { colors, radius, scoreBand, scoreBands } from '@/constants/theme';
+import { colors, elevation, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
 import { shortLakeName } from '@/lib/format';
-import { T } from '../ui';
-import type { LakeMapProps, MapLakePin } from './types';
+import { IconButton, T } from '../ui';
+import { pinScoreLabel, type LakeMapProps, type MapLakePin } from './types';
 
 type MapsModule = typeof import('react-native-maps');
 
@@ -49,18 +49,29 @@ function createNativeMap(maps: MapsModule): ComponentType<LakeMapProps> {
   return function NativeTileMap({ pins, selectedId, onSelect }: LakeMapProps) {
     const ref = useRef<MapViewType>(null);
     const initialRegion = useMemo(() => regionFor(pins), [pins]);
-    const fit = () =>
+    const fit = (animated: boolean) =>
       ref.current?.fitToCoordinates(
         pins.map((pin) => ({ latitude: pin.latitude, longitude: pin.longitude })),
-        { edgePadding: { top: 56, right: 44, bottom: 72, left: 44 }, animated: false },
+        // Pins hang above their coordinate, so the top needs more room.
+        { edgePadding: { top: 72, right: 48, bottom: 32, left: 48 }, animated },
       );
 
+    const shown = useRef(selectedId);
+    useEffect(() => {
+      if (shown.current === selectedId) return;
+      shown.current = selectedId;
+      const pin = pins.find((item) => item.id === selectedId);
+      if (pin) ref.current?.animateCamera({ center: { latitude: pin.latitude, longitude: pin.longitude } }, { duration: 350 });
+    }, [selectedId, pins]);
+
     return (
+      <View style={StyleSheet.absoluteFill}>
       <MapView
         ref={ref}
         style={StyleSheet.absoluteFill}
         initialRegion={initialRegion}
-        onMapReady={fit}
+        // A frame later, so the map has its final size to fit into.
+        onMapReady={() => requestAnimationFrame(() => fit(false))}
         mapType={Platform.OS === 'ios' ? 'mutedStandard' : 'standard'}
         showsPointsOfInterests={false}
         showsBuildings={false}
@@ -73,23 +84,23 @@ function createNativeMap(maps: MapsModule): ComponentType<LakeMapProps> {
       >
         {pins.map((pin) => {
           const active = pin.id === selectedId;
-          const band = scoreBands[scoreBand(pin.score)];
+          const band = pin.score === null ? null : scoreBands[scoreBand(pin.score)];
           return (
             <Marker
-              // Re-key on selection so the static snapshot redraws without tracking every frame.
-              key={`${pin.id}-${active ? 'on' : 'off'}`}
+              // The marker is a static snapshot: re-key on anything it draws, so it never keeps an old score.
+              key={`${pin.id}:${active}:${pin.score}:${pin.followed}`}
               coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
               anchor={{ x: 0.5, y: 1 }}
               tracksViewChanges={false}
-              zIndex={active ? 10 : 1}
+              zIndex={active ? 10 : pin.followed ? 2 : 1}
               onPress={() => onSelect(pin.id)}
-              accessibilityLabel={`${pin.name}, best bite score ${pin.score}, ${band.label}${pin.followed ? ', followed' : ''}`}
+              accessibilityLabel={`${pin.name}, ${pinScoreLabel(pin.score, band?.label)}${pin.followed ? ', followed' : ''}`}
             >
               <View style={styles.pinWrap}>
                 <View style={[styles.pin, active && styles.pinActive]}>
-                  <View style={[styles.stripe, { backgroundColor: active ? band.onDark : band.color }]} />
+                  <View style={[styles.stripe, { backgroundColor: band ? (active ? band.onDark : band.color) : colors.fogDeep }]} />
                   <View style={{ alignItems: 'center', paddingHorizontal: 6 }}>
-                    <T variant="numeralS" color={active ? colors.onDark : colors.ink} maxFontSizeMultiplier={1.1}>{pin.score}</T>
+                    <T variant="numeralS" color={active ? colors.onDark : colors.ink} maxFontSizeMultiplier={1.1}>{pin.score ?? '–'}</T>
                     <T variant="caption" weight="700" color={active ? colors.onDarkMuted : colors.inkSoft} style={{ fontSize: 10, lineHeight: 12 }} numberOfLines={1} maxFontSizeMultiplier={1.1}>{shortLakeName(pin.name)}</T>
                   </View>
                   {pin.followed ? <View style={styles.followDot} /> : null}
@@ -100,12 +111,17 @@ function createNativeMap(maps: MapsModule): ComponentType<LakeMapProps> {
           );
         })}
       </MapView>
+      <View style={styles.showAll}>
+        <IconButton icon="expand" label="Show all lakes" tone="paper" size={touch.min} onPress={() => fit(true)} />
+      </View>
+      </View>
     );
   };
 }
 
 const styles = StyleSheet.create({
   pinWrap: { alignItems: 'center' },
+  showAll: { position: 'absolute', top: spacing.md, right: spacing.md, borderRadius: touch.min / 2, ...elevation.low },
   pin: { flexDirection: 'row', alignItems: 'center', minHeight: 40, minWidth: 58, borderRadius: radius.sm, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.lineStrong, overflow: 'hidden' },
   pinActive: { backgroundColor: colors.deep, borderColor: colors.deep },
   stripe: { width: 5, alignSelf: 'stretch' },

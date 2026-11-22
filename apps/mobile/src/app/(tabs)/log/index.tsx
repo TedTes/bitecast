@@ -7,7 +7,7 @@ import { WalleyeArt } from '@/components/walleye';
 import { colors, elevation, hitSlop, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
 import { integrationsReady } from '@/api/config';
 import { lakeById } from '@/data/lakes';
-import { capitalize, formatDay, formatTime, lengthUnit, startOfDay, toDisplayLength } from '@/lib/format';
+import { capitalize, formatDay, formatDayInline, formatTime, lengthUnit, startOfDay, toDisplayLength } from '@/lib/format';
 import { useNow } from '@/lib/use-now';
 import { useAppStore } from '@/store/use-app-store';
 import type { CatchLog } from '@/types/app';
@@ -59,7 +59,7 @@ export default function LogListScreen() {
         <T variant="title" accessibilityRole="header">Catch log</T>
         {logs.length ? (
           <T variant="caption" color={colors.inkMuted}>
-            {logs.length} trip{logs.length === 1 ? '' : 's'} · last {formatDay(logs[0].caughtAt).toLowerCase()}
+            {logs.length} trip{logs.length === 1 ? '' : 's'} · last {formatDayInline(logs[0].caughtAt)}
           </T>
         ) : null}
       </View>

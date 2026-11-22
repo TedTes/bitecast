@@ -1,15 +1,19 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { useQueries } from '@tanstack/react-query';
+import type { ForecastWindow, LakeForecast } from '@bitecast/engine';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { ConfidenceMeter, ReasonChips, ScoreReadout, bestWindowWithin, formatWindow } from '@/components/forecast';
+import { ConfidenceMeter, ReasonChips, ScoreReadout, bestWindowWithin, formatWindow, hoursFromNow } from '@/components/forecast';
 import { Icon } from '@/components/icon';
 import { LakeMap, useMapMode, type MapLakePin } from '@/components/map/lake-map';
 import { Banner, Button, Card, Chip, IceSafetyNotice, Row, Screen, Segmented, T } from '@/components/ui';
-import { colors, elevation, radius, spacing } from '@/constants/theme';
+import { colors, spacing, TAB_BUTTON_RISE } from '@/constants/theme';
+import { integrationsReady } from '@/api/config';
 import { forecastQuery } from '@/data/forecasts';
 import { lakes } from '@/data/lakes';
 import { formatDay } from '@/lib/format';
+import { useNow } from '@/lib/use-now';
+import { publishedForecast } from '@/features/published-forecast';
 import { haptic } from '@/lib/haptics';
 import { seasonLabel, useConditionResolver } from '@/features/lake-season';
 import { useAppStore } from '@/store/use-app-store';
@@ -21,13 +25,16 @@ export default function MapScreen() {
   const [view, setView] = useState<'map' | 'list'>('map');
   const [selectedId, setSelectedId] = useState<string>(followed[0] ?? lakes[0].id);
   const mode = useMapMode();
+  const clock = useNow();
   const queries = useQueries({ queries: lakes.map((lake) => forecastQuery(lake.id, resolve(lake.id).season)) });
 
   const summaries = lakes.map((lake, index) => {
-    const forecast = queries[index].data;
-    const window = forecast ? bestWindowWithin(forecast.windows, 24) : undefined;
-    const now = forecast?.hours[0];
-    return { lake, forecast, window, now, score: window?.peakScore ?? now?.score ?? 0 };
+    const forecast = publishedForecast(queries[index].data, integrationsReady);
+    const window = forecast ? bestWindowWithin(forecast.windows, 24, clock) : undefined;
+    const now = forecast ? hoursFromNow(forecast.hours, clock)[0] : undefined;
+    // No published forecast means no score, reason or confidence — never a stand-in number.
+    const waiting = !forecast && queries[index].isFetching;
+    return { lake, forecast, window, now, waiting, score: window?.peakScore ?? now?.score ?? null };
   });
   const pins: MapLakePin[] = summaries.map(({ lake, score }) => ({
     id: lake.id, name: lake.name, latitude: lake.latitude, longitude: lake.longitude, score,
@@ -77,16 +84,17 @@ export default function MapScreen() {
                 <Row gap={6}>
                   <Icon name={selected.window ? 'clock' : 'info'} size={13} color={selected.window ? colors.sunriseInk : colors.inkMuted} />
                   <T variant="callout" weight="700" color={selected.window ? colors.ink : colors.inkSoft} numberOfLines={1} style={{ flexShrink: 1 }}>
-                    {selected.window ? `${formatDay(selected.window.start)} · ${formatWindow(selected.window)}` : 'No window above 60 in 24 h'}
+                    {windowText(selected)}
                   </T>
                 </Row>
-                <T variant="caption" color={colors.inkMuted} numberOfLines={1}>
-                  {seasonLabel(resolve(selected.lake.id).season)} · {(selected.window?.reasons ?? selected.now?.reasons ?? [])[0] ?? 'Mixed conditions'}
+                <T variant="caption" color={colors.inkMuted} numberOfLines={2}>
+                  {seasonLabel(resolve(selected.lake.id).season)}
+                  {selected.forecast ? ` · ${(selected.window?.reasons ?? selected.now?.reasons ?? [])[0] ?? 'Mixed conditions'}` : ''}
                 </T>
               </View>
-              <ScoreReadout score={selected.score} size="sm" caption={selectedBroad ? 'Block' : selected.window ? 'Peak' : 'Now'} />
+              {selected.score === null ? null : <ScoreReadout score={selected.score} size="sm" caption={selectedBroad ? 'Block' : selected.window ? 'Peak' : 'Now'} />}
             </Row>
-            <ConfidenceMeter value={selected.window?.confidence ?? selected.now?.confidence ?? 'Low'} />
+            {selected.now ? <ConfidenceMeter value={selected.window?.confidence ?? selected.now.confidence} /> : null}
             {atLimit ? <T variant="caption" color={colors.inkMuted}>You follow 5 lakes — remove one to follow another.</T> : null}
             <Row gap={spacing.sm}>
               <Button style={{ flex: 1 }} size="md" variant="secondary" icon={isFollowing ? 'check' : 'plus'} disabled={atLimit} onPress={follow}>
@@ -101,13 +109,14 @@ export default function MapScreen() {
       ) : (
         <ScrollView contentContainerStyle={styles.list}>
           {mode === 'cached' ? <Banner tone="neutral" icon="device" body="Showing every covered lake from data stored on this device." /> : null}
-          {[...summaries].sort((a, b) => b.score - a.score).map(({ lake, forecast, window, now, score }) => {
+          {[...summaries].sort((a, b) => (b.score ?? -1) - (a.score ?? -1)).map((summary) => {
+            const { lake, forecast, window, now, score } = summary;
             const broad = forecast?.predictionGranularity === 'time_block';
             return (
             <Card
               key={lake.id}
               onPress={() => router.push({ pathname: '/lake/[id]', params: { id: lake.id } })}
-              accessibilityLabel={`${lake.name}${followed.includes(lake.id) ? ', followed' : ''}. ${window ? `${formatDay(window.start)} ${formatWindow(window)}, ${broad ? 'broad block' : 'peak'} ${score}` : `Now ${score}, no window in 24 hours`}. ${(window?.reasons ?? now?.reasons ?? []).slice(0, 2).join(', ')}. ${window?.confidence ?? now?.confidence} confidence.`}
+              accessibilityLabel={`${lake.name}${followed.includes(lake.id) ? ', followed' : ''}. ${windowText(summary)}.${now ? ` ${window ? (broad ? 'Broad block' : 'Peak') : 'Now'} ${score}. ${(window?.reasons ?? now.reasons).slice(0, 2).join(', ')}. ${window?.confidence ?? now.confidence} confidence.` : ''}`}
             >
               <Row gap={spacing.md} align="flex-start">
                 <View style={{ flex: 1, gap: 2 }}>
@@ -115,12 +124,16 @@ export default function MapScreen() {
                     <T variant="subhead">{lake.name}</T>
                     {followed.includes(lake.id) ? <Icon name="check" size={14} color={colors.teal} /> : null}
                   </Row>
-                  <T variant="caption" color={colors.inkMuted}>{window ? `${formatDay(window.start)} · ${formatWindow(window)}` : 'No window above 60 in 24 h'}</T>
+                  <T variant="caption" color={colors.inkMuted}>{windowText(summary)}</T>
                 </View>
-                <ScoreReadout score={score} size="sm" caption={broad ? 'Block' : window ? 'Peak' : 'Now'} />
+                {score === null ? null : <ScoreReadout score={score} size="sm" caption={broad ? 'Block' : window ? 'Peak' : 'Now'} />}
               </Row>
-              <ReasonChips reasons={window?.reasons ?? now?.reasons ?? []} limit={2} />
-              <ConfidenceMeter value={window?.confidence ?? now?.confidence ?? 'Low'} />
+              {now ? (
+                <>
+                  <ReasonChips reasons={window?.reasons ?? now.reasons} limit={2} />
+                  <ConfidenceMeter value={window?.confidence ?? now.confidence} />
+                </>
+              ) : null}
             </Card>
             );
           })}
@@ -130,9 +143,14 @@ export default function MapScreen() {
   );
 }
 
+function windowText({ forecast, window, waiting }: { forecast?: LakeForecast; window?: ForecastWindow; waiting: boolean }) {
+  if (!forecast) return waiting ? 'Loading forecast…' : 'No forecast published yet';
+  return window ? `${formatDay(window.start)} · ${formatWindow(window)}` : 'No window above 60 in 24 h';
+}
+
 const styles = StyleSheet.create({
   screen: { paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0, gap: 0, maxWidth: undefined },
   header: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.md, gap: spacing.md },
-  sheet: { backgroundColor: colors.paper, paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.md, gap: spacing.sm + 2, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, marginTop: -spacing.lg, ...elevation.raised },
-  list: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xxl, gap: spacing.md },
+  sheet: { backgroundColor: colors.paper, paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.md + TAB_BUTTON_RISE, gap: spacing.sm + 2, borderTopWidth: StyleSheet.hairlineWidth * 2, borderTopColor: colors.line },
+  list: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xxl + TAB_BUTTON_RISE, gap: spacing.md },
 });

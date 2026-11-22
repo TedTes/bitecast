@@ -22,6 +22,12 @@ export const conditionLabel = (score: number) => `${scoreBands[scoreBand(score)]
 export const scoreColor = (score: number) => scoreBands[scoreBand(score)].color;
 export { formatTime };
 
+/** Forecast hours from the current hour onward (cached forecasts can start earlier). */
+export const hoursFromNow = (hours: ForecastHour[], now: number) => {
+  const start = hours.findIndex((hour) => new Date(hour.ts).getTime() + 3_600_000 > now);
+  return start <= 0 ? hours : hours.slice(start);
+};
+
 /** Windows that have not finished yet, soonest first. */
 export const upcomingWindows = (windows: ForecastWindow[], now = Date.now()) =>
   windows.filter((w) => new Date(windowEnd(w)).getTime() > now).sort((a, b) => a.start.localeCompare(b.start));

@@ -14,6 +14,11 @@ export const formatDay = (value: string | Date, now = new Date()) => {
   if (days === -1) return 'Yesterday';
   return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 };
+/** A day inside a sentence: “today”, but “Sat, Nov 7” keeps its capitals. */
+export const formatDayInline = (value: string | Date, now = new Date()) => {
+  const day = formatDay(value, now);
+  return day === 'Today' || day === 'Tomorrow' || day === 'Yesterday' ? day.toLowerCase() : day;
+};
 export const startOfDay = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 export const durationLabel = (start: string, end: string) => {
   const minutes = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60_000);

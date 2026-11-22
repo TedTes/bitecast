@@ -3,7 +3,7 @@ import type { ForecastHour, ForecastWindow } from '@bitecast/engine';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
-import { ForecastFootnote, HourlyChart, SevenDayOutlook, conditionLabel, formatWindow, upcomingWindows, windowEnd } from '@/components/forecast';
+import { ForecastFootnote, HourlyChart, SevenDayOutlook, conditionLabel, formatWindow, hoursFromNow, upcomingWindows, windowEnd } from '@/components/forecast';
 import { Icon } from '@/components/icon';
 import { ConfidenceBars, ScoreRing, ScoreTile } from '@/components/score-ring';
 import { Banner, Button, Card, Divider, EmptyState, IceSafetyNotice, LinkButton, ListRow, OfflineBanner, Reveal, Row, Screen, SectionHeader, Segmented, T } from '@/components/ui';
@@ -22,12 +22,6 @@ import { useAppStore } from '@/store/use-app-store';
  */
 
 const INITIAL_WINDOWS = 3;
-
-/** Forecast hours from the current hour onward (cached forecasts can start earlier). */
-const fromNow = (hours: ForecastHour[], now: number) => {
-  const start = hours.findIndex((hour) => new Date(hour.ts).getTime() + 3_600_000 > now);
-  return start <= 0 ? hours : hours.slice(start);
-};
 
 /** “Today”, “Tomorrow”, else a short weekday + date. */
 const dayLabel = (value: string) => {
@@ -57,7 +51,7 @@ export default function LakeForecastScreen() {
   }
 
   const forecast = query.data;
-  const hours = fromNow(forecast.hours, now);
+  const hours = hoursFromNow(forecast.hours, now);
   const current = hours[0];
   const isFollowing = followed.includes(lake.id);
   const atLimit = !isFollowing && followed.length >= 5;

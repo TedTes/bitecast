@@ -75,6 +75,9 @@ export const scoreBand = (score: number): ScoreBand =>
 export const spacing = { xxs: 2, xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28, xxxl: 40 } as const;
 export const radius = { xs: 6, sm: 10, md: 14, lg: 20, xl: 28, pill: 999 } as const;
 
+/** How far the centre + button rises above the tab bar; tab screens keep this much clear below their content. */
+export const TAB_BUTTON_RISE = 10;
+
 /** Minimum touch target (Apple HIG 44pt, Material 48dp → we use 48 where space allows). */
 export const touch = { min: 44, comfortable: 48, large: 56 } as const;
 export const hitSlop = { top: 8, bottom: 8, left: 8, right: 8 } as const;

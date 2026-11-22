@@ -5,7 +5,6 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import Constants from 'expo-constants';
 import { walleyeProfile } from '@bitecast/engine';
 import { Icon, type IconName } from '@/components/icon';
-import { WalleyeArt } from '@/components/walleye';
 import { Banner, Divider, ICE_SAFETY_TEXT, LinkButton, ListRow, Row, Screen, Segmented, T, ToggleRow } from '@/components/ui';
 import { colors, elevation, hitSlop, radius, spacing } from '@/constants/theme';
 import { deleteCloudAccount, integrationStatus, restorePurchases } from '@/api/adapters';
@@ -138,10 +137,6 @@ export default function ProfileScreen() {
           </Defs>
           <Rect x="0" y="0" width="100%" height="100%" fill="url(#angler)" />
         </Svg>
-        <View style={styles.watermark} pointerEvents="none" importantForAccessibility="no-hide-descendants">
-          <WalleyeArt width={210} tone="dark" contours={false} />
-        </View>
-
         <Row justify="space-between" align="flex-start">
           <View style={{ flex: 1, gap: 2 }} accessible accessibilityLabel={`${linked ? `Linked with ${account.provider === 'apple' ? 'Apple' : 'Google'}` : 'Anonymous angler'}. ${isPro ? 'Pro member' : 'Free plan'}.`}>
             <T variant="label" color={colors.mint} style={{ fontSize: 12 }}>BiteCast angler</T>
@@ -275,7 +270,6 @@ function DangerLink({ label, onPress, hint }: { label: string; onPress?: () => v
 
 const styles = StyleSheet.create({
   anglerCard: { gap: spacing.lg, padding: spacing.xl, borderRadius: radius.xl, overflow: 'hidden', ...elevation.raised },
-  watermark: { position: 'absolute', right: -24, bottom: 8, opacity: 0.35 },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.deepLine, backgroundColor: 'rgba(255,255,255,0.08)' },
   badgePro: { backgroundColor: colors.mint, borderColor: colors.mint },
   anglerStats: { paddingVertical: spacing.md, borderRadius: radius.md, backgroundColor: 'rgba(255,255,255,0.07)' },

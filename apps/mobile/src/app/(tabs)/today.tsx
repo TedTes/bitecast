@@ -8,7 +8,7 @@ import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import * as SunCalc from 'suncalc';
-import { conditionLabel, upcomingWindows, windowEnd } from '@/components/forecast';
+import { conditionLabel, hoursFromNow, upcomingWindows, windowEnd } from '@/components/forecast';
 import { Icon, type IconName } from '@/components/icon';
 import { LAKE_FLOOR, LakeScene, ORB, SHORE, SKY_SPACE, SURFACE, orbTop } from '@/components/lake-scene';
 import { ConfidenceBars } from '@/components/score-ring';
@@ -39,12 +39,6 @@ const DEFAULT_PLACE = { latitude: 44.2, longitude: -78.4 };
 
 type LakeData = { lake: Lake; season: Season; forecast: LakeForecast; updatedAt: number; next?: ForecastWindow; live: boolean };
 
-/** Forecast hours from the current hour onward (cached forecasts can start earlier). */
-const fromNow = (hours: ForecastHour[], now: number) => {
-  const start = hours.findIndex((hour) => new Date(hour.ts).getTime() + HOUR > now);
-  return start <= 0 ? hours : hours.slice(start);
-};
-
 /** The window to act on for a lake: one open now, else the soonest upcoming. */
 function actionable(windows: ForecastWindow[], now: number) {
   const upcoming = upcomingWindows(windows, now);
@@ -54,7 +48,7 @@ function actionable(windows: ForecastWindow[], now: number) {
 
 /** What a lake’s forecast says for its window, or for right now when there is none. */
 function outlook({ next, forecast }: LakeData, now: number) {
-  const current = fromNow(forecast.hours, now)[0];
+  const current = hoursFromNow(forecast.hours, now)[0];
   return {
     score: next?.peakScore ?? current.score,
     reason: (next?.reasons ?? current.reasons)[0] ?? 'Mixed conditions',
@@ -121,7 +115,7 @@ export default function TodayScreen() {
   const refreshErrorAt = Math.max(0, ...queries.filter((query) => query.isRefetchError).map((query) => query.errorUpdatedAt));
   const fresh = data.length ? freshness(Math.min(...data.map((entry) => entry.updatedAt)), now) : undefined;
   const best = data[0];
-  const nowHour = best ? fromNow(best.forecast.hours, now)[0] : undefined;
+  const nowHour = best ? hoursFromNow(best.forecast.hours, now)[0] : undefined;
 
   const place = best?.lake ?? DEFAULT_PLACE;
   const altitude = SunCalc.getPosition(new Date(skyTime), place.latitude, place.longitude).altitude; // degrees
@@ -288,7 +282,7 @@ function Ticket({ entry, now }: { entry: LakeData; now: number }) {
           <Icon name="chevron-right" size={12} color={onScene.accent} />
         </Row>
         <T variant="title" color={onScene.text} style={styles.when} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-          {next ? capitalize(range) : conditionLabel(fromNow(forecast.hours, now)[0].score)}
+          {next ? capitalize(range) : conditionLabel(hoursFromNow(forecast.hours, now)[0].score)}
         </T>
         <T variant="caption" color={onScene.soft}>{detail}</T>
       </View>

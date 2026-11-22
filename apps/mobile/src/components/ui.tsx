@@ -30,7 +30,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, elevation, hitSlop, radius, spacing, touch, type, type TypeVariant } from '@/constants/theme';
+import { colors, elevation, hitSlop, radius, spacing, TAB_BUTTON_RISE, touch, type, type TypeVariant } from '@/constants/theme';
 import { haptic } from '@/lib/haptics';
 import { useAppStore } from '@/store/use-app-store';
 import { Icon, type IconName } from './icon';
@@ -126,7 +126,7 @@ export function Screen({ children, scroll = true, header = false, tab = false, f
     return { paddingBottom: Math.max(0, keyboard.height.value - bottomInset) };
   });
   const content = (
-    <View style={[styles.screenContent, { paddingBottom: footer ? spacing.xl : spacing.xxl + bottomInset }, style]}>{children}</View>
+    <View style={[styles.screenContent, { paddingBottom: footer ? spacing.xl : spacing.xxl + bottomInset + (tab ? TAB_BUTTON_RISE : 0) }, style]}>{children}</View>
   );
   return (
     <Animated.View style={[{ flex: 1, backgroundColor: background, paddingTop: header ? 0 : insets.top }, lift]}>
@@ -254,8 +254,8 @@ export function Button({ children, variant = 'primary', size = 'lg', icon, iconR
   );
 }
 
-export function IconButton({ icon, label, onPress, tone = 'fog', size = touch.min, disabled }: { icon: IconName; label: string; onPress: () => void; tone?: 'fog' | 'ink' | 'clear'; size?: number; disabled?: boolean }) {
-  const bg = tone === 'ink' ? colors.deep : tone === 'fog' ? colors.fog : 'transparent';
+export function IconButton({ icon, label, onPress, tone = 'fog', size = touch.min, disabled }: { icon: IconName; label: string; onPress: () => void; tone?: 'fog' | 'paper' | 'ink' | 'clear'; size?: number; disabled?: boolean }) {
+  const bg = tone === 'ink' ? colors.deep : tone === 'fog' ? colors.fog : tone === 'paper' ? colors.paper : 'transparent';
   return (
     <Pressable
       accessibilityRole="button"
@@ -497,6 +497,8 @@ export function ToggleRow({ icon, title, subtitle, value, onValueChange, disable
         {subtitle ? <T variant="caption" color={colors.inkMuted}>{subtitle}</T> : null}
       </View>
       <Switch
+        // React Native pins iOS switches to the top of a row unless told otherwise.
+        style={styles.switch}
         accessibilityLabel={title}
         accessibilityHint={subtitle}
         value={value}
@@ -701,6 +703,7 @@ const styles = StyleSheet.create({
   stepButton: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.tealTint, alignItems: 'center', justifyContent: 'center' },
   stepValue: { width: 84 },
 
+  switch: { alignSelf: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', minHeight: 56, gap: spacing.md, paddingVertical: spacing.sm },
   rowIcon: { width: 36, height: 36, borderRadius: radius.sm, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
 
