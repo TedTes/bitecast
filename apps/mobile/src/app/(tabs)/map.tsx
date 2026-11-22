@@ -1,21 +1,22 @@
-import { useState } from 'react';
-import { router } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { router, useFocusEffect, useNavigation } from 'expo-router';
 import { useQueries } from '@tanstack/react-query';
 import type { ForecastWindow, LakeForecast } from '@bitecast/engine';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ReasonLine, bestWindowWithin, formatWindow, hoursFromNow } from '@/components/forecast';
 import { Icon } from '@/components/icon';
 import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { LakeMap, useMapMode, type MapLakePin } from '@/components/map/lake-map';
 import { ShorelineHeader } from '@/components/shoreline-header';
-import { Banner, Button, Card, IceSafetyNotice, Row, Screen, Segmented, T } from '@/components/ui';
-import { colors, spacing, TAB_BUTTON_RISE } from '@/constants/theme';
+import { Banner, Button, Card, IceSafetyNotice, Row, Screen, T } from '@/components/ui';
+import { colors, spacing, TAB_BUTTON_RISE, touch } from '@/constants/theme';
 import { integrationsReady } from '@/api/config';
 import { forecastQuery } from '@/data/forecasts';
 import { lakes } from '@/data/lakes';
 import { formatDay } from '@/lib/format';
 import { useNow } from '@/lib/use-now';
 import { publishedForecast } from '@/features/published-forecast';
+import { onScene } from '@/features/sky';
 import { haptic } from '@/lib/haptics';
 import { seasonLabel, useConditionResolver } from '@/features/lake-season';
 import { useAppStore } from '@/store/use-app-store';
@@ -26,6 +27,20 @@ export default function MapScreen() {
   const toggle = useAppStore((state) => state.toggleLake);
   const [view, setView] = useState<'map' | 'list'>('map');
   const [selectedId, setSelectedId] = useState<string>(followed[0] ?? lakes[0].id);
+  const navigation = useNavigation();
+  // The Map tab always means the map, so tapping it closes the list.
+  useEffect(() => navigation.addListener('tabPress' as never, () => setView('map')), [navigation]);
+  // The list is a layer over the map: Android’s Back closes it before leaving the tab.
+  useFocusEffect(
+    useCallback(() => {
+      if (view !== 'list') return;
+      const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+        setView('map');
+        return true;
+      });
+      return () => subscription.remove();
+    }, [view]),
+  );
   const mode = useMapMode();
   const clock = useNow();
   const queries = useQueries({ queries: lakes.map((lake) => forecastQuery(lake.id, resolve(lake.id).season)) });
@@ -63,12 +78,27 @@ export default function MapScreen() {
       top={
         <ShorelineHeader
           page={view === 'map' && !iceNotice ? null : undefined}
-          title="Lake map"
-          subtitle={view === 'list' ? 'Best window in the next 24 hours' : mode === 'cached' ? 'Offline chart · not to scale · not for navigation' : 'Ontario + Great Lakes · not for navigation'}
+          // The tab already says “Map”, so the header says what you’re looking at.
+          title={view === 'list' ? 'The lake lineup' : 'Walleye waters'}
+          subtitle={
+            view === 'list'
+              ? `${lakes.length} Ontario lakes · best in the next 24 hours`
+              : mode === 'cached'
+                ? 'Offline chart · not to scale · not for navigation'
+                : `${lakes.length} Ontario lakes · ${followed.length} followed · not for navigation`
+          }
           right={
-            <View style={styles.views}>
-              <Segmented tone="dark" label="View" value={view} onChange={setView} options={[{ label: 'Map', value: 'map' }, { label: 'List', value: 'list' }]} />
-            </View>
+            <Pressable
+              onPress={() => {
+                haptic.select();
+                setView(view === 'map' ? 'list' : 'map');
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={view === 'map' ? 'Show lakes as a list' : 'Close the list and show the map'}
+              style={({ pressed }) => [styles.listButton, pressed && { opacity: 0.7 }]}
+            >
+              <Icon name={view === 'map' ? 'list' : 'close'} size={18} color={onScene.text} />
+            </Pressable>
           }
         />
       }
@@ -157,7 +187,8 @@ function windowText({ forecast, window, waiting }: { forecast?: LakeForecast; wi
 
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0, gap: 0, maxWidth: undefined },
-  views: { width: 140 },
+  // The same glass circle as Back on lake detail.
+  listButton: { width: touch.min, height: touch.min, borderRadius: touch.min / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: onScene.glass, borderWidth: 1, borderColor: onScene.glassLine },
   notice: { paddingHorizontal: spacing.xl, paddingVertical: spacing.sm },
   sheet: { backgroundColor: colors.paper, paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.md + TAB_BUTTON_RISE, gap: spacing.sm + 2, borderTopWidth: StyleSheet.hairlineWidth * 2, borderTopColor: colors.line },
   list: { paddingTop: spacing.lg, paddingHorizontal: spacing.xl, paddingBottom: spacing.xxl + TAB_BUTTON_RISE, gap: spacing.md },

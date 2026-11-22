@@ -82,6 +82,7 @@ const registry = {
   request: { ios: 'plus.bubble', android: 'add_comment' },
   pro: { ios: 'star.circle', android: 'workspace_premium' },
   apple: { ios: 'apple.logo', android: 'phone_iphone' },
+  list: { ios: 'list.bullet', android: 'format_list_bulleted' },
   expand: { ios: 'arrow.up.left.and.arrow.down.right', android: 'fit_screen' },
   settings: { ios: 'gearshape', android: 'settings' },
   plug: { ios: 'powerplug', android: 'power' },
