@@ -1,11 +1,12 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { walleyeProfile } from '@bitecast/engine';
 import { View } from 'react-native';
-import { ConfidenceMeter, LightCurve, ReasonList, ScoreReadout, formatWindow, windowEnd, windowPeak } from '@/components/forecast';
+import { LightCurve, ReasonList, formatWindow, windowEnd, windowPeak } from '@/components/forecast';
+import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { Icon, type IconName } from '@/components/icon';
 import { Button, Card, Chip, Divider, EmptyState, IceSafetyNotice, Row, Screen, SectionHeader, T } from '@/components/ui';
 import { colors, radius, spacing } from '@/constants/theme';
-import { useForecast } from '@/data/forecasts';
+import { forecastSource, useForecast } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
 import { capitalize, durationLabel, formatDay, formatHour, formatWind } from '@/lib/format';
 import { useLakeCondition } from '@/features/lake-season';
@@ -55,40 +56,32 @@ export default function WindowDetailScreen() {
       header
       footer={<Button icon="plus" onPress={() => router.push({ pathname: '/log/new', params: { lakeId: lake.id, score: String(window.peakScore) } })}>Log a trip in this window</Button>}
     >
-      <View style={{ gap: spacing.xs }}>
-        <T variant="label" color={colors.teal}>{lake.name} · {formatDay(window.start)}</T>
-        <Row gap={spacing.md} align="flex-start">
-          <View style={{ flex: 1, gap: spacing.xs }}>
-            <T variant="title" accessibilityRole="header">{formatWindow(window)}</T>
-            <T variant="callout" color={colors.inkMuted}>
-              {broad
-                ? `${durationLabel(window.start, windowEnd(window))} · broad time-block outlook · no exact peak hour`
-                : `${durationLabel(window.start, windowEnd(window))} · peaks near ${formatHour(windowPeak(window).ts)}`}
-            </T>
-          </View>
-          <ScoreReadout score={window.peakScore} size="lg" caption={broad ? 'Block' : 'Peak'} />
-        </Row>
-      </View>
+      <Row gap={spacing.md} align="center">
+        <View style={{ flex: 1, gap: spacing.xs }}>
+          <T variant="callout" color={colors.inkMuted}>{lake.name} · {formatDay(window.start)}</T>
+          <T variant="title" accessibilityRole="header">{capitalize(formatWindow(window))}</T>
+          <T variant="caption" color={colors.inkMuted}>
+            {broad
+              ? `${durationLabel(window.start, windowEnd(window))} · broad time block · no exact peak hour`
+              : `${durationLabel(window.start, windowEnd(window))} · peaks near ${formatHour(windowPeak(window).ts)}`}
+          </T>
+        </View>
+        <ScoreBadge score={window.peakScore} size="lg" caption={broad ? 'Block' : 'Peak'} />
+      </Row>
 
-      <Card variant="tint" style={{ gap: spacing.sm }}>
-        <ConfidenceMeter value={window.confidence} explain />
-        <Divider color={colors.tealTint} />
+      <Card style={{ gap: spacing.sm }}>
+        <ConfidenceBars level={window.confidence} long explain />
+        <Divider />
         <T variant="callout" color={colors.inkSoft}>
           {broad
-            ? 'This is a lower-precision pattern learned from complete fishing trips. It ranks the block, not an exact hour, and does not mean fish will bite.'
+            ? 'This is a lower-precision pattern learned from complete fishing trips. The score was inferred once for the whole block: repeated hours are for scheduling, not separate hourly predictions. It does not mean fish will bite.'
             : 'Underwater light moves into the range walleye tend to feed in. That makes conditions favourable — it doesn’t mean fish will bite.'}
         </T>
       </Card>
 
       {season === 'ice' ? <IceSafetyNotice compact /> : null}
 
-      {broad ? (
-        <Card variant="tint">
-          <T variant="callout" color={colors.inkSoft}>
-            This score was inferred once for the complete time block from trip-level evidence. The repeated hours are for scheduling and do not represent separate hourly predictions.
-          </T>
-        </Card>
-      ) : (
+      {broad ? null : (
         <>
           <SectionHeader title="Light through the window" caption="Effective underwater light each hour, with bite score above" />
           <Card>
@@ -125,13 +118,16 @@ export default function WindowDetailScreen() {
         <ReasonList reasons={window.reasons} />
       </Card>
 
-      <SectionHeader title="Tactics to try" />
+      {/* Published forecasts have no depth, and broad models put an outlook note where tactics would be. */}
+      <SectionHeader title={broad ? 'About this outlook' : 'Tactics to try'} />
       <Card style={{ gap: spacing.md }}>
-        <Chip label={`${capitalize(window.depth)} water`} tone="dark" icon="depth" />
-        <T variant="headline">{window.tactics}</T>
-        <T variant="callout" color={colors.inkMuted}>
-          A starting point from the walleye profile for this light level — not a spot prediction. Adjust to what you see on the water.
-        </T>
+        {forecastSource(forecast) === 'Demo weather' ? <Chip label={`${capitalize(window.depth)} water`} tone="teal" icon="depth" /> : null}
+        <T variant="callout">{window.tactics}</T>
+        {broad ? null : (
+          <T variant="caption" color={colors.inkMuted}>
+            A starting point from the walleye profile for this light level — not a spot prediction. Adjust to what you see on the water.
+          </T>
+        )}
       </Card>
     </Screen>
   );

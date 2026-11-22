@@ -72,6 +72,19 @@ uv run bitecast-ml infer forecast-input.parquet registry/models/<version> predic
 
 Promotion compares Brier score and top-window lift only within the same model family and season. Automatic promotion is disabled by default. The production worker requires either an hourly or broad champion for both `open_water` and `ice`; hourly always wins when both exist.
 
+For a launch-stage technical canary only:
+
+```bash
+uv run bitecast-ml train-broad-canary snapshot/training.parquet artifacts-canary open_water
+uv run bitecast-ml register artifacts-canary/<version> registry-canary
+uv run bitecast-ml activate-canary <version> registry-canary
+```
+
+Canary artifacts retain the normal production minimums by using a separate command. They are marked
+`canary_only`, cannot be promoted as champions, use only in-sample diagnostics, force Low confidence, and
+rank the three-day forecast horizon relatively with a maximum score of 69. The worker resolves them only
+when `ALLOW_EARLY_ACCESS_MODE=true` is explicitly set.
+
 ## Production secrets
 
 - `SUPABASE_URL`
@@ -88,6 +101,7 @@ Promotion compares Brier score and top-window lift only within the same model fa
 - `OPEN_METEO_BASE_URL`, `OPEN_METEO_API_KEY` (optional legacy commercial adapter)
 - `WEATHER_API_BASE_URL`, `WEATHER_API_KEY` (only when using the legacy provider-neutral contract)
 - `MODEL_REGISTRY_PATH`
+- `ALLOW_EARLY_ACCESS_MODE=true` (temporary launch-stage canaries only)
 
 The service-role and optional legacy weather keys belong in the worker environment, never in the mobile app.
 Production uses the anonymous ECCC GeoMet RDPS 10 km feed for up to 84 hourly forecast steps. BiteCast

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useFrameCallback, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
-import { WalleyeArt } from './walleye';
+import { NaturalWalleye } from './walleye';
 
 export type Mood = 'active' | 'idle' | 'sleepy';
 const level: Record<Mood, number> = { sleepy: 0, idle: 1, active: 2 };
@@ -21,6 +21,9 @@ type Fish = {
   fading: boolean;
 };
 
+/** Furthest a fish changes depth per decision (pt), and how fast it may do so (pt/s). */
+const MAX_HOP = 90;
+const MAX_CLIMB = 14;
 const FISH_ASPECT = 110 / 240; // WalleyeArt viewBox
 function lifespan() {
   'worklet';
@@ -39,8 +42,9 @@ function roomiest(fish: Fish[], self: Fish, width: number, top: number, room: nu
     let nearest = Number.MAX_VALUE;
     for (const other of fish) {
       if (other === self || other.alpha < 0.1) continue;
-      const dx = (other.x - x) / Math.max(1, width);
-      const dy = (other.y - y) / Math.max(1, room + 1);
+      // Measured in points: scaling by the band would stack fish in a column when the band is shallow.
+      const dx = other.x - x;
+      const dy = other.y - y;
       nearest = Math.min(nearest, dx * dx + dy * dy * 3);
     }
     if (nearest > bestScore) { bestScore = nearest; bestX = x; bestY = y; }
@@ -54,7 +58,7 @@ function roomiest(fish: Fish[], self: Fish, width: number, top: number, room: nu
  * random lifespan dwindle away and reappear somewhere roomy — often mid-lake — so the scene
  * stays evenly populated and never visibly repeats. `mood` changes behaviour, never count.
  */
-export function LakeSchool({ width, top, bottom, mood, count = 10 }: { width: number; top: number; bottom: number; mood: Mood; count?: number }) {
+export function LakeSchool({ width, top, bottom, mood, count = 10, sizeScale = 1, visibility = 1, active = true }: { width: number; top: number; bottom: number; mood: Mood; count?: number; sizeScale?: number; /** Multiplies fish opacity (capped at 1). */ visibility?: number; /** False pauses swimming (e.g. while the screen is out of focus). */ active?: boolean }) {
   const reduced = useReducedMotion();
   const activity = useSharedValue(level[mood]);
   const band = bottom - top;
@@ -65,7 +69,7 @@ export function LakeSchool({ width, top, bottom, mood, count = 10 }: { width: nu
     const rows = Math.ceil(count / cols);
     return Array.from({ length: count }, (_, i) => {
       const depth = Math.random();
-      const size = 46 - depth * 22 + Math.random() * 4;
+      const size = (46 - depth * 22 + Math.random() * 4) * sizeScale;
       const room = Math.max(0, band - size * FISH_ASPECT);
       const col = i % cols, row = Math.floor(i / cols);
       const x = ((col + 0.15 + Math.random() * 0.7) / cols) * width - size / 2;
@@ -93,12 +97,13 @@ export function LakeSchool({ width, top, bottom, mood, count = 10 }: { width: nu
     });
   }, [mood, activity, school]);
 
-  useFrameCallback((frame) => {
+  const swim = useFrameCallback((frame) => {
     'worklet';
     const dt = Math.min(0.05, (frame.timeSincePreviousFrame ?? 16) / 1000);
     const a = activity.get(); // 0 sleepy … 2 active
     const pace = 0.2 + a * 0.55;
-    const preferred = 1 - a / 2; // active → upper water, sleepy → lower water
+    // Lively fish use the whole water column; sleepy ones favour the bottom.
+    const depthBias = 0.45 + a * 0.2;
     school.modify((fish) => {
       'worklet';
       for (const f of fish) {
@@ -110,17 +115,19 @@ export function LakeSchool({ width, top, bottom, mood, count = 10 }: { width: nu
         if (f.turnIn <= 0) {
           f.turnIn = 4 + Math.random() * 10;
           if (Math.random() < 0.3) f.dir = -f.dir;
-          const d = Math.min(1, Math.max(0, preferred * 0.6 + Math.random() * 0.55 - 0.15));
-          f.targetY = top + d * room;
+          const wander = top + Math.random() ** depthBias * room;
+          // Short hops, so a fish meanders through a tall band instead of diving across it.
+          f.targetY = Math.min(f.y + MAX_HOP, Math.max(f.y - MAX_HOP, wander));
         }
 
-        // Personal space: ease apart vertically from close neighbours (no stacked pairs).
+        // Personal space: ease apart from close neighbours, sideways too as a shallow band has no height to spare.
         for (const other of fish) {
           if (other === f || other.alpha < 0.2) continue;
           const dx = Math.abs(other.x - f.x);
           const dy = other.y - f.y;
           if (dx < (f.size + other.size) * 0.55 && Math.abs(dy) < (h + other.size * FISH_ASPECT) * 0.8) {
             f.targetY = Math.min(top + room, Math.max(top, f.targetY - Math.sign(dy || 1) * 14 * dt * 10));
+            f.x += Math.sign(f.x - other.x) * 7 * dt;
           }
         }
 
@@ -128,7 +135,7 @@ export function LakeSchool({ width, top, bottom, mood, count = 10 }: { width: nu
         f.facing += (f.dir - f.facing) * Math.min(1, dt * 2.2);
         const turning = 1 - Math.abs(f.facing);
         f.x += f.facing * f.speed * pace * (1 - turning * 0.7) * dt;
-        f.y += (f.targetY - f.y) * Math.min(1, dt * 0.35);
+        f.y += Math.min(MAX_CLIMB, Math.max(-MAX_CLIMB, (f.targetY - f.y) * 0.35)) * dt;
         f.phase += dt * (1 + a * 2);
 
         // Lifespan: dwindle away in place, then reappear somewhere roomy.
@@ -162,26 +169,31 @@ export function LakeSchool({ width, top, bottom, mood, count = 10 }: { width: nu
       }
       return fish;
     });
-  }, !reduced);
+  }, false);
+
+  // Swim only while visible and motion is allowed; Reduce Motion leaves a still scene.
+  useEffect(() => {
+    swim.setActive(active && !reduced);
+  }, [swim, active, reduced]);
 
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill} importantForAccessibility="no-hide-descendants">
       {initial
         .map((fish, i) => ({ fish, i }))
         .sort((a, b) => b.fish.depth - a.fish.depth) // far fish render first
-        .map(({ fish, i }) => <SwimmingFish key={i} index={i} size={fish.size} width={width} school={school} />)}
+        .map(({ fish, i }) => <SwimmingFish key={i} index={i} size={fish.size} width={width} school={school} visibility={visibility} />)}
     </View>
   );
 }
 
-function SwimmingFish({ index, size, width, school }: { index: number; size: number; width: number; school: SharedValue<Fish[]> }) {
+function SwimmingFish({ index, size, width, school, visibility }: { index: number; size: number; width: number; school: SharedValue<Fish[]>; visibility: number }) {
   const style = useAnimatedStyle(() => {
     const f = school.get()[index];
     // Fade near the edges so fish dwindle away instead of hitting a wall.
     const fadeZone = f.size * 1.4;
     const centre = f.x + f.size / 2;
     const edge = Math.max(0, Math.min(1, Math.min(centre, width - centre) / fadeZone));
-    const base = 0.22 + (1 - f.depth) * 0.38; // subtle: 0.22 far … 0.6 near
+    const base = Math.min(1, (0.38 + (1 - f.depth) * 0.42) * visibility); // 0.38 far … 0.8 near: visible even when lazy
     const facing = Math.abs(f.facing) < 0.12 ? (f.facing < 0 ? -0.12 : 0.12) : f.facing;
     return {
       opacity: base * edge * f.alpha,
@@ -195,7 +207,7 @@ function SwimmingFish({ index, size, width, school }: { index: number; size: num
   });
   return (
     <Animated.View style={[styles.fish, style]}>
-      <WalleyeArt width={size} tone="light" contours={false} />
+      <NaturalWalleye width={size} />
     </Animated.View>
   );
 }

@@ -13,10 +13,12 @@ class ModelRegistry:
 
     def read(self) -> dict:
         if not self.index_path.exists():
-            return {"models": [], "champions": {}}
-        return json.loads(self.index_path.read_text())
+            return {"models": [], "champions": {}, "canaries": {}}
+        registry = json.loads(self.index_path.read_text())
+        registry.setdefault("canaries", {})
+        return registry
 
-    def register(self, artifact_dir: Path) -> dict:
+    def register(self, artifact_dir: Path, artifact_reference: Path | None = None) -> dict:
         registry = self.read()
         metadata = json.loads((artifact_dir / "metadata.json").read_text())
         metrics = json.loads((artifact_dir / "metrics.json").read_text())
@@ -25,10 +27,13 @@ class ModelRegistry:
             "season_mode": metadata["season_mode"],
             "model_family": metadata.get("model_family", "hourly"),
             "prediction_granularity": metadata.get("prediction_granularity", "hour"),
-            "artifact_dir": str(artifact_dir.resolve()),
+            "artifact_dir": str(
+                artifact_reference if artifact_reference is not None else artifact_dir.resolve()
+            ),
             "status": "challenger",
             "registered_at": datetime.now(UTC).isoformat(),
             "metrics": metrics,
+            "canary_only": bool(metadata.get("canary_only", False)),
         }
         registry["models"] = [item for item in registry["models"] if item["version"] != entry["version"]]
         registry["models"].append(entry)
@@ -40,6 +45,8 @@ class ModelRegistry:
         challenger = next((item for item in registry["models"] if item["version"] == version), None)
         if challenger is None:
             raise ValueError(f"Unknown model version: {version}")
+        if challenger.get("canary_only"):
+            raise ValueError("Canary-only models cannot be promoted to production champion")
         season = challenger["season_mode"]
         family = challenger.get("model_family", "hourly")
         champion_key = self._champion_key(season, family)
@@ -73,13 +80,46 @@ class ModelRegistry:
             raise ValueError(f"No {model_family} champion registered for {season}")
         return Path(entry["artifact_dir"])
 
-    def available_champion_path(self, season: str) -> tuple[Path, str]:
+    def activate_canary(self, version: str) -> None:
+        registry = self.read()
+        entry = next((item for item in registry["models"] if item["version"] == version), None)
+        if entry is None:
+            raise ValueError(f"Unknown model version: {version}")
+        if not entry.get("canary_only"):
+            raise ValueError("Only canary-only models can be activated as early access")
+        season = entry["season_mode"]
+        family = entry.get("model_family", "hourly")
+        for item in registry["models"]:
+            if (
+                item["season_mode"] == season
+                and item.get("model_family", "hourly") == family
+                and item["status"] == "canary"
+            ):
+                item["status"] = "challenger"
+        entry["status"] = "canary"
+        entry["activated_at"] = datetime.now(UTC).isoformat()
+        registry["canaries"][self._champion_key(season, family)] = version
+        self._write(registry)
+
+    def available_champion_path(
+        self, season: str, allow_canary: bool = False
+    ) -> tuple[Path, str]:
         """Prefer the precise hourly family, then fall back to the broad family."""
         for family in ("hourly", "trip_broad"):
             try:
                 return self.champion_path(season, family), family
             except ValueError:
                 continue
+        if allow_canary:
+            registry = self.read()
+            for family in ("hourly", "trip_broad"):
+                version = registry["canaries"].get(self._champion_key(season, family))
+                entry = next(
+                    (item for item in registry["models"] if item["version"] == version),
+                    None,
+                )
+                if entry is not None and entry.get("canary_only"):
+                    return Path(entry["artifact_dir"]), family
         raise ValueError(f"No hourly or trip_broad champion registered for {season}")
 
     @staticmethod

@@ -75,6 +75,9 @@ export const scoreBand = (score: number): ScoreBand =>
 export const spacing = { xxs: 2, xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28, xxxl: 40 } as const;
 export const radius = { xs: 6, sm: 10, md: 14, lg: 20, xl: 28, pill: 999 } as const;
 
+/** How far the centre + button rises above the tab bar; tab screens keep this much clear below their content. */
+export const TAB_BUTTON_RISE = 10;
+
 /** Minimum touch target (Apple HIG 44pt, Material 48dp → we use 48 where space allows). */
 export const touch = { min: 44, comfortable: 48, large: 56 } as const;
 export const hitSlop = { top: 8, bottom: 8, left: 8, right: 8 } as const;
@@ -93,26 +96,29 @@ export const elevation = {
   }),
 } as const;
 
-const serif = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, "Iowan Old Style", serif' });
+/** The BiteCast wordmark is the only serif. Interface text uses the platform font. */
+export const wordmarkFont = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, serif' });
 
 /**
- * Type scale. Display/title use a serif for the “field journal” voice; everything
- * operational uses the system sans for legibility outdoors. `maxScale` caps Dynamic
- * Type growth only where layout would otherwise break (large numerals, display).
+ * Type scale in the platform’s own font (SF Pro on iOS, Roboto on Android), so the app reads
+ * like a native one: sentence case, no italics, no added tracking on text, semibold for
+ * emphasis. `maxScale` caps Dynamic Type growth only where layout would otherwise break.
  */
 export const type = {
-  display: { fontFamily: serif, fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.4, maxScale: 1.35 },
-  title: { fontFamily: serif, fontSize: 25, lineHeight: 31, fontWeight: '700', letterSpacing: -0.2, maxScale: 1.4 },
-  headline: { fontSize: 19, lineHeight: 25, fontWeight: '700', letterSpacing: -0.2, maxScale: 1.6 },
-  subhead: { fontSize: 16, lineHeight: 22, fontWeight: '700', maxScale: 1.8 },
+  display: { fontSize: 32, lineHeight: 39, fontWeight: '700', maxScale: 1.35 },
+  title: { fontSize: 25, lineHeight: 31, fontWeight: '600', maxScale: 1.4 },
+  /** Titles on the sky. Apple’s rounded cut of SF Pro softens the angler talk; Android keeps Roboto. */
+  screenTitle: { fontFamily: Platform.select({ ios: 'ui-rounded' }), fontSize: 22, lineHeight: 28, fontWeight: '600', maxScale: 1.4 },
+  headline: { fontSize: 19, lineHeight: 25, fontWeight: '600', maxScale: 1.6 },
+  subhead: { fontSize: 16, lineHeight: 22, fontWeight: '600', maxScale: 1.8 },
   body: { fontSize: 16, lineHeight: 23, fontWeight: '400', maxScale: 2 },
   callout: { fontSize: 14, lineHeight: 20, fontWeight: '400', maxScale: 2 },
-  caption: { fontSize: 12.5, lineHeight: 17, fontWeight: '500', maxScale: 1.8 },
-  label: { fontSize: 11, lineHeight: 14, fontWeight: '700', letterSpacing: 1.1, textTransform: 'uppercase', maxScale: 1.5 },
-  numeralXL: { fontSize: 56, lineHeight: 60, fontWeight: '700', letterSpacing: -1.5, fontVariant: ['tabular-nums'], maxScale: 1.2 },
-  numeralL: { fontSize: 34, lineHeight: 38, fontWeight: '700', letterSpacing: -0.8, fontVariant: ['tabular-nums'], maxScale: 1.25 },
-  numeralM: { fontSize: 22, lineHeight: 26, fontWeight: '700', letterSpacing: -0.3, fontVariant: ['tabular-nums'], maxScale: 1.3 },
-  numeralS: { fontSize: 15, lineHeight: 18, fontWeight: '700', fontVariant: ['tabular-nums'], maxScale: 1.4 },
+  caption: { fontSize: 12.5, lineHeight: 17, fontWeight: '400', maxScale: 1.8 },
+  label: { fontSize: 13, lineHeight: 17, fontWeight: '600', maxScale: 1.5 },
+  numeralXL: { fontSize: 56, lineHeight: 60, fontWeight: '600', letterSpacing: -0.5, fontVariant: ['tabular-nums'], maxScale: 1.2 },
+  numeralL: { fontSize: 34, lineHeight: 38, fontWeight: '600', fontVariant: ['tabular-nums'], maxScale: 1.25 },
+  numeralM: { fontSize: 22, lineHeight: 26, fontWeight: '600', fontVariant: ['tabular-nums'], maxScale: 1.3 },
+  numeralS: { fontSize: 15, lineHeight: 18, fontWeight: '600', fontVariant: ['tabular-nums'], maxScale: 1.4 },
 } satisfies Record<string, TextStyle & { maxScale: number }>;
 export type TypeVariant = keyof typeof type;
 

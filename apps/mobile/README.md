@@ -18,11 +18,11 @@ shows the offline chart).
 
 ## Configuration
 
-All external services are optional in development; the app runs on local demo data.
+All external services are optional in development; the app runs on local demo data. When Supabase is configured, published forecasts refresh in the background and are cached locally for offline reuse.
 
 | Variable | Used for |
 | --- | --- |
-| `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Sync, accounts, lake requests |
+| `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Forecasts, sync, accounts, lake requests |
 | `EXPO_PUBLIC_REVENUECAT_IOS_KEY`, `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` | Purchases (prices are dev placeholders until set) |
 | `EXPO_PUBLIC_POSTHOG_KEY`, `EXPO_PUBLIC_SENTRY_DSN` | Analytics, crash reporting |
 | `EXPO_PUBLIC_MAP_PROVIDER` | `react-native-maps` (default) or `cached` (offline chart only) |
@@ -46,6 +46,6 @@ cd apps/mobile && npx expo-doctor
 - `src/components` — design system (`ui.tsx`, `forecast.tsx`), sky arc + lake school, map boundary (`map/`)
 - `src/constants/theme.ts` — colour, type, spacing and score-band tokens
 - `src/api` — the only place external services are called
-- `src/db` — SQLite-first local storage (catch logs are written here before any sync)
+- `src/db` — SQLite-first local storage (catch logs are written here before any sync; forecasts are cached after refresh)
 - Catch/no-catch logging is free with consent off by default. Training consent is per trip, versioned, and
   timestamped; unversioned legacy logs are excluded from training.

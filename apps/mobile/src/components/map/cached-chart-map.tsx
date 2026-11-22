@@ -5,13 +5,13 @@ import { shortLakeName } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { Icon } from '../icon';
 import { T } from '../ui';
-import type { LakeMapProps, MapLakePin } from './types';
+import { pinScoreLabel, type LakeMapProps, type MapLakePin } from './types';
 
 const PIN_W = 66;
 const PIN_H = 44;
 const PAD = 52;
-/** Space hidden under the overlapping bottom sheet. */
-const BOTTOM_RESERVE = 24;
+/** Breathing room above the sheet. */
+const BOTTOM_RESERVE = 8;
 
 type Placed = MapLakePin & { x: number; y: number; px: number; py: number };
 
@@ -113,7 +113,7 @@ export function CachedChartMap({ pins, selectedId, onSelect }: LakeMapProps) {
       </View>
       {/* Pins */}
       {ordered.map((pin) => {
-        const band = scoreBands[scoreBand(pin.score)];
+        const band = pin.score === null ? null : scoreBands[scoreBand(pin.score)];
         const active = pin.id === selectedId;
         return (
           <Pressable
@@ -124,14 +124,14 @@ export function CachedChartMap({ pins, selectedId, onSelect }: LakeMapProps) {
             }}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
-            accessibilityLabel={`${pin.name}, best bite score ${pin.score}, ${band.label}${pin.followed ? ', followed' : ''}`}
+            accessibilityLabel={`${pin.name}, ${pinScoreLabel(pin.score, band?.label)}${pin.followed ? ', followed' : ''}`}
             accessibilityHint="Shows the window, reasons and confidence below the map"
             style={[styles.pin, { left: pin.px - PIN_W / 2, top: pin.py - PIN_H / 2 }, active && styles.pinActive]}
           >
-            <View style={[styles.pinStripe, { backgroundColor: active ? band.onDark : band.color }]} />
+            <View style={[styles.pinStripe, { backgroundColor: band ? (active ? band.onDark : band.color) : colors.fogDeep }]} />
             <View style={{ alignItems: 'center', flex: 1 }}>
-              <T variant="numeralS" color={active ? colors.onDark : colors.ink} maxFontSizeMultiplier={1.1}>{pin.score}</T>
-              <T variant="caption" weight="700" color={active ? colors.onDarkMuted : colors.inkSoft} style={{ fontSize: 10, lineHeight: 12 }} numberOfLines={1} maxFontSizeMultiplier={1.1}>{shortLakeName(pin.name)}</T>
+              <T variant="numeralS" color={active ? colors.onDark : colors.ink} maxFontSizeMultiplier={1.1}>{pin.score ?? '–'}</T>
+              <T variant="caption" weight="600" color={active ? colors.onDarkMuted : colors.inkSoft} style={{ fontSize: 10, lineHeight: 12 }} numberOfLines={1} maxFontSizeMultiplier={1.1}>{shortLakeName(pin.name)}</T>
             </View>
             {pin.followed ? <View style={styles.followDot} /> : null}
           </Pressable>
@@ -139,7 +139,7 @@ export function CachedChartMap({ pins, selectedId, onSelect }: LakeMapProps) {
       })}
       <View style={styles.compass} importantForAccessibility="no-hide-descendants">
         <Icon name="north" size={14} color={colors.ink} />
-        <T variant="caption" weight="800" style={{ fontSize: 10, lineHeight: 12 }}>N</T>
+        <T variant="caption" weight="600" style={{ fontSize: 10, lineHeight: 12 }}>N</T>
       </View>
     </View>
   );

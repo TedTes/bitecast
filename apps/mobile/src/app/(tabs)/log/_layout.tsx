@@ -8,6 +8,8 @@ export default function LogTabLayout() {
         headerShadowVisible: false,
         headerStyle: { backgroundColor: colors.cream },
         headerTintColor: colors.ink,
+        // Matches the root stack's headers.
+        headerTitleStyle: { fontWeight: '600', fontSize: 17, color: colors.ink },
         headerBackButtonDisplayMode: 'minimal',
         contentStyle: { backgroundColor: colors.cream },
       }}

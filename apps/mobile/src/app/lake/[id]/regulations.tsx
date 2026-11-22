@@ -44,8 +44,8 @@ export default function RegulationsScreen() {
       }
     >
       <View style={{ gap: spacing.xs }}>
-        <T variant="label" color={colors.teal}>{lake.name} · {lake.provinceState}</T>
-        <T variant="title" accessibilityRole="header">Walleye regulations</T>
+        <T variant="title" accessibilityRole="header">{lake.name}</T>
+        <T variant="callout" color={colors.inkMuted}>Walleye · {lake.provinceState}</T>
       </View>
 
       <View

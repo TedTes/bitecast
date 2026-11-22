@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon, type IconName } from '@/components/icon';
 import { StepHeader } from '@/components/onboarding';
 import { Button, IceSafetyNotice, PageHeader, Reveal, Row, Screen, T } from '@/components/ui';
-import { colors, elevation, radius, spacing } from '@/constants/theme';
+import { colors, radius, spacing } from '@/constants/theme';
 import { haptic } from '@/lib/haptics';
 import { useAppStore } from '@/store/use-app-store';
 
@@ -72,7 +72,7 @@ export default function SeasonScreen() {
 
 const styles = StyleSheet.create({
   option: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.lg, backgroundColor: colors.paper, borderRadius: radius.lg, borderWidth: 1.5, borderColor: colors.line, padding: spacing.lg },
-  optionActive: { borderColor: colors.teal, backgroundColor: colors.white, ...elevation.raised },
+  optionActive: { borderColor: colors.teal, backgroundColor: colors.tealMist },
   optionIcon: { width: 52, height: 52, borderRadius: radius.md, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
   radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   radioActive: { borderColor: colors.teal },

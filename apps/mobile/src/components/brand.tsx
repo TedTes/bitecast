@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
-import { colors, type } from '@/constants/theme';
+import { colors, wordmarkFont } from '@/constants/theme';
 
 /**
  * BiteCast mark: a sun breaking the horizon over bathymetric contour rings —
@@ -124,6 +124,6 @@ const styles = StyleSheet.create({
   sunClip: { position: 'absolute', left: 0, overflow: 'hidden' },
   waterClip: { position: 'absolute', left: 0, overflow: 'hidden' },
   horizon: { position: 'absolute', left: '14%', right: '14%', borderRadius: 2 },
-  word: { fontFamily: type.title.fontFamily, fontWeight: '700', letterSpacing: -0.2 },
+  word: { fontFamily: wordmarkFont, fontWeight: '700', letterSpacing: -0.2 },
   lockup: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 });

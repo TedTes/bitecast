@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite';
+import type { LakeForecast } from '@bitecast/engine';
 import type { LakeSeasons, AlertPreference, AppSettings, CatchLog, LakeRequest } from '@/types/app';
 import { normalizeCatchLog } from '@/features/catch-log';
 
@@ -19,7 +20,8 @@ async function getDatabase() {
   await database.execAsync(`PRAGMA journal_mode = WAL;
     CREATE TABLE IF NOT EXISTS catch_logs_local (id TEXT PRIMARY KEY NOT NULL, payload TEXT NOT NULL, sync_state TEXT NOT NULL, client_updated_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS settings_local (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL);
-    CREATE TABLE IF NOT EXISTS lake_requests_local (id TEXT PRIMARY KEY NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);`);
+    CREATE TABLE IF NOT EXISTS lake_requests_local (id TEXT PRIMARY KEY NOT NULL, payload TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS forecast_cache_local (key TEXT PRIMARY KEY NOT NULL, payload TEXT NOT NULL, computed_at TEXT NOT NULL, cached_at TEXT NOT NULL);`);
   return database;
 }
 export async function loadCatchLogs(): Promise<CatchLog[]> {
@@ -35,7 +37,31 @@ export async function saveCatchLog(log: CatchLog) {
 }
 export async function removeAllLocalData() {
   const db = await getDatabase();
-  await db.execAsync('DELETE FROM catch_logs_local; DELETE FROM lake_requests_local;');
+  await db.execAsync('DELETE FROM catch_logs_local; DELETE FROM lake_requests_local; DELETE FROM forecast_cache_local;');
+}
+
+export async function loadForecastCache(key: string): Promise<LakeForecast | null> {
+  try {
+    const db = await getDatabase();
+    const row = await db.getFirstAsync<{ payload: string }>(
+      'SELECT payload FROM forecast_cache_local WHERE key = ?',
+      key,
+    );
+    return row ? JSON.parse(row.payload) as LakeForecast : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveForecastCache(key: string, forecast: LakeForecast) {
+  const db = await getDatabase();
+  await db.runAsync(
+    'INSERT OR REPLACE INTO forecast_cache_local (key, payload, computed_at, cached_at) VALUES (?, ?, ?, ?)',
+    key,
+    JSON.stringify(forecast),
+    forecast.computedAt,
+    new Date().toISOString(),
+  );
 }
 
 export async function loadAppState(): Promise<LocalAppState | null> {

@@ -52,7 +52,7 @@ export function Toast({
             accessibilityRole="button"
             style={({ pressed }) => [styles.action, pressed && { opacity: 0.6 }]}
           >
-            <T variant="callout" weight="700" color={colors.mint}>{actionLabel}</T>
+            <T variant="callout" weight="600" color={colors.mint}>{actionLabel}</T>
           </Pressable>
         ) : null}
       </Animated.View>

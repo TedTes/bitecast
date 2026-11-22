@@ -8,12 +8,15 @@ export type MapLakePin = {
   name: string;
   latitude: number;
   longitude: number;
-  /** Peak bite score for the selected period; pins always pair it with the band word. */
-  score: number;
+  /** Peak bite score for the selected period, or null when there is no published forecast. */
+  score: number | null;
   followed: boolean;
   /** Relative water-body size hint for the offline chart. */
   scale: 'large' | 'small';
 };
+
+/** Screen-reader description of a pin. */
+export const pinScoreLabel = (score: number | null, band: string | undefined) => (score === null ? 'no forecast yet' : `best bite score ${score}, ${band}`);
 
 export type LakeMapProps = {
   pins: MapLakePin[];

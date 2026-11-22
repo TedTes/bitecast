@@ -12,5 +12,5 @@ gcloud run jobs describe bitecast-training --project "$PROJECT_ID" --region "$RE
 echo "Cloud Scheduler jobs (expected: none):"
 gcloud scheduler jobs list --project "$PROJECT_ID" --location "$REGION" --format='table(name,schedule,state)'
 
-echo "Cloud Run executions (expected before activation: none):"
+echo "Cloud Run execution history (forecast canaries may be present; training remains manual):"
 gcloud run jobs executions list --project "$PROJECT_ID" --region "$REGION" --format='table(name,job,completionTime,conditions[0].state)'

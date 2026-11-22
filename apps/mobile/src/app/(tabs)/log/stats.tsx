@@ -27,10 +27,6 @@ export default function StatsScreen() {
     const remaining = MIN_LOGS - logs.length;
     return (
       <Screen header tab footer={<Button icon="plus" onPress={() => router.push('/log/new')}>Log a trip</Button>}>
-        <View style={{ gap: spacing.xs }}>
-          <T variant="label" color={colors.teal}>Personal insights</T>
-          <T variant="title" accessibilityRole="header">Your patterns</T>
-        </View>
         <View style={{ alignItems: 'center' }} importantForAccessibility="no-hide-descendants">
           <WalleyeArt width={220} tone="light" />
         </View>
@@ -39,7 +35,7 @@ export default function StatsScreen() {
             <T variant="headline">{remaining} more log{remaining === 1 ? '' : 's'} to go</T>
             <T variant="numeralS" color={colors.inkMuted}>{logs.length}/{MIN_LOGS}</T>
           </Row>
-          <ProgressBar value={logs.length / MIN_LOGS} label={`${logs.length} of ${MIN_LOGS} logs`} height={10} />
+          <ProgressBar value={logs.length / MIN_LOGS} label={`${logs.length} of ${MIN_LOGS} logs`} height={4} />
           <T variant="callout" color={colors.inkSoft}>Five trips is the minimum before patterns mean anything. No-catch trips count — they show when fishing was slow.</T>
         </Card>
         <SectionHeader title="What you’ll unlock" />
@@ -72,11 +68,6 @@ export default function StatsScreen() {
 
   return (
     <Screen header tab>
-      <View style={{ gap: spacing.xs }}>
-        <T variant="label" color={colors.teal}>Personal insights · {logs.length} trips</T>
-        <T variant="title" accessibilityRole="header">Your patterns</T>
-      </View>
-
       <Row gap={spacing.md} align="stretch">
         <Metric value={pct(totals.rate)} label="of trips caught fish" />
         <Metric value={String(totals.fish)} label="walleye logged" />
@@ -129,7 +120,7 @@ export default function StatsScreen() {
 function Metric({ value, label }: { value: string; label: string }) {
   return (
     <Card style={{ flex: 1, gap: 2 }}>
-      <T variant="numeralL" color={colors.teal}>{value}</T>
+      <T variant="numeralL">{value}</T>
       <T variant="caption" color={colors.inkMuted}>{label}</T>
     </Card>
   );
@@ -140,8 +131,8 @@ function RateRow({ item, hint }: { item: Bucket; hint?: string }) {
   return (
     <View style={{ gap: 6 }} accessible accessibilityLabel={`${item.label}${hint ? `, ${hint}` : ''}: ${item.trips ? `${pct(item.rate)} of ${item.trips} trips` : 'no trips yet'}${thin ? ', too few trips to rely on' : ''}`}>
       <Row justify="space-between">
-        <T variant="callout" weight="700">{item.label}{hint ? <T variant="caption" color={colors.inkMuted}>  {hint}</T> : null}</T>
-        <T variant="callout" weight="700" color={item.trips ? colors.ink : colors.inkFaint}>{item.trips ? pct(item.rate) : '—'}</T>
+        <T variant="callout" weight="600">{item.label}{hint ? <T variant="caption" color={colors.inkMuted}>  {hint}</T> : null}</T>
+        <T variant="callout" weight="600" color={item.trips ? colors.ink : colors.inkFaint}>{item.trips ? pct(item.rate) : '—'}</T>
       </Row>
       <ProgressBar value={item.rate} color={thin ? colors.inkFaint : colors.teal} />
       <T variant="caption" color={colors.inkMuted}>{item.trips ? `${item.successes} of ${item.trips} trips${thin ? ' · too few to rely on' : ''}` : 'No trips logged yet'}</T>

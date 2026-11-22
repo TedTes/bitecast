@@ -1,0 +1,52 @@
+name: BiteCast support request
+description: Report an app problem or ask for help. Do not include private fishing locations or personal information.
+title: "Support: "
+labels:
+  - support
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for using BiteCast. This request will be public. Do not include passwords, authentication codes, precise fishing spots, or other sensitive information.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Forecasts
+        - Catch log
+        - Account or data deletion
+        - Notifications
+        - Lake coverage
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: BiteCast version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: ios-version
+    attributes:
+      label: iOS version
+      placeholder: "For example: iOS 18.2"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Explain the problem and what you expected. Remove personal information from screenshots.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Opened…
+        2. Selected…
+        3. Saw…

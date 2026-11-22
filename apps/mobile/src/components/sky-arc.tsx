@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { ForecastHour, ForecastWindow } from '@bitecast/engine';
 import { StyleSheet, View, type AccessibilityActionEvent, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
+import * as SunCalc from 'suncalc';
 import Svg, { Defs, Line, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { colors, scoreBand, scoreBands } from '@/constants/theme';
 import { formatTime, shortClock } from '@/lib/format';
@@ -18,13 +19,15 @@ const NIGHT_DIP = 20;
 const AXIS_Y = H - 16;
 const PAD = 14;
 const HORIZON_LABEL_W = 98;
-const MAX_ELEVATION = 45;
-const MIN_ELEVATION = -12;
+/** Score threshold where a bite window starts (drawn as a faint guide). */
+const WINDOW_SCORE = 60;
 
-const yFor = (elevation: number) =>
-  elevation >= 0
-    ? HORIZON - (Math.min(elevation, MAX_ELEVATION) / MAX_ELEVATION) * (HORIZON - SKY_TOP)
-    : HORIZON + (Math.min(-elevation, -MIN_ELEVATION) / -MIN_ELEVATION) * NIGHT_DIP;
+/**
+ * The line is the hourly bite score (a “bite tide”): 0 sits just under the waterline,
+ * 100 near the top of the sky. Day/night context comes from the sky tint, the sunrise/
+ * sunset labels and the sun/moon marker — not from the line.
+ */
+const yForScore = (score: number) => HORIZON + 10 - (Math.max(0, Math.min(100, score)) / 100) * (HORIZON + 10 - SKY_TOP);
 
 /** Smooth path through points (Catmull-Rom → cubic Bézier). */
 function smooth(points: { x: number; y: number }[]) {
@@ -45,18 +48,46 @@ type Props = {
   ice: boolean;
   index: number;
   onIndexChange: (index: number) => void;
+  /**
+   * Full-bleed scene: no sky fill (the page's sky shows through), a deeper lake that fades
+   * into the page at the bottom, and the hour axis just above the fade.
+   */
+  immersive?: boolean;
+  /** Pills drawn inside the sky, top-left and top-right (e.g. current / next window). */
+  overlayLeft?: ReactNode;
+  overlayRight?: ReactNode;
+  /** Show the scrubbed hour's score in the marker tag (“2 am · 29”). */
+  tagScore?: boolean;
+  fishCount?: number;
+  fishScale?: number;
+  /** When given, the curve is the true sun path for this location (smooth), not model data. */
+  latitude?: number;
+  longitude?: number;
 };
+
+const IMMERSIVE_H = 214;
+const FADE = 44;
+/** Approximate half-width of the time tag, used to keep it inside the screen. */
+const TAG_HALF = 44;
 
 /**
  * Sky arc: the next 24 hours of sun elevation over a lake horizon. Daylight rises above the
  * waterline, night dips under it; window hours glow. Drag to scrub hours.
  */
-export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
+export function SkyArc({ hours, windows, ice, index, onIndexChange, immersive = false, overlayLeft, overlayRight, tagScore = false, fishCount, fishScale, latitude, longitude }: Props) {
+  const height = immersive ? IMMERSIVE_H : H;
+  const lakeH = immersive ? height - HORIZON : AXIS_Y - HORIZON - 6;
+  const fishBottom = immersive ? height - FADE - 18 : AXIS_Y - 8;
   const data = hours.slice(0, 24);
   const [width, setWidth] = useState(0);
   const reduced = useReducedMotion();
   const step = width ? (width - PAD * 2) / Math.max(1, data.length - 1) : 0;
-  const points = useMemo(() => data.map((hour, i) => ({ x: PAD + i * step, y: yFor(hour.sunElevation) })), [data, step]);
+  // True sun elevation for the lake when we know where it is; model data otherwise.
+  const elev = useMemo(
+    () => data.map((hour) => (latitude !== undefined && longitude !== undefined ? (SunCalc.getPosition(new Date(hour.ts), latitude, longitude).altitude * 180) / Math.PI : hour.sunElevation)),
+    [data, latitude, longitude],
+  );
+  const points = useMemo(() => data.map((hour, i) => ({ x: PAD + i * step, y: yForScore(hour.score) })), [data, step]);
   const windowSet = useMemo(() => new Set(windows.flatMap((w) => w.hours.map((h) => h.ts))), [windows]);
 
   // Window segments drawn over the curve.
@@ -91,6 +122,12 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
   }, [point, mx, my, reduced, index, step]);
   const markerStyle = useAnimatedStyle(() => ({ transform: [{ translateX: mx.get() - MARKER_W / 2 }, { translateY: my.get() - GLYPH_CENTER_Y }] }));
   const guideStyle = useAnimatedStyle(() => ({ transform: [{ translateX: mx.get() }] }));
+  // Keep the time tag on screen when the marker is near either edge.
+  const tagStyle = useAnimatedStyle(() => {
+    const x = mx.get();
+    const shift = Math.max(0, TAG_HALF + 4 - x) - Math.max(0, x + TAG_HALF + 4 - width);
+    return { transform: [{ translateX: shift }] };
+  });
 
   const pick = (x: number) => {
     if (!step) return;
@@ -100,13 +137,13 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
   const onTouch = (event: GestureResponderEvent) => pick(event.nativeEvent.locationX);
 
   const hour = data[index] ?? data[0];
-  const daylight = (hour?.sunElevation ?? 0) > 0;
+  const daylight = (elev[index] ?? 0) > 0;
   const band = hour ? scoreBands[scoreBand(hour.score)] : scoreBands.fair;
-  const crossings = data.flatMap((h, i): { i: number; label: "rise" | "set" }[] => {
-    const prev = data[i - 1];
-    if (!prev) return [];
-    if (prev.sunElevation < 0 && h.sunElevation >= 0) return [{ i: i - 1 + prev.sunElevation / (prev.sunElevation - h.sunElevation), label: 'rise' as const }];
-    if (prev.sunElevation >= 0 && h.sunElevation < 0) return [{ i: i - 1 + prev.sunElevation / (prev.sunElevation - h.sunElevation), label: 'set' as const }];
+  const crossings = elev.flatMap((e, i): { i: number; label: 'rise' | 'set' }[] => {
+    const prev = elev[i - 1];
+    if (prev === undefined) return [];
+    if (prev < 0 && e >= 0) return [{ i: i - 1 + prev / (prev - e), label: 'rise' }];
+    if (prev >= 0 && e < 0) return [{ i: i - 1 + prev / (prev - e), label: 'set' }];
     return [];
   });
   const clockAt = (fraction: number) => shortClock(new Date(new Date(data[0].ts).getTime() + fraction * 3_600_000));
@@ -115,17 +152,17 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
 
   return (
     <View
-      style={{ height: H }}
+      style={{ height }}
       onLayout={(event: LayoutChangeEvent) => setWidth(event.nativeEvent.layout.width)}
       accessible
       accessibilityRole="adjustable"
-      accessibilityLabel="Sun and bite score over the next 24 hours"
+      accessibilityLabel="Bite score over the next 24 hours"
       accessibilityValue={{ text: hour ? `${index === 0 ? 'Now' : formatTime(hour.ts)}, bite score ${hour.score}, ${band.label}${windowSet.has(hour.ts) ? ', inside a window' : ''}` : undefined }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(event: AccessibilityActionEvent) => onIndexChange(Math.min(data.length - 1, Math.max(0, index + (event.nativeEvent.actionName === 'increment' ? 1 : -1))))}
     >
       {width ? (
-        <Svg width={width} height={H} style={StyleSheet.absoluteFill} pointerEvents="none">
+        <Svg width={width} height={height} style={StyleSheet.absoluteFill} pointerEvents="none">
           <Defs>
             <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
               <Stop offset="0" stopColor={daylight ? '#E3EFEC' : '#D9E1E3'} />
@@ -133,14 +170,15 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
             </LinearGradient>
             <LinearGradient id="lake" x1="0" y1="0" x2="0" y2="1">
               <Stop offset="0" stopColor={ice ? '#E6EEF0' : colors.chartWater} />
-              <Stop offset="1" stopColor={ice ? '#D3DFE2' : colors.chartWaterDeep} />
+              <Stop offset={immersive ? (lakeH - FADE) / lakeH : 1} stopColor={ice ? '#D3DFE2' : colors.chartWaterDeep} />
+              <Stop offset="1" stopColor={immersive ? colors.cream : ice ? '#D3DFE2' : colors.chartWaterDeep} />
             </LinearGradient>
           </Defs>
-          <Rect x={0} y={0} width={width} height={HORIZON} fill="url(#sky)" />
-          <Rect x={0} y={HORIZON} width={width} height={AXIS_Y - HORIZON - 6} fill="url(#lake)" />
+          {immersive ? null : <Rect x={0} y={0} width={width} height={HORIZON} fill="url(#sky)" />}
+          <Rect x={0} y={HORIZON} width={width} height={lakeH} fill="url(#lake)" />
           {/* Gentle ripples / contour lines in the lake */}
           {[0.35, 0.65].map((t) => {
-            const y = HORIZON + (AXIS_Y - HORIZON - 6) * t;
+            const y = HORIZON + (immersive ? lakeH - FADE : lakeH) * t;
             return <Path key={t} d={`M0 ${y} C${width * 0.25} ${y - 3} ${width * 0.5} ${y + 3} ${width * 0.75} ${y - 2} S${width} ${y + 2} ${width} ${y}`} stroke={colors.chartContour} strokeWidth={1} fill="none" opacity={0.6} />;
           })}
           {ice ? (
@@ -150,8 +188,9 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
             </>
           ) : null}
           <Line x1={0} y1={HORIZON} x2={width} y2={HORIZON} stroke={colors.teal} strokeWidth={1} opacity={0.5} />
-          {/* Sun-elevation curve, then window segments on top */}
-          <Path d={smooth(points)} stroke={colors.inkFaint} strokeWidth={2} fill="none" strokeLinecap="round" opacity={0.85} />
+          {/* Window threshold guide, bite-score line, then window segments on top */}
+          <Line x1={0} y1={yForScore(WINDOW_SCORE)} x2={width} y2={yForScore(WINDOW_SCORE)} stroke={colors.inkFaint} strokeWidth={1} strokeDasharray="3 5" opacity={0.45} />
+          <Path d={smooth(points)} stroke={colors.teal} strokeWidth={2.5} fill="none" strokeLinecap="round" opacity={0.9} />
           {segments.map((seg, i) => (
             <Path key={i} d={smooth(seg)} stroke={colors.sunrise} strokeWidth={6} fill="none" strokeLinecap="round" opacity={0.9} />
           ))}
@@ -159,18 +198,18 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
       ) : null}
 
       {/* A subtle school of walleye fills the lake and reacts to the scrubbed hour */}
-      {width ? <LakeSchool width={width} top={HORIZON + (ice ? 10 : 4)} bottom={AXIS_Y - 8} mood={moodFor(hour?.score ?? 0)} /> : null}
+      {width ? <LakeSchool width={width} top={HORIZON + (ice ? 10 : 4)} bottom={fishBottom} mood={moodFor(hour?.score ?? 0)} count={fishCount} sizeScale={fishScale} /> : null}
 
       {/* Vertical guide + sun/moon marker */}
       {width ? (
         <>
           <Animated.View pointerEvents="none" style={[styles.guide, guideStyle]} />
           <Animated.View pointerEvents="none" style={[styles.marker, markerStyle]}>
-            <View style={styles.tag}>
+            <Animated.View style={[styles.tag, tagStyle]}>
               <T variant="caption" weight="700" color={colors.onDark} style={{ fontSize: 10.5, lineHeight: 13 }} maxFontSizeMultiplier={1.1}>
-                {index === 0 ? 'Now' : shortClock(hour.ts)}
+                {index === 0 ? 'Now' : shortClock(hour.ts)}{tagScore ? ` · ${hour.score}` : ''}
               </T>
-            </View>
+            </Animated.View>
             {daylight ? <SunGlyph /> : <MoonGlyph />}
           </Animated.View>
         </>
@@ -190,11 +229,14 @@ export function SkyArc({ hours, windows, ice, index, onIndexChange }: Props) {
               );
             })
         : null}
-      <View style={styles.axis} pointerEvents="none">
+      <View style={[styles.axis, immersive && { bottom: FADE - 6 }]} pointerEvents="none">
         {[0, 6, 12, 18, 23].map((i) => (
           <T key={i} variant="caption" color={colors.inkMuted} style={{ fontSize: 10.5 }} maxFontSizeMultiplier={1.2}>{i === 0 ? 'Now' : shortClock(data[i].ts)}</T>
         ))}
       </View>
+
+      {overlayLeft ? <View pointerEvents="none" style={[styles.overlay, { left: PAD }]}>{overlayLeft}</View> : null}
+      {overlayRight ? <View pointerEvents="none" style={[styles.overlay, { right: PAD }]}>{overlayRight}</View> : null}
 
       {/* Touch surface */}
       <View
@@ -246,5 +288,6 @@ const styles = StyleSheet.create({
   sunCore: { width: 15, height: 15, borderRadius: 8, backgroundColor: colors.sunrise, borderWidth: 2, borderColor: colors.white },
   moonCore: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.paper, borderWidth: 1.5, borderColor: colors.inkSoft, alignItems: 'center', justifyContent: 'center' },
   horizonLabel: { position: 'absolute', top: HORIZON - 18, fontSize: 10.5 },
+  overlay: { position: 'absolute', top: 8, maxWidth: '58%' },
   axis: { position: 'absolute', left: PAD - 4, right: PAD - 8, bottom: 0, flexDirection: 'row', justifyContent: 'space-between' },
 });

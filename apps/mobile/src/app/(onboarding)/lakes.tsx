@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Icon } from '@/components/icon';
 import { StepHeader } from '@/components/onboarding';
-import { Banner, Button, EmptyState, OfflineBanner, PageHeader, Row, Screen, T } from '@/components/ui';
+import { Banner, Button, ChoiceChips, EmptyState, OfflineBanner, PageHeader, Row, Screen, T } from '@/components/ui';
 import { colors, hitSlop, radius, spacing, touch } from '@/constants/theme';
 import { lakes } from '@/data/lakes';
 import { capitalize } from '@/lib/format';
@@ -62,7 +62,7 @@ export default function LakesScreen() {
       footer={
         <>
           <Row justify="space-between">
-            <T variant="callout" weight="700" accessibilityLiveRegion="polite">{selected.length} of {MAX} followed</T>
+            <T variant="callout" weight="600" accessibilityLiveRegion="polite">{selected.length} of {MAX} followed</T>
             {selected.length === 0 ? <T variant="caption" color={colors.inkMuted}>Pick at least one lake</T> : null}
           </Row>
           <Button iconRight="chevron-right" disabled={selected.length === 0} onPress={() => router.push('/(onboarding)/preview')}>See my first forecast</Button>
@@ -93,24 +93,8 @@ export default function LakesScreen() {
         ) : null}
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }} style={{ marginHorizontal: -spacing.xl }}>
-        <View style={{ width: spacing.xl - spacing.sm }} />
-        {regions.map((item) => {
-          const active = item === region;
-          return (
-            <Pressable
-              key={item}
-              onPress={() => setRegion(item)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              accessibilityLabel={`Region filter: ${item}`}
-              style={[styles.filter, active && styles.filterActive]}
-            >
-              <T variant="callout" weight="700" color={active ? colors.onDark : colors.ink}>{item}</T>
-            </Pressable>
-          );
-        })}
-        <View style={{ width: spacing.xl - spacing.sm }} />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.xl }} style={{ marginHorizontal: -spacing.xl }}>
+        <ChoiceChips label="Region" value={region} onChange={setRegion} options={regions.map((item) => ({ label: item, value: item, accessibilityLabel: `Region filter: ${item}` }))} />
       </ScrollView>
 
       {full ? <Banner tone="info" body={`You’re following ${MAX} lakes — the maximum. Remove one to add another.`} live /> : null}
@@ -137,9 +121,7 @@ const styles = StyleSheet.create({
   search: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: touch.large - 4, paddingHorizontal: spacing.lg, borderRadius: radius.md, borderWidth: 1, borderColor: colors.lineStrong, backgroundColor: colors.paper },
   input: { flex: 1, minHeight: touch.comfortable, color: colors.ink, fontSize: 16 },
   clear: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.fog, alignItems: 'center', justifyContent: 'center' },
-  filter: { minHeight: 40, paddingHorizontal: spacing.lg, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.lineStrong, backgroundColor: colors.paper, justifyContent: 'center' },
-  filterActive: { backgroundColor: colors.ink, borderColor: colors.ink },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 68, padding: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 68, padding: spacing.md, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper },
   rowSelected: { borderColor: colors.teal, backgroundColor: colors.tealMist },
   lakeIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
   check: { width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },

@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { BrandMark } from '@/components/brand';
 import { Icon, type IconName } from '@/components/icon';
 import { Banner, Button, Card, IconButton, LinkButton, Row, Screen, Skeleton, T } from '@/components/ui';
-import { colors, elevation, radius, spacing } from '@/constants/theme';
+import { colors, radius, spacing } from '@/constants/theme';
 import { externalConfig } from '@/api/config';
 import { getOfferings, purchasePlan, purchasesConfigured, restorePurchases, type Offering, type PlanId } from '@/api/adapters';
 import { haptic } from '@/lib/haptics';
@@ -123,7 +123,7 @@ export default function PaywallScreen() {
             <View style={styles.featureIcon}>
               <Icon name={item.icon} size={16} color={colors.teal} />
             </View>
-            <T variant="callout" weight="600" style={{ flex: 1 }}>{item.text}</T>
+            <T variant="callout" style={{ flex: 1 }}>{item.text}</T>
           </Row>
         ))}
       </View>
@@ -166,13 +166,13 @@ export default function PaywallScreen() {
                   <Row gap={spacing.sm} wrap>
                     <T variant="headline">{offering.title}</T>
                     {offering.id === 'annual' ? (
-                      <View style={styles.badge}><T variant="label" color={colors.sunriseInk} style={{ fontSize: 10 }}>Best value</T></View>
+                      <View style={styles.badge}><T variant="label" color={colors.sunriseInk} style={{ fontSize: 11.5 }}>Best value</T></View>
                     ) : null}
                   </Row>
                   <T variant="callout" color={colors.inkSoft}>{offering.price}</T>
                   {offering.perMonth ? <T variant="caption" color={colors.inkMuted}>{offering.perMonth}</T> : null}
                 </View>
-                {offering.isPlaceholder ? <View style={styles.devTag}><T variant="label" color={colors.warning} style={{ fontSize: 9 }}>Dev</T></View> : null}
+                {offering.isPlaceholder ? <View style={styles.devTag}><T variant="label" color={colors.warning} style={{ fontSize: 10.5 }}>Dev</T></View> : null}
               </Pressable>
             );
           })
@@ -185,7 +185,7 @@ export default function PaywallScreen() {
       {status.kind === 'error' ? <Banner tone="danger" title="Purchase didn’t go through" body={status.message} action={{ label: 'Try again', onPress: purchase }} live /> : null}
       {status.kind === 'nothing-to-restore' ? <Banner tone="neutral" title="No purchases found" body="We couldn’t find an active subscription for this store account." live /> : null}
 
-      <Card variant="tint" style={{ gap: spacing.sm }}>
+      <Card style={{ gap: spacing.sm }}>
         <Row gap={spacing.sm}>
           <Icon name="log" size={18} color={colors.teal} />
           <T variant="subhead">Catch logging is always free</T>
@@ -216,7 +216,7 @@ function LegalLink({ label, url }: { label: string; url: string }) {
 const styles = StyleSheet.create({
   featureIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
   plan: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg, borderRadius: radius.lg, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.paper },
-  planActive: { borderColor: colors.teal, backgroundColor: colors.white, ...elevation.raised },
+  planActive: { borderColor: colors.teal, backgroundColor: colors.tealMist },
   radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: colors.lineStrong, alignItems: 'center', justifyContent: 'center' },
   radioActive: { borderColor: colors.teal },
   radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.teal },
