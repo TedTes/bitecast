@@ -40,7 +40,6 @@ export default function LakeForecastScreen() {
   const setLakeSeason = useAppStore((state) => state.setLakeSeason);
   const followed = useAppStore((state) => state.followedLakeIds);
   const toggle = useAppStore((state) => state.toggleLake);
-  const isPro = useAppStore((state) => state.isPro);
   const query = useForecast(lake?.id ?? '', season);
   const [showAll, setShowAll] = useState(false);
   const now = useNow();
@@ -167,20 +166,6 @@ export default function LakeForecastScreen() {
 
       <SectionHeader title="7-day outlook" caption={broad ? 'Best broad block each day' : 'Best hour each day'} />
       <SevenDayOutlook hours={hours} />
-      {!isPro ? (
-        <Pressable
-          onPress={() => router.push('/paywall')}
-          accessibilityRole="button"
-          accessibilityLabel="BiteCast Pro: the full seven days and alerts before windows open"
-          style={({ pressed }) => [styles.pro, pressed && { opacity: 0.8 }]}
-        >
-          <Icon name="pro" size={18} color={colors.sunriseInk} />
-          <T variant="callout" style={{ flex: 1 }}>
-            <T variant="callout" weight="600">Pro</T> adds all 7 days and alerts before windows open
-          </T>
-          <Icon name="chevron-right" size={14} color={colors.inkFaint} />
-        </Pressable>
-      ) : null}
 
       <Card style={{ gap: 0, paddingVertical: spacing.xs }}>
         <ListRow icon="document" title="Walleye regulations" subtitle="Season, limits and the official source" onPress={() => router.push({ pathname: '/lake/[id]/regulations', params: { id: lake.id } })} />
@@ -305,5 +290,4 @@ const styles = StyleSheet.create({
   nextLive: { borderWidth: 1, borderColor: colors.sunrise },
   liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.sunrise },
   windowRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },
-  pro: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 48, paddingHorizontal: spacing.lg, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper },
 });

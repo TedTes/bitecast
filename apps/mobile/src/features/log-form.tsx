@@ -321,7 +321,7 @@ function LogFormInner({ previous }: { previous?: TripLog }) {
             <Divider />
             <ToggleRow
               icon="chart"
-              title="Help improve BiteCast"
+              title="Help improve DawnBite"
               subtitle="Allow this pseudonymized trip to train future walleye models. You can leave this off and still use logging."
               value={trainingConsent}
               onValueChange={setTrainingConsent}

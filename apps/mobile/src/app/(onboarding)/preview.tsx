@@ -36,19 +36,14 @@ export default function PreviewScreen() {
   return (
     <Screen
       footer={
-        <>
-          <Button icon="pro" onPress={() => router.push('/paywall')}>Unlock the full forecast</Button>
-          <Button
-            variant="ghost"
-            size="md"
-            onPress={() => {
-              complete(false);
-              router.replace('/(tabs)/today');
-            }}
-          >
-            Continue with free logging
-          </Button>
-        </>
+        <Button
+          onPress={() => {
+            complete(false);
+            router.replace('/(tabs)/today');
+          }}
+        >
+          Start using DawnBite
+        </Button>
       }
     >
       <StepHeader step={3} />

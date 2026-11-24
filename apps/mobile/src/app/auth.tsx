@@ -11,7 +11,6 @@ import { useAppStore } from '@/store/use-app-store';
 const kept: { icon: IconName; text: string }[] = [
   { icon: 'log', text: 'Every catch log, synced or still on this device' },
   { icon: 'lake', text: 'Your followed lakes and alert settings' },
-  { icon: 'pro', text: 'Your subscription' },
 ];
 const providerName: Record<AuthProvider, string> = { apple: 'Apple', google: 'Google' };
 
@@ -75,7 +74,7 @@ export default function AuthScreen() {
     >
       <View style={{ gap: spacing.sm }}>
         <T variant="title" accessibilityRole="header">Keep your logs across devices.</T>
-        <T variant="callout" color={colors.inkMuted}>Optional. You’re using BiteCast anonymously. Linking adds a sign-in to the account you already have — nothing moves or resets.</T>
+        <T variant="callout" color={colors.inkMuted}>Optional. You’re using DawnBite anonymously. Linking adds a sign-in to the account you already have — nothing moves or resets.</T>
       </View>
 
       <Card style={{ gap: spacing.md }}>
@@ -95,7 +94,7 @@ export default function AuthScreen() {
         <Banner
           tone="danger"
           title={`This ${providerName[result.provider]} account is already in use`}
-          body="It’s linked to a different BiteCast account, so we didn’t link it here. Nothing was merged or lost — your logs are still on this device. Try a different account, or sign in on the device that uses it."
+          body="It’s linked to a different DawnBite account, so we didn’t link it here. Nothing was merged or lost — your logs are still on this device. Try a different account, or sign in on the device that uses it."
           live
         />
       ) : null}

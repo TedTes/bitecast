@@ -136,11 +136,9 @@ export async function getOfferings(): Promise<Offering[]> {
   ];
 }
 
-/** Development placeholder: simulates a successful store purchase so flows can be exercised. */
+/** Disabled for the free-only 1.0 release. Never simulate a successful purchase. */
 export async function purchasePlan(_plan: PlanId): Promise<PurchaseResult> {
-  await new Promise((resolve) => setTimeout(resolve, 900));
-  if (!purchasesConfigured) return { status: 'success', message: 'Development purchase (no store connected).' };
-  return { status: 'error', message: 'RevenueCat purchase is not wired yet.' };
+  return { status: 'error', message: 'Subscriptions are not available in this version.' };
 }
 
 export async function restorePurchases(): Promise<boolean> {

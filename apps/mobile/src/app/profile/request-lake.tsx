@@ -71,7 +71,7 @@ export default function RequestLakeScreen() {
           <T variant="title" align="center" accessibilityRole="header">{queued ? 'Request saved' : 'Request sent'}</T>
           <T variant="body" color={colors.inkMuted} align="center" accessibilityLiveRegion="polite">
             {queued
-              ? `${submitted.name} is queued on this device and will send automatically when BiteCast can reach the server.`
+              ? `${submitted.name} is queued on this device and will send automatically when DawnBite can reach the server.`
               : `Thanks — ${submitted.name} is on our research list.`}
           </T>
           <T variant="caption" color={colors.inkMuted} align="center">We add lakes after checking clarity, forecast coverage and an official regulations source. That can take a while.</T>
@@ -83,7 +83,7 @@ export default function RequestLakeScreen() {
   return (
     <Screen header footer={<Button icon="request" loading={sending} loadingLabel="Saving…" onPress={send}>Send request</Button>}>
       <View style={{ gap: spacing.sm }}>
-        <T variant="title" accessibilityRole="header">Where should BiteCast go next?</T>
+        <T variant="title" accessibilityRole="header">Where should DawnBite go next?</T>
         <T variant="callout" color={colors.inkMuted}>Tell us about a walleye lake you fish. Requests help us decide which lakes to research next.</T>
       </View>
       <OfflineBanner what="Requests are queued on this device." />

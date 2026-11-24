@@ -35,7 +35,6 @@ export default function AlertsScreen() {
   const settings = useAppStore((state) => state.settings);
   const setMaster = useAppStore((state) => state.setAlertsEnabled);
   const setQuietHours = useAppStore((state) => state.setQuietHours);
-  const isPro = useAppStore((state) => state.isPro);
   const [permission, setPermission] = useState<NotificationPermission>('undetermined');
   const [requesting, setRequesting] = useState(false);
 
@@ -61,16 +60,12 @@ export default function AlertsScreen() {
     <Screen header>
       <T variant="callout" color={colors.inkMuted}>At most one alert per lake per day, before a window that meets your bar.</T>
 
-      {!isPro ? (
-        <Banner tone="info" icon="pro" title="Alerts are part of BiteCast Pro" body="Set them up now; they’ll send once Pro is active." action={{ label: 'See Pro', onPress: () => router.push('/paywall') }} />
-      ) : null}
-
       {permission === 'denied' ? (
         <Banner
           tone="danger"
           icon="bell-off"
           title="Notifications are turned off"
-          body="BiteCast can’t send alerts until you allow notifications in system settings."
+          body="DawnBite can’t send alerts until you allow notifications in system settings."
           action={{ label: 'Open settings', onPress: () => Linking.openSettings() }}
           live
         />

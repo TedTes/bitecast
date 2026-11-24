@@ -583,7 +583,7 @@ export function Banner({ tone = 'info', title, body, icon, action, live }: { ton
 }
 
 /** Mandatory, fixed ice-safety disclaimer. Text must not be paraphrased. */
-export const ICE_SAFETY_TEXT = 'BiteCast does not assess ice safety. Check ice yourself and follow local guidance.';
+export const ICE_SAFETY_TEXT = 'DawnBite does not assess ice safety. Check ice yourself and follow local guidance.';
 export function IceSafetyNotice({ compact }: { compact?: boolean }) {
   return (
     <View style={[styles.iceNotice, compact && { paddingVertical: spacing.sm }]} accessibilityRole="alert" accessible accessibilityLabel={`Ice safety. ${ICE_SAFETY_TEXT}`}>

@@ -7,10 +7,9 @@ import { Icon, type IconName } from '@/components/icon';
 import { ShorelineHeader } from '@/components/shoreline-header';
 import { Banner, Card, Divider, ICE_SAFETY_TEXT, LinkButton, ListRow, ROW_INSET, Row, Screen, Segmented, T, ToggleRow } from '@/components/ui';
 import { colors, hitSlop, radius, spacing, touch } from '@/constants/theme';
-import { deleteCloudAccount, integrationStatus, restorePurchases } from '@/api/adapters';
+import { deleteCloudAccount, integrationStatus } from '@/api/adapters';
 import { DATA_SOURCE_LABEL } from '@/data/forecasts';
 import { catchLogsToCsv } from '@/features/export';
-import { onScene } from '@/features/sky';
 import { haptic } from '@/lib/haptics';
 import { useAppStore } from '@/store/use-app-store';
 
@@ -23,8 +22,6 @@ export default function ProfileScreen() {
   const lakeSeasons = useAppStore((state) => state.lakeSeasons);
   const resetLakeSeasons = useAppStore((state) => state.resetLakeSeasons);
   const manualCount = Object.keys(lakeSeasons).length;
-  const isPro = useAppStore((state) => state.isPro);
-  const setPro = useAppStore((state) => state.setPro);
   const account = useAppStore((state) => state.account);
   const setAccount = useAppStore((state) => state.setAccount);
   const logs = useAppStore((state) => state.catchLogs);
@@ -32,7 +29,6 @@ export default function ProfileScreen() {
   const alerts = useAppStore((state) => state.alerts);
   const clearLocalData = useAppStore((state) => state.clearLocalData);
   const [notice, setNotice] = useState<Notice>(null);
-  const [restoring, setRestoring] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
 
@@ -40,25 +36,11 @@ export default function ProfileScreen() {
   const activeAlerts = followed.filter((id) => alerts.find((item) => item.lakeId === id)?.enabled ?? true).length;
   const pending = logs.filter((log) => log.syncState !== 'synced').length;
 
-  const restore = async () => {
-    setRestoring(true);
-    setNotice(null);
-    try {
-      const active = await restorePurchases();
-      if (active) { setPro(true); haptic.success(); setNotice({ tone: 'success', title: 'Purchase restored', body: 'BiteCast Pro is active on this device.' }); }
-      else setNotice({ tone: 'neutral', title: 'No purchases found', body: 'There’s no active subscription for this store account.' });
-    } catch {
-      setNotice({ tone: 'danger', title: 'Couldn’t reach the store', body: 'Check your connection and try again.' });
-    } finally {
-      setRestoring(false);
-    }
-  };
-
   const exportLogs = async () => {
     if (!logs.length) { setNotice({ tone: 'neutral', title: 'Nothing to export yet', body: 'Log a trip first — exports include every log on this device.' }); return; }
     setExporting(true);
     try {
-      await Share.share({ title: 'BiteCast catch logs', message: catchLogsToCsv(logs) });
+      await Share.share({ title: 'DawnBite catch logs', message: catchLogsToCsv(logs) });
     } catch {
       setNotice({ tone: 'danger', title: 'Export didn’t open', body: 'Your logs are unchanged. Try again.' });
     } finally {
@@ -91,8 +73,8 @@ export default function ProfileScreen() {
 
   const confirmDeleteAccount = () => {
     Alert.alert(
-      'Delete BiteCast account?',
-      'This permanently deletes synced logs, follows, alert settings, and your BiteCast account. Local logs on this device will also be removed. Export first if you want a copy.',
+      'Delete DawnBite account?',
+      'This permanently deletes synced logs, follows, alert settings, and your DawnBite account. Local logs on this device will also be removed. Export first if you want a copy.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -105,7 +87,7 @@ export default function ProfileScreen() {
               await clearLocalData();
               setAccount({ status: 'anonymous' });
               haptic.success();
-              setNotice({ tone: 'success', title: 'Account deleted', body: 'Cloud and local BiteCast data were removed.' });
+              setNotice({ tone: 'success', title: 'Account deleted', body: 'Cloud and local DawnBite data were removed.' });
             } catch (error) {
               setNotice({ tone: 'danger', title: 'Couldn’t delete the account', body: error instanceof Error ? error.message : 'Nothing was removed. Try again.' });
             } finally {
@@ -130,12 +112,6 @@ export default function ProfileScreen() {
         <ShorelineHeader
           title={name}
           subtitle={`${count(followed.length, 'lake')} · ${count(logs.length, 'trip')} · ${fish} walleye`}
-          right={
-            <View style={[styles.badge, isPro && styles.badgePro]} accessible accessibilityLabel={isPro ? 'Pro member' : 'Free plan'}>
-              {isPro ? <Icon name="pro" size={12} color={colors.deep} /> : null}
-              <T variant="caption" weight="600" color={isPro ? colors.deep : onScene.text}>{isPro ? 'Pro' : 'Free'}</T>
-            </View>
-          }
         />
       }
     >
@@ -149,14 +125,6 @@ export default function ProfileScreen() {
         ) : (
           <ListRow icon="link" title="Back up logs" subtitle="Not linked to an account" accessibilityHint="Links an Apple or Google account" onPress={() => router.push('/auth')} />
         )}
-        <Divider inset={ROW_INSET} />
-        {isPro ? null : (
-          <>
-            <ListRow icon="pro" title="BiteCast Pro" accessibilityHint="Shows plans" onPress={() => router.push('/paywall')} right={<Value text="See plans" />} />
-            <Divider inset={ROW_INSET} />
-          </>
-        )}
-        <ListRow icon="restore" title={restoring ? 'Restoring…' : 'Restore purchases'} chevron={false} onPress={restore} />
       </Card>
 
       {/* Settings */}
@@ -194,7 +162,7 @@ export default function ProfileScreen() {
         <Divider inset={ROW_INSET} />
         <ListRow icon="request" title="Request a lake" onPress={() => router.push('/profile/request-lake')} right={<Value />} />
         <Divider inset={ROW_INSET} />
-        <ListRow icon="info" title="About BiteCast" onPress={() => setAboutOpen((open) => !open)} right={<Value text={Constants.expoConfig?.version ?? '—'} icon={aboutOpen ? 'chevron-up' : 'chevron-down'} />} />
+        <ListRow icon="info" title="About DawnBite" onPress={() => setAboutOpen((open) => !open)} right={<Value text={Constants.expoConfig?.version ?? '—'} icon={aboutOpen ? 'chevron-up' : 'chevron-down'} />} />
         {aboutOpen ? (
           <View style={styles.about}>
             <T variant="caption" color={colors.inkSoft}>Forecast engine {walleyeProfile.version} · {DATA_SOURCE_LABEL}</T>
@@ -238,8 +206,6 @@ function DangerLink({ label, onPress, hint }: { label: string; onPress?: () => v
 }
 
 const styles = StyleSheet.create({
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 3, borderRadius: radius.pill, borderWidth: 1, borderColor: onScene.glassLine, backgroundColor: onScene.glass },
-  badgePro: { backgroundColor: colors.mint, borderColor: colors.mint },
   groupLabel: { marginBottom: -spacing.sm, paddingHorizontal: spacing.xs },
   group: { gap: 0, paddingVertical: spacing.xxs },
   // The 44pt control needs air above and below, or it sits on the divider.
