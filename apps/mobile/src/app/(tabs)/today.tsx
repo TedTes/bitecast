@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { router, useFocusEffect, useIsFocused } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { useQueryClient } from '@tanstack/react-query';
@@ -13,7 +13,7 @@ import { LAKE_FLOOR, LakeScene, ORB, SHORE, SKY_SPACE, SURFACE, orbTop } from '@
 import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { SkyPreview } from '@/components/sky-preview';
 import { Toast } from '@/components/toast';
-import { Button, EmptyState, ErrorState, IceSafetyNotice, OfflineBanner, Reveal, Row, SkeletonCard, T } from '@/components/ui';
+import { Button, EmptyState, ErrorState, OfflineBanner, Reveal, Row, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
 import { colors, hitSlop, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
 import { forecastSource, freshness, type Freshness } from '@/data/forecasts';
@@ -59,6 +59,11 @@ export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  useEffect(() => {
+    if (!aboutOpen) return undefined;
+    const timeout = setTimeout(() => setAboutOpen(false), 7_000);
+    return () => clearTimeout(timeout);
+  }, [aboutOpen]);
   // The scene is drawn from measured layout, so it lines up with the content at any text size.
   const [page, setPage] = useState({ width: 0, height: 0 });
   const [horizon, setHorizon] = useState(0);
@@ -81,7 +86,7 @@ export default function TodayScreen() {
       return () => setStatusBarStyle('dark');
     }, []),
   );
-  const { ids, seasons, queries, data } = useRankedLakes(now);
+  const { ids, queries, data } = useRankedLakes(now);
 
   const refresh = async () => {
     setRefreshing(true);
@@ -93,8 +98,12 @@ export default function TodayScreen() {
   const failed = queries.length > 0 && queries.every((query) => query.isError && !query.data);
   // Latest refresh failure; drives a transient toast instead of a sticky banner.
   const refreshErrorAt = Math.max(0, ...queries.filter((query) => query.isRefetchError).map((query) => query.errorUpdatedAt));
-  const fresh = data.length ? freshness(Math.min(...data.map((entry) => entry.updatedAt)), now) : undefined;
   const best = data[0];
+  const fresh = best
+    ? forecastSource(best.forecast) === 'Demo weather'
+      ? { state: 'fresh' as const, label: 'Demo forecast' }
+      : freshness(Math.min(...data.map((entry) => entry.updatedAt)), now)
+    : undefined;
   const { time: skyTime, place, altitude, hour: nowHour, weather, ice, palette } = useSceneSky(best, now);
   const nowScore = nowHour?.score ?? 50;
 
@@ -104,6 +113,7 @@ export default function TodayScreen() {
       <View style={[styles.overscroll, { backgroundColor: palette.top }]} />
       <Animated.ScrollView
         onScroll={onScroll}
+        onScrollBeginDrag={() => setAboutOpen(false)}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
@@ -155,7 +165,6 @@ export default function TodayScreen() {
               {best ? (
                 <>
                   <Conditions {...outlook(best, now)} units={units} />
-                  {seasons.includes('ice') ? <IceSafetyNotice compact /> : null}
                   <OfflineBanner />
                   {data.length > 1 ? <OtherLakes lakes={data.slice(1)} now={now} /> : null}
                 </>
@@ -167,8 +176,8 @@ export default function TodayScreen() {
                       icon="lake"
                       art={<WalleyeArt width={200} tone="light" />}
                       title="No lakes followed yet"
-                      body="Follow up to five lakes and Today tells you when and where to go."
-                      action={<Button icon="map" onPress={() => router.push('/(tabs)/map')}>Find lakes on the map</Button>}
+                      body="Follow up to five waters and Today tells you when and where to go."
+                      action={<Button icon="map" onPress={() => router.push('/(tabs)/map')}>Browse fishing waters</Button>}
                     />
                   ) : failed ? (
                     <ErrorState title="Forecasts unavailable" body="We couldn’t load forecasts and nothing is saved on this device yet. Check your connection and try again." onRetry={refresh} retrying={refreshing} />
@@ -208,7 +217,7 @@ function Header({ onTitleLongPress, now, fresh, refreshing, onRefresh, aboutOpen
   const date = new Date(now).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
   return (
     <Row justify="space-between" align="center" style={{ minHeight: HEADER }}>
-      <T variant="screenTitle" color={onScene.text} onLongPress={onTitleLongPress} suppressHighlighting accessibilityRole="header" accessibilityLabel={`Today’s cast, ${date}`}>Today’s cast</T>
+      <T variant="screenTitle" color={onScene.text} onLongPress={onTitleLongPress} suppressHighlighting accessibilityRole="header" accessibilityLabel={`Today’s bite, ${date}`}>Today’s bite</T>
       <Row gap={spacing.md} align="center" style={{ flexShrink: 1 }}>
         {fresh ? (
           <Pressable
@@ -240,7 +249,8 @@ function Ticket({ entry, now }: { entry: LakeData; now: number }) {
   const kind = forecast.predictionGranularity === 'time_block' ? 'time block' : 'window';
   const range = next ? shortRange(next.start, windowEnd(next)) : '';
   const wait = next ? formatDuration(new Date(live ? windowEnd(next) : next.start).getTime() - now) : '';
-  const detail = !next ? 'No window this week' : live ? `Current ${kind}` : `Next ${kind} · ${dayLabel(next.start)}`;
+  const currentBand = conditionLabel(hoursFromNow(forecast.hours, now)[0].score);
+  const detail = !next ? `${currentBand} right now` : live ? `Current ${kind}` : `Next ${kind} · ${dayLabel(next.start)}`;
   return (
     <Pressable
       onPress={() => openLake(lake.id)}
@@ -256,7 +266,7 @@ function Ticket({ entry, now }: { entry: LakeData; now: number }) {
           <Icon name="chevron-right" size={12} color={onScene.accent} />
         </Row>
         <T variant="title" color={onScene.text} style={styles.when} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
-          {next ? capitalize(range) : conditionLabel(hoursFromNow(forecast.hours, now)[0].score)}
+          {next ? capitalize(range) : 'No strong window ahead'}
         </T>
         <T variant="caption" color={onScene.soft}>{detail}</T>
       </View>
@@ -312,7 +322,6 @@ function ShoreTimeline({ entry: { next }, now }: { entry: LakeData; now: number 
           <View style={[styles.timelineWindow, { left: `${from * 100}%`, width: `${Math.max(0.02, to - from) * 100}%` }]} />
         </>
       ) : null}
-      <T variant="caption" weight="600" color={onScene.text} maxFontSizeMultiplier={1.15} style={styles.timelineEnd}>Tomorrow</T>
     </View>
   );
 }
@@ -365,7 +374,7 @@ const pressureTrend = (hours: ForecastHour[]) => {
 function OtherLakes({ lakes, now }: { lakes: LakeData[]; now: number }) {
   return (
     <View style={styles.others}>
-      <T variant="label" color={onScene.text} accessibilityRole="header" style={styles.othersLabel}>{lakes.length === 1 ? 'Other lake' : 'Other lakes'}</T>
+      <T variant="label" color={onScene.text} accessibilityRole="header" style={styles.othersLabel}>Other waters</T>
       <View style={styles.othersCard}>
         {lakes.map((entry, index) => <OtherLake key={entry.lake.id} entry={entry} now={now} divided={index > 0} />)}
       </View>
@@ -377,7 +386,7 @@ function OtherLake({ entry, now, divided }: { entry: LakeData; now: number; divi
   const { lake, next, live, season } = entry;
   const { score, reason, confidence, caption } = outlook(entry, now);
   const band = scoreBands[scoreBand(score)];
-  const when = !next ? 'No window this week' : live ? `Open until ${shortClock(windowEnd(next))}` : `${dayLabel(next.start)} ${shortRange(next.start, windowEnd(next))}`;
+  const when = !next ? `${conditionLabel(hoursFromNow(entry.forecast.hours, now)[0].score)} right now` : live ? `Open until ${shortClock(windowEnd(next))}` : `${dayLabel(next.start)} ${shortRange(next.start, windowEnd(next))}`;
   return (
     <Pressable
       onPress={() => openLake(lake.id)}
@@ -426,7 +435,6 @@ const styles = StyleSheet.create({
   timeline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: SHORE },
   timelineNow: { position: 'absolute', left: 0, top: 3 },
   timelineEdge: { position: 'absolute', top: 3, width: 72, marginLeft: -36, textAlign: 'center' },
-  timelineEnd: { position: 'absolute', right: 0, top: 3 },
   timelineWindow: { position: 'absolute', bottom: 0, height: 3, borderRadius: 2, backgroundColor: onScene.accent },
   water: { marginTop: SURFACE + spacing.sm, gap: spacing.md },
   // Dark enough for the text, clear enough that fish show faintly as they pass behind.

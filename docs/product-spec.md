@@ -19,7 +19,7 @@ Product rules:
 - Hourly training observations measure effort with trip start, trip end, duration, and catch/no-catch outcome. A timestamped catch without effort is not an eligible hourly row. Broad bootstrap observations may retain unknown effort, but receive lower source/time-precision weights and train only the separate `trip_broad` family.
 - Synced logs are validated and deduplicated independently of training consent. Sync failures remain visible and retryable while the SQLite copy remains authoritative on the device.
 - Each lake has its own condition, open water or ice. It defaults to the lake’s typical season for its latitude and date when the angler ice fishes (open water otherwise) and can be set by hand per lake. “Typical” describes when lakes usually freeze; it is never an ice-safety assessment.
-- Ice mode always displays: “DawnBite does not assess ice safety. Check ice yourself and follow local guidance.”
+- Ice forecast detail and setup surfaces display: “DawnBite does not assess ice safety. Check ice yourself and follow local guidance.” The Today overview identifies ice season without repeating the full safety card.
 - Regulations are summaries; the linked official source governs.
 - DawnBite 1.0 is free-only. Onboarding enters the product directly; no paywall, simulated purchase, premium gate, or restore-purchase control is exposed. Logging, seven-day forecasts, and window alerts remain available without a subscription.
 
