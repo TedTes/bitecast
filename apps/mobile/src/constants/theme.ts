@@ -1,7 +1,7 @@
 import { Platform, type TextStyle } from 'react-native';
 
 /**
- * BiteCast design tokens.
+ * DawnBite design tokens.
  *
  * Palette: deep lake ink, mineral teal, fog and cream surfaces, with a restrained
  * sunrise accent reserved for low-light/“window” moments. Text colours meet WCAG AA
@@ -96,7 +96,7 @@ export const elevation = {
   }),
 } as const;
 
-/** The BiteCast wordmark is the only serif. Interface text uses the platform font. */
+/** The DawnBite wordmark is the only serif. Interface text uses the platform font. */
 export const wordmarkFont = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, serif' });
 
 /**

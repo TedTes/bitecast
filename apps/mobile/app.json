@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "BiteCast",
+    "name": "DawnBite",
     "slug": "bitecast",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,7 +8,6 @@
     "scheme": "bitecast",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.tedros.bitecast",
       "supportsTablet": false,
       "config": {
@@ -17,7 +16,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#021F2D",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -33,9 +32,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#071B24",
+          "backgroundColor": "#021F2D",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 92
+          "imageWidth": 200
         }
       ],
       "expo-sqlite",

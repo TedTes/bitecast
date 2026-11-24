@@ -1,6 +1,6 @@
-# BiteCast mobile
+# DawnBite mobile
 
-Expo (SDK 58) + Expo Router app for BiteCast walleye forecasts. Product rules live in
+Expo (SDK 58) + Expo Router app for DawnBite fishing forecasts. Product rules live in
 [`docs/product-spec.md`](../../docs/product-spec.md); coding rules in [`AGENTS.md`](../../AGENTS.md).
 
 ## Run
