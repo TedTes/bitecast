@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { LightCurve, ReasonList, formatWindow, windowEnd, windowPeak } from '@/components/forecast';
 import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { Icon, type IconName } from '@/components/icon';
-import { Button, Card, Chip, Divider, EmptyState, IceSafetyNotice, Row, Screen, SectionHeader, T } from '@/components/ui';
+import { Button, Card, Chip, Divider, EmptyState, Row, Screen, SectionHeader, T } from '@/components/ui';
 import { colors, radius, spacing } from '@/constants/theme';
 import { forecastSource, useForecast } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
@@ -79,7 +79,6 @@ export default function WindowDetailScreen() {
         </T>
       </Card>
 
-      {season === 'ice' ? <IceSafetyNotice compact /> : null}
 
       {broad ? null : (
         <>

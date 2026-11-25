@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDuration, fromDisplayDepth, fromDisplayLength, reasonIcon, reasonIsNegative, shortClock, shortLakeName, shortRange, toDisplayDepth, toDisplayLength } from '@/lib/format';
+import { formatDuration, fromDisplayDepth, fromDisplayLength, reasonIcon, reasonIsNegative, reasonLabel, shortClock, shortLakeName, shortRange, toDisplayDepth, toDisplayLength } from '@/lib/format';
 
 const at = (h: number, m = 0) => new Date(2026, 10, 7, h, m);
 
@@ -48,6 +48,13 @@ describe('labels', () => {
     expect(reasonIcon('Overcast softens the light')).toBe('cloud');
     expect(reasonIcon('Something new')).toBe('info');
     expect(reasonIsNegative('Bright conditions may slow activity')).toBe(true);
+    expect(reasonIsNegative('Wind conditions reduce the model outlook')).toBe(true);
     expect(reasonIsNegative('Stable pressure')).toBe(false);
+  });
+
+  it('shortens model contribution prose for the forecast UI', () => {
+    expect(reasonLabel('Wind conditions reduce the model outlook')).toBe('Wind less favorable');
+    expect(reasonLabel('Timing is away from sunrise')).toBe('Outside sunrise transition');
+    expect(reasonLabel('Stable pressure')).toBe('Stable pressure');
   });
 });

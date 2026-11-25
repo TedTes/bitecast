@@ -42,7 +42,7 @@ export default function WelcomeScreen() {
       }
     >
       <ChartTexture />
-      <BrandLockup tone="light" size={38} animateSun />
+      <BrandLockup tone="light" size={38} />
       <Reveal index={0} style={{ alignItems: 'flex-end', marginTop: spacing.sm, marginBottom: -spacing.lg }}>
         <SwimmingWalleye width={260} tone="dark" />
       </Reveal>

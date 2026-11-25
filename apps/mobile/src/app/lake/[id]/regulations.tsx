@@ -95,7 +95,7 @@ export default function RegulationsScreen() {
       </Card>
 
       <T variant="caption" color={colors.inkMuted}>
-        Lake summaries are placeholders until each curated lake is reviewed for launch. BiteCast doesn’t interpret regulations for you.
+        Lake summaries are placeholders until each curated lake is reviewed for launch. DawnBite doesn’t interpret regulations for you.
       </T>
     </Screen>
   );

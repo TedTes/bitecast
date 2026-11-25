@@ -5,7 +5,7 @@ import { ReasonChips, ScoreScale, bestWindowWithin, conditionLabel, formatWindow
 import { Icon } from '@/components/icon';
 import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { StepHeader } from '@/components/onboarding';
-import { Banner, Button, Card, Divider, IceSafetyNotice, PageHeader, Reveal, Row, Screen, SectionHeader, T } from '@/components/ui';
+import { Banner, Button, Card, Divider, PageHeader, Reveal, Row, Screen, SectionHeader, T } from '@/components/ui';
 import { colors, radius, spacing } from '@/constants/theme';
 import { getForecast } from '@/data/forecasts';
 import { lakeById } from '@/data/lakes';
@@ -36,19 +36,14 @@ export default function PreviewScreen() {
   return (
     <Screen
       footer={
-        <>
-          <Button icon="pro" onPress={() => router.push('/paywall')}>Unlock the full forecast</Button>
-          <Button
-            variant="ghost"
-            size="md"
-            onPress={() => {
-              complete(false);
-              router.replace('/(tabs)/today');
-            }}
-          >
-            Continue with free logging
-          </Button>
-        </>
+        <Button
+          onPress={() => {
+            complete(false);
+            router.replace('/(tabs)/today');
+          }}
+        >
+          Start using DawnBite
+        </Button>
       }
     >
       <StepHeader step={3} />
@@ -104,7 +99,6 @@ export default function PreviewScreen() {
         </View>
       </Reveal>
 
-      {[lake.id, ...others.map((o) => o.lake.id)].some((id) => seasonOf(id) === 'ice') ? <IceSafetyNotice /> : null}
 
       {others.length ? (
         <Reveal index={1} style={{ gap: spacing.md }}>

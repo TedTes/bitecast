@@ -582,21 +582,8 @@ export function Banner({ tone = 'info', title, body, icon, action, live }: { ton
   );
 }
 
-/** Mandatory, fixed ice-safety disclaimer. Text must not be paraphrased. */
-export const ICE_SAFETY_TEXT = 'BiteCast does not assess ice safety. Check ice yourself and follow local guidance.';
-export function IceSafetyNotice({ compact }: { compact?: boolean }) {
-  return (
-    <View style={[styles.iceNotice, compact && { paddingVertical: spacing.sm }]} accessibilityRole="alert" accessible accessibilityLabel={`Ice safety. ${ICE_SAFETY_TEXT}`}>
-      <View style={styles.iceIcon}>
-        <Icon name="warning" size={compact ? 16 : 18} color={colors.warning} />
-      </View>
-      <View style={{ flex: 1, gap: 2 }}>
-        {!compact ? <T variant="callout" weight="600" color={colors.warning}>Ice safety</T> : null}
-        <T variant={compact ? 'caption' : 'callout'} color={colors.ink} weight={compact ? '600' : '400'}>{ICE_SAFETY_TEXT}</T>
-      </View>
-    </View>
-  );
-}
+/** Shared wording for user-invoked information surfaces. */
+export const ICE_SAFETY_TEXT = 'DawnBite does not assess ice safety. Check ice yourself and follow local guidance.';
 
 /** Device-level connectivity notice. Wired to the connectivity adapter in the store. */
 export function OfflineBanner({ what = 'Showing cached forecasts.' }: { what?: string }) {
@@ -736,9 +723,6 @@ const styles = StyleSheet.create({
   rowIcon: { width: ROW_ICON, height: ROW_ICON, borderRadius: radius.sm, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center' },
 
   banner: { flexDirection: 'row', gap: spacing.md, padding: spacing.md, paddingRight: spacing.lg, borderRadius: radius.md, borderWidth: 1 },
-  iceNotice: { flexDirection: 'row', gap: spacing.md, alignItems: 'center', padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.warningTint, borderWidth: 1, borderColor: colors.warningLine, borderLeftWidth: 4, borderLeftColor: colors.sunrise },
-  iceIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#FBF4E3', alignItems: 'center', justifyContent: 'center' },
-
   empty: { paddingVertical: spacing.xxl, paddingHorizontal: spacing.lg, alignItems: 'center', gap: spacing.sm },
   emptyIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.tealMist, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs },
 });

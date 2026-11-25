@@ -1,5 +1,5 @@
 import { Tabs, router } from 'expo-router';
-import { Pressable, StyleSheet, View, type ColorValue } from 'react-native';
+import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import { Icon, type IconName } from '@/components/icon';
 import { DeepWaterBar } from '@/components/deep-water-bar';
 import { colors, elevation, TAB_BUTTON_RISE } from '@/constants/theme';
@@ -37,6 +37,7 @@ function LogTripButton() {
           <Icon name="plus" size={26} color={colors.deep} />
         </View>
       </Pressable>
+      <Text style={styles.centreLabel}>Log trip</Text>
     </View>
   );
 }
@@ -57,10 +58,10 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="today" options={{ title: 'Today', tabBarIcon: tabIcon('today'), tabBarBackground: () => <DeepWaterBar edge={false} /> }} />
-      <Tabs.Screen name="map" options={{ title: 'Map', tabBarIcon: tabIcon('map') }} />
+      <Tabs.Screen name="map" options={{ title: 'Bite Map', tabBarIcon: tabIcon('map') }} />
       <Tabs.Screen name="add" options={{ title: 'Log a trip', tabBarButton: () => <LogTripButton /> }} />
-      <Tabs.Screen name="log" options={{ title: 'Log', tabBarIcon: tabIcon('log') }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: tabIcon('profile') }} />
+      <Tabs.Screen name="log" options={{ title: 'Trips', tabBarIcon: tabIcon('log') }} />
+      <Tabs.Screen name="profile" options={{ title: 'Settings', tabBarIcon: tabIcon('profile') }} />
     </Tabs>
   );
 }
@@ -69,6 +70,7 @@ const styles = StyleSheet.create({
   centre: { flex: 1, alignItems: 'center' },
   button: { width: 54, height: 54, marginTop: -TAB_BUTTON_RISE, borderRadius: 27, alignItems: 'center', justifyContent: 'center', ...elevation.raised },
   disc: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.onDark },
+  centreLabel: { position: 'absolute', top: 42, color: onScene.soft, fontSize: 10, lineHeight: 13, fontWeight: '600' },
   icon: { width: 52, height: 28, alignItems: 'center', justifyContent: 'center' },
   pill: { position: 'absolute', top: 1, bottom: 1, left: 0, right: 0, borderRadius: 13, backgroundColor: onScene.accent, opacity: TAB_PILL_TINT },
 });

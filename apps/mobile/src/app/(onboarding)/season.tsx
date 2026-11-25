@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon, type IconName } from '@/components/icon';
 import { StepHeader } from '@/components/onboarding';
-import { Button, IceSafetyNotice, PageHeader, Reveal, Row, Screen, T } from '@/components/ui';
+import { Button, PageHeader, Row, Screen, T } from '@/components/ui';
 import { colors, radius, spacing } from '@/constants/theme';
 import { haptic } from '@/lib/haptics';
 import { useAppStore } from '@/store/use-app-store';
@@ -17,17 +17,7 @@ export default function SeasonScreen() {
   const setIceFishing = useAppStore((state) => state.setIceFishing);
   return (
     <Screen
-      footer={
-        <>
-          {/* Pinned in the footer so it is always on screen, even on the smallest phones. */}
-          {iceFishing ? (
-            <Reveal>
-              <IceSafetyNotice />
-            </Reveal>
-          ) : null}
-          <Button iconRight="chevron-right" onPress={() => router.push('/(onboarding)/lakes')}>Choose my lakes</Button>
-        </>
-      }
+      footer={<Button iconRight="chevron-right" onPress={() => router.push('/(onboarding)/lakes')}>Choose my lakes</Button>}
     >
       <StepHeader step={1} />
       <PageHeader title="Do you fish through the ice?" lede="Each lake is forecast for its own conditions — open water or ice. This sets how lakes start out; you can change any lake later." />

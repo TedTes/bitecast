@@ -25,7 +25,7 @@ export function getForecast(lakeId: string, season: Season): LakeForecast {
 }
 
 /**
- * Network refresh boundary. Configured builds read published BiteCast forecasts
+ * Network refresh boundary. Configured builds read published DawnBite forecasts
  * from Supabase; unconfigured development builds retain deterministic demo data.
  */
 async function fetchForecast(lakeId: string, season: Season): Promise<LakeForecast> {

@@ -8,7 +8,7 @@ import { Icon } from '@/components/icon';
 import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { LakeMap, useMapMode, type MapLakePin } from '@/components/map/lake-map';
 import { ShorelineHeader } from '@/components/shoreline-header';
-import { Banner, Button, Card, IceSafetyNotice, Row, Screen, T } from '@/components/ui';
+import { Banner, Button, Card, Row, Screen, T } from '@/components/ui';
 import { colors, spacing, TAB_BUTTON_RISE, touch } from '@/constants/theme';
 import { integrationsReady } from '@/api/config';
 import { forecastQuery } from '@/data/forecasts';
@@ -62,8 +62,6 @@ export default function MapScreen() {
   const isFollowing = followed.includes(selected.lake.id);
   const atLimit = !isFollowing && followed.length >= 5;
 
-  const iceNotice = view === 'map' ? resolve(selected.lake.id).season === 'ice' : lakes.some((lake) => resolve(lake.id).season === 'ice');
-
   const follow = () => {
     if (atLimit) { haptic.warning(); return; }
     haptic.select();
@@ -77,7 +75,7 @@ export default function MapScreen() {
       style={styles.screen}
       top={
         <ShorelineHeader
-          page={view === 'map' && !iceNotice ? null : undefined}
+          page={view === 'map' ? null : undefined}
           // The tab already says “Map”, so the header says what you’re looking at.
           title={view === 'list' ? 'The lake lineup' : 'Walleye waters'}
           subtitle={
@@ -103,12 +101,6 @@ export default function MapScreen() {
         />
       }
     >
-      {iceNotice ? (
-        <View style={styles.notice}>
-          <IceSafetyNotice compact />
-        </View>
-      ) : null}
-
       {view === 'map' ? (
         <>
           <View style={{ flex: 1, minHeight: 160 }}>
@@ -189,7 +181,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0, gap: 0, maxWidth: undefined },
   // The same glass circle as Back on lake detail.
   listButton: { width: touch.min, height: touch.min, borderRadius: touch.min / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: onScene.glass, borderWidth: 1, borderColor: onScene.glassLine },
-  notice: { paddingHorizontal: spacing.xl, paddingVertical: spacing.sm },
   sheet: { backgroundColor: colors.paper, paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.md + TAB_BUTTON_RISE, gap: spacing.sm + 2, borderTopWidth: StyleSheet.hairlineWidth * 2, borderTopColor: colors.line },
   list: { paddingTop: spacing.lg, paddingHorizontal: spacing.xl, paddingBottom: spacing.xxl + TAB_BUTTON_RISE, gap: spacing.md },
 });

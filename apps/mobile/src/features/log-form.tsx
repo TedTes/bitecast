@@ -1,9 +1,9 @@
 import { useState, type PropsWithChildren } from 'react';
 import { randomUUID } from 'expo-crypto';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/icon';
-import { Banner, Button, Card, ChoiceChips, Divider, EmptyState, Field, IceSafetyNotice, MultiChoiceChips, Reveal, Row, Screen, Segmented, SkeletonCard, Stepper, T, ToggleRow } from '@/components/ui';
+import { Banner, Button, Card, ChoiceChips, Divider, EmptyState, Field, MultiChoiceChips, Reveal, Row, Screen, Segmented, SkeletonCard, Stepper, T, ToggleRow } from '@/components/ui';
 import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { colors, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
 import { lakes, lakeById } from '@/data/lakes';
@@ -62,7 +62,8 @@ function LogFormInner({ previous }: { previous?: TripLog }) {
   const seasonOf = (id: string) => resolveLakeCondition(id, { iceFishing }, lakeSeasons).season;
 
   // Defaults: the last trip's setup, so a typical entry is lake ✓ → result → save.
-  const [lakeId, setLakeId] = useState(previous?.lakeId ?? params.lakeId ?? last?.lakeId ?? followed[0] ?? lakes[0].id);
+  const [initialLakeId] = useState(() => previous?.lakeId ?? params.lakeId ?? last?.lakeId ?? followed[0] ?? lakes[0].id);
+  const [lakeId, setLakeId] = useState(initialLakeId);
   // The count is the result: zero is a no-catch trip. A new trip starts at zero, so a catch is never logged by default.
   const [count, setCount] = useState(previous?.caught ? Math.max(1, previous.count) : 0);
   const caught = count > 0;
@@ -93,7 +94,9 @@ function LogFormInner({ previous }: { previous?: TripLog }) {
   const keepPrevious = previous && previous.lakeId === lakeId;
   const score = keepPrevious ? previous.scoreAtTime : Number(params.score) || hour.score;
   const lightCondition: CatchLog['lightCondition'] = keepPrevious ? previous.lightCondition : hour.light < 0.25 ? 'Low light' : hour.light < 0.55 ? 'Mid light' : 'Bright';
-  const lakeChoices = lakes.filter((lake) => followed.includes(lake.id) || lake.id === lakeId || lake.id === last?.lakeId);
+  const lakeChoices = lakes.filter((lake) =>
+    followed.includes(lake.id) || lake.id === initialLakeId || lake.id === lakeId || lake.id === last?.lakeId,
+  );
   // What will be saved always stays visible; an edited log's baits stay offered even when unticked.
   const baitChips = baitOptions(logs, season, presets[season], [...recordedBaits, ...baits.filter((item) => item !== OTHER)]);
   const baitName = (choice: string) => (choice === OTHER ? customBait.trim() : choice);
@@ -205,23 +208,21 @@ function LogFormInner({ previous }: { previous?: TripLog }) {
 
       {/* 1 · Where */}
       <Section title="Lake">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.lakes} contentContainerStyle={styles.lakesContent}>
-          <ChoiceChips
-            label="Lake"
-            value={lakeId}
-            onChange={(id) => {
-              setLakeId(id);
-              setClarity(lakeById(id).clarity);
-              // A new trip follows the lake's season; an edited one keeps what was recorded.
-              const nextSeason = seasonOf(id);
-              if (!previous && nextSeason !== season) {
-                setMethods(methodsForSeason(nextSeason, methods));
-                setBaits(baitsForSeason(logs, nextSeason, presets[nextSeason]));
-              }
-            }}
-            options={lakeChoices.map((lake) => ({ label: lake.name, value: lake.id }))}
-          />
-        </ScrollView>
+        <ChoiceChips
+          label="Lake"
+          value={lakeId}
+          onChange={(id) => {
+            setLakeId(id);
+            setClarity(lakeById(id).clarity);
+            // A new trip follows the lake's season; an edited one keeps what was recorded.
+            const nextSeason = seasonOf(id);
+            if (!previous && nextSeason !== season) {
+              setMethods(methodsForSeason(nextSeason, methods));
+              setBaits(baitsForSeason(logs, nextSeason, presets[nextSeason]));
+            }
+          }}
+          options={lakeChoices.map((lake) => ({ label: lake.name, value: lake.id }))}
+        />
       </Section>
 
       {/* 2 · What happened */}
@@ -321,7 +322,7 @@ function LogFormInner({ previous }: { previous?: TripLog }) {
             <Divider />
             <ToggleRow
               icon="chart"
-              title="Help improve BiteCast"
+              title="Help improve DawnBite"
               subtitle="Allow this pseudonymized trip to train future walleye models. You can leave this off and still use logging."
               value={trainingConsent}
               onValueChange={setTrainingConsent}
@@ -347,7 +348,6 @@ function LogFormInner({ previous }: { previous?: TripLog }) {
         </View>
       </View>
 
-      {season === 'ice' ? <IceSafetyNotice compact /> : null}
     </Screen>
   );
 }
@@ -381,8 +381,6 @@ const styles = StyleSheet.create({
   // Equal halves, so neither button shifts when Save turns into “Saving…”.
   action: { flexGrow: 1, flexBasis: 0, paddingHorizontal: spacing.sm },
   // Bleeds to the screen edges so a long list of lakes scrolls under them.
-  lakes: { marginHorizontal: -spacing.xl },
-  lakesContent: { paddingHorizontal: spacing.xl },
   group: { gap: 0, paddingVertical: 0 },
   block: { gap: spacing.xs, paddingVertical: spacing.md },
   // Indented behind a rule, so it reads as a question about the chips above, not more chips.
