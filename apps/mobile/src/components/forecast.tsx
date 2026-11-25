@@ -3,7 +3,7 @@ import type { ForecastHour, ForecastWindow } from '@bitecast/engine';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { Keyframe } from 'react-native-reanimated';
 import { colors, radius, scoreBand, scoreBands, spacing } from '@/constants/theme';
-import { formatDay, formatHour, formatTime, reasonIcon, reasonIsNegative, shortClock, shortRange } from '@/lib/format';
+import { formatDay, formatHour, formatTime, reasonIcon, reasonIsNegative, reasonLabel, shortClock, shortRange } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import { Icon } from './icon';
 import { ConfidenceBars, ScoreBadge } from './score-badge';
@@ -48,10 +48,10 @@ export function ReasonChips({ reasons, limit = 3, tone = 'light' }: { reasons: s
         tone === 'dark' ? (
           <View key={reason} style={styles.darkChip} accessible accessibilityLabel={reason}>
             <Icon name={reasonIcon(reason)} size={13} color={reasonIsNegative(reason) ? scoreBands.fair.onDark : colors.mint} />
-            <T variant="caption" weight="600" color={colors.onDark}>{reason}</T>
+            <T variant="caption" weight="600" color={colors.onDark}>{reasonLabel(reason)}</T>
           </View>
         ) : (
-          <Chip key={reason} label={reason} icon={reasonIcon(reason)} tone={reasonIsNegative(reason) ? 'warm' : 'teal'} />
+          <Chip key={reason} label={reasonLabel(reason)} icon={reasonIcon(reason)} tone={reasonIsNegative(reason) ? 'warm' : 'teal'} />
         ),
       )}
     </View>
@@ -66,7 +66,7 @@ export function ReasonLine({ reasons, limit = 2 }: { reasons: string[]; limit?: 
       {shown.map((reason) => (
         <Row key={reason} gap={5}>
           <Icon name={reasonIcon(reason)} size={13} color={reasonIsNegative(reason) ? colors.sunriseInk : colors.teal} />
-          <T variant="caption" color={colors.inkSoft}>{reason}</T>
+          <T variant="caption" color={colors.inkSoft}>{reasonLabel(reason)}</T>
         </Row>
       ))}
     </View>
@@ -85,7 +85,7 @@ export function ReasonList({ reasons }: { reasons: string[] }) {
               <Icon name={reasonIcon(reason)} size={18} color={negative ? colors.sunriseInk : colors.teal} />
             </View>
             <View style={{ flex: 1 }}>
-              <T variant="subhead" weight="600">{reason}</T>
+              <T variant="subhead" weight="600">{reasonLabel(reason)}</T>
               {negative ? <T variant="caption" color={colors.sunriseInk}>Works against the bite</T> : null}
             </View>
           </Row>
@@ -106,7 +106,7 @@ const THRESHOLD = 60;
  * Tappable 24-hour bar chart with a compact readout for the selected hour. With `nowShownAbove`
  * the “Now” readout skips its reasons (the screen already lists them) and shows a hint instead.
  */
-export function HourlyChart({ hours, windows, nowShownAbove }: { hours: ForecastHour[]; windows: ForecastWindow[]; nowShownAbove?: boolean }) {
+export function HourlyChart({ hours, windows, nowShownAbove, compactReadout }: { hours: ForecastHour[]; windows: ForecastWindow[]; nowShownAbove?: boolean; compactReadout?: boolean }) {
   const data = hours.slice(0, 24);
   const broad = data.some((item) => item.predictionGranularity === 'time_block');
   const [selected, setSelected] = useState(0);
@@ -116,22 +116,36 @@ export function HourlyChart({ hours, windows, nowShownAbove }: { hours: Forecast
   const band = scoreBands[scoreBand(hour.score)];
   return (
     <Card style={{ paddingHorizontal: 0, gap: spacing.md }}>
-      {/* Readout for the selected hour: when → score → reasons → confidence */}
-      <View style={{ paddingHorizontal: spacing.lg, gap: spacing.xs }} accessibilityLiveRegion="polite">
-        <Row gap={spacing.sm} align="flex-end">
-          <T variant="numeralM">{hour.score}</T>
-          <T variant="subhead" color={band.color} style={{ marginBottom: 3 }}>{band.label}</T>
-          <T variant="caption" color={colors.inkMuted} style={{ flex: 1, marginBottom: 4 }} numberOfLines={1}>
-            {' · '}{selected === 0 ? 'Now' : `${formatDay(hour.ts)} ${shortClock(hour.ts)}`}{broad ? ' · broad block' : ''}
-          </T>
-          <View style={{ marginBottom: 4 }}><ConfidenceBars level={hour.confidence} long /></View>
-        </Row>
-        {selected === 0 && nowShownAbove ? (
-          <T variant="caption" color={colors.inkMuted}>Tap a bar to see that hour.</T>
-        ) : (
-          <ReasonLine reasons={hour.reasons} />
-        )}
-      </View>
+      {/* Compact lake detail avoids repeating the current score and subjective band label. */}
+      {compactReadout ? (
+        <View style={{ paddingHorizontal: spacing.lg, gap: spacing.xs }} accessibilityLiveRegion="polite">
+          <Row gap={spacing.sm}>
+            <T variant="callout" weight="600" style={{ flex: 1 }}>
+              {selected === 0 ? 'Now' : `${formatDay(hour.ts)} · ${shortClock(hour.ts)}`}{broad ? ' · rough timing' : ''}
+            </T>
+            <ConfidenceBars level={hour.confidence} long />
+          </Row>
+          {selected === 0 && nowShownAbove ? null : (
+            <ReasonLine reasons={hour.reasons} />
+          )}
+        </View>
+      ) : (
+        <View style={{ paddingHorizontal: spacing.lg, gap: spacing.xs }} accessibilityLiveRegion="polite">
+          <Row gap={spacing.sm} align="flex-end">
+            <T variant="numeralM">{hour.score}</T>
+            <T variant="subhead" color={band.color} style={{ marginBottom: 3 }}>{band.label}</T>
+            <T variant="caption" color={colors.inkMuted} style={{ flex: 1, marginBottom: 4 }} numberOfLines={1}>
+              {' · '}{selected === 0 ? 'Now' : `${formatDay(hour.ts)} ${shortClock(hour.ts)}`}{broad ? ' · rough timing' : ''}
+            </T>
+            <View style={{ marginBottom: 4 }}><ConfidenceBars level={hour.confidence} long /></View>
+          </Row>
+          {selected === 0 && nowShownAbove ? (
+            <T variant="caption" color={colors.inkMuted}>Tap a bar to see that hour.</T>
+          ) : (
+            <ReasonLine reasons={hour.reasons} />
+          )}
+        </View>
+      )}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chart} accessibilityLabel={broad ? 'Broad time-block bite outlook for the next 24 hours' : 'Hourly bite scores for the next 24 hours'}>
         {data.map((item, index) => {
           const b = scoreBands[scoreBand(item.score)];
@@ -166,11 +180,11 @@ export function HourlyChart({ hours, windows, nowShownAbove }: { hours: Forecast
       <Row gap={spacing.lg} style={{ paddingHorizontal: spacing.lg }} wrap>
         <Row gap={6}>
           <View style={[styles.legendSwatch, { backgroundColor: colors.sunrise }]} />
-          <T variant="caption" color={colors.inkMuted}>Window hours</T>
+          <T variant="caption" color={colors.inkMuted}>Bite window</T>
         </Row>
         <Row gap={6}>
           <View style={styles.legendDash} />
-          <T variant="caption" color={colors.inkMuted}>60 = window threshold</T>
+          <T variant="caption" color={colors.inkMuted}>Window line (60)</T>
         </Row>
       </Row>
     </Card>

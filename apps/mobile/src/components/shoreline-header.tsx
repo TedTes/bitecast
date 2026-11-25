@@ -26,6 +26,8 @@ const WATER = 14;
 type Props = {
   title: string;
   subtitle?: string;
+  /** Compact status content directly under the title block. */
+  meta?: ReactNode;
   /** Beside the title, or beside the back button when there is one. */
   right?: ReactNode;
   /** The page colour the wave runs into; null where the water meets the content directly (the map). */
@@ -38,7 +40,7 @@ export function ShorelineHeader(props: Props) {
   return <Shoreline {...props} sky={sky} />;
 }
 
-export function Shoreline({ title, subtitle, right, back, sky, page = colors.cream }: Props & { back?: boolean; sky: SceneSky }) {
+export function Shoreline({ title, subtitle, meta, right, back, sky, page = colors.cream }: Props & { back?: boolean; sky: SceneSky }) {
   const insets = useSafeAreaInsets();
   const [size, setSize] = useState({ width: 0, height: 0 });
   useFocusEffect(
@@ -71,6 +73,7 @@ export function Shoreline({ title, subtitle, right, back, sky, page = colors.cre
           <View style={styles.heading}>
             <T variant="screenTitle" color={onScene.text} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{title}</T>
             {subtitle ? <T variant="caption" color={onScene.text}>{subtitle}</T> : null}
+            {meta ? <View style={styles.meta}>{meta}</View> : null}
           </View>
           {!back && right ? <View style={styles.right}>{right}</View> : null}
         </Row>
@@ -132,6 +135,7 @@ const styles = StyleSheet.create({
   back: { width: touch.min, height: touch.min, borderRadius: touch.min / 2, alignItems: 'center', justifyContent: 'center', backgroundColor: onScene.glass, borderWidth: 1, borderColor: onScene.glassLine },
   // The title centres in the first 44pt, level with Today’s title and with whatever is on the right.
   heading: { flex: 1, paddingTop: (touch.min - type.screenTitle.lineHeight) / 2 },
+  meta: { marginTop: spacing.sm },
   right: { minHeight: touch.min, justifyContent: 'center' },
   seam: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 1 },
 });

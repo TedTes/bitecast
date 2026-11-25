@@ -1,6 +1,6 @@
 # DawnBite v1 implementation brief
 
-DawnBite helps anglers decide when to fish using bite-condition scores, low-light windows, transparent reasons, confidence, tactics, and seven-day planning. Precise champions produce hourly forecasts; a separately trained broad champion may provide explicitly labeled time-block outlooks while hourly evidence is still sparse. v1 starts with walleye across Ontario and the Great Lakes, supports open-water and ice seasons, and targets iOS and Android.
+DawnBite helps anglers decide when to fish using bite-condition scores, low-light windows, transparent reasons, confidence, tactics, and next-day planning. Precise champions produce hourly forecasts; a separately trained broad champion may provide explicitly labeled time-block outlooks while hourly evidence is still sparse. v1 starts with walleye across Ontario and the Great Lakes, supports open-water and ice seasons, and targets iOS and Android.
 
 Product rules:
 
@@ -14,14 +14,17 @@ Product rules:
 - Confidence is derived from training coverage, missing inputs, unfamiliar categories, and disagreement across the model ensemble. If evidence is insufficient, show that a forecast is unavailable instead of inventing one.
 - Forecast reasons come from model feature contributions mapped through approved language; unrestricted generated explanations are not allowed.
 - Catch logging works offline and stays free.
+- The trip form keeps its starting lake available in the picker while the angler tries another selection, including when editing a trip on a lake they no longer follow.
+- Trips opens on the full timeline, including no-catch trips. A compact catch filter appears once at least five trips are logged and both outcomes are present. Pending or failed sync is shown on the affected trips, with a retry action when cloud sync is configured and the device is online.
 - Model training requires explicit per-trip consent. Consent defaults off, legacy logs remain excluded, and logging works identically without consent.
 - Each consent decision records the policy version and decision time. Changing consent creates a backend audit event; only currently consented, validated, non-deleted logs may enter a new training snapshot.
 - Hourly training observations measure effort with trip start, trip end, duration, and catch/no-catch outcome. A timestamped catch without effort is not an eligible hourly row. Broad bootstrap observations may retain unknown effort, but receive lower source/time-precision weights and train only the separate `trip_broad` family.
 - Synced logs are validated and deduplicated independently of training consent. Sync failures remain visible and retryable while the SQLite copy remains authoritative on the device.
 - Each lake has its own condition, open water or ice. It defaults to the lake’s typical season for its latitude and date when the angler ice fishes (open water otherwise) and can be set by hand per lake. “Typical” describes when lakes usually freeze; it is never an ice-safety assessment.
-- Ice forecast detail and setup surfaces display: “DawnBite does not assess ice safety. Check ice yourself and follow local guidance.” The Today overview identifies ice season without repeating the full safety card.
+- Automatic information and ice-safety toasts are not shown. The Today header’s information button opens a user-invoked modal above the page flow with score meaning, reasons and confidence, data freshness, broad-outlook limits, offline behavior, regulations, and the ice-safety warning. Opening or closing it never moves screen content.
+- Lake detail moves its compact current signals into the shoreline header beneath the lake name: a quality colour, confidence, freshness, and up to two short reason labels. It does not render a separate current-condition card or heading. The content flows directly into one animated 24-hour forecast graph with no horizon selector; bar height and colour show relative quality, and window hours are marked directly on the graph without a persistent legend. Open water remains the default lake condition, lake detail does not expose an Open/Ice or Reset control, regulations remain a single utility row, and trip logging is accessed through the app-wide Log trip action instead of a duplicate lake-detail row.
 - Regulations are summaries; the linked official source governs.
-- DawnBite 1.0 is free-only. Onboarding enters the product directly; no paywall, simulated purchase, premium gate, or restore-purchase control is exposed. Logging, seven-day forecasts, and window alerts remain available without a subscription.
+- DawnBite 1.0 is free-only. Onboarding enters the product directly; no paywall, simulated purchase, premium gate, or restore-purchase control is exposed. Logging, 24-hour forecasts, and window alerts remain available without a subscription.
 
 Routes: onboarding welcome/season/lakes/preview, Today, Map, Log, Profile, lake forecast, window detail, regulations, new/edit log, stats, alert settings, account linking, and lake request. The dormant paywall route redirects into the free product for backward-compatible development links.
 

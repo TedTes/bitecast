@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { router, useFocusEffect, useIsFocused } from 'expo-router';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ForecastHour } from '@bitecast/engine';
-import { Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SunCalc from 'suncalc';
@@ -12,15 +12,14 @@ import { Icon, type IconName } from '@/components/icon';
 import { LAKE_FLOOR, LakeScene, ORB, SHORE, SKY_SPACE, SURFACE, orbTop } from '@/components/lake-scene';
 import { ConfidenceBars, ScoreBadge } from '@/components/score-badge';
 import { SkyPreview } from '@/components/sky-preview';
-import { Toast } from '@/components/toast';
-import { Button, EmptyState, ErrorState, OfflineBanner, Reveal, Row, SkeletonCard, T } from '@/components/ui';
+import { Button, EmptyState, ErrorState, ICE_SAFETY_TEXT, OfflineBanner, Row, SkeletonCard, T } from '@/components/ui';
 import { WalleyeArt } from '@/components/walleye';
 import { colors, hitSlop, radius, scoreBand, scoreBands, spacing, touch } from '@/constants/theme';
 import { forecastSource, freshness, type Freshness } from '@/data/forecasts';
 import { seasonLabel } from '@/features/lake-season';
 import { useRankedLakes, useSceneSky, useSkyPreviewTime, type LakeData } from '@/features/live-sky';
 import { onScene, type SkyPalette } from '@/features/sky';
-import { capitalize, formatDay, formatDuration, formatWind, shortClock, shortRange } from '@/lib/format';
+import { capitalize, formatDay, formatDuration, formatWind, reasonLabel, shortClock, shortRange } from '@/lib/format';
 import { useNow } from '@/lib/use-now';
 import { useAppStore } from '@/store/use-app-store';
 import type { AppSettings } from '@/types/app';
@@ -59,11 +58,6 @@ export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
-  useEffect(() => {
-    if (!aboutOpen) return undefined;
-    const timeout = setTimeout(() => setAboutOpen(false), 7_000);
-    return () => clearTimeout(timeout);
-  }, [aboutOpen]);
   // The scene is drawn from measured layout, so it lines up with the content at any text size.
   const [page, setPage] = useState({ width: 0, height: 0 });
   const [horizon, setHorizon] = useState(0);
@@ -96,8 +90,6 @@ export default function TodayScreen() {
 
   const loading = queries.some((query) => query.isPending);
   const failed = queries.length > 0 && queries.every((query) => query.isError && !query.data);
-  // Latest refresh failure; drives a transient toast instead of a sticky banner.
-  const refreshErrorAt = Math.max(0, ...queries.filter((query) => query.isRefetchError).map((query) => query.errorUpdatedAt));
   const best = data[0];
   const fresh = best
     ? forecastSource(best.forecast) === 'Demo weather'
@@ -113,7 +105,6 @@ export default function TodayScreen() {
       <View style={[styles.overscroll, { backgroundColor: palette.top }]} />
       <Animated.ScrollView
         onScroll={onScroll}
-        onScrollBeginDrag={() => setAboutOpen(false)}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="never"
@@ -141,14 +132,6 @@ export default function TodayScreen() {
 
           <View style={[styles.content, { paddingTop: insets.top }]}>
             <Header onTitleLongPress={__DEV__ ? () => setPreviewOpen(true) : undefined} now={now} fresh={fresh} refreshing={refreshing} onRefresh={refresh} aboutOpen={aboutOpen} onAbout={() => setAboutOpen((open) => !open)} />
-            {aboutOpen ? (
-              <Reveal style={styles.about}>
-                <T variant="caption" color={onScene.text}>
-                  Bite scores describe conditions, not a guarantee of fish.{best ? ` Source: ${forecastSource(best.forecast)}.` : ''}
-                  {best?.forecast.predictionGranularity === 'time_block' ? ' This lake uses broad time-block outlooks; they repeat across the day and don’t identify an exact peak hour.' : ''}
-                </T>
-              </Reveal>
-            ) : null}
 
             {best ? <Ticket entry={best} now={now} /> : null}
 
@@ -207,8 +190,51 @@ export default function TodayScreen() {
           }}
         />
       ) : null}
-      <Toast trigger={refreshErrorAt} icon="sync-error" message="Couldn’t refresh. Showing the forecast saved on this device." actionLabel="Retry" onAction={refresh} />
+      <AppInfoModal
+        visible={aboutOpen}
+        source={best ? forecastSource(best.forecast) : undefined}
+        broad={best?.forecast.predictionGranularity === 'time_block'}
+        onClose={() => setAboutOpen(false)}
+      />
     </View>
+  );
+}
+
+function AppInfoModal({ visible, source, broad, onClose }: { visible: boolean; source?: string; broad?: boolean; onClose: () => void }) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      <View style={styles.infoBackdrop}>
+        <View style={styles.infoSheet} accessibilityViewIsModal>
+          <Row justify="space-between">
+            <T variant="headline" accessibilityRole="header">About DawnBite</T>
+            <Pressable onPress={onClose} hitSlop={hitSlop} accessibilityRole="button" accessibilityLabel="Close app information" style={styles.infoClose}>
+              <Icon name="close" size={17} color={colors.ink} />
+            </Pressable>
+          </Row>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.infoContent}>
+            <InfoItem icon="chart" title="Bite scores" body="Scores compare fishing conditions. They are not a catch probability or a guarantee of fish." />
+            <InfoItem icon="info" title="Reasons and confidence" body="Reasons show what drives a score. Confidence shows how strongly the available data supports it." />
+            <InfoItem icon="clock" title="Forecast data" body={`${source ? `Current source: ${source}. ` : ''}Use the updated time to judge freshness and pull down to refresh.`} />
+            {broad ? <InfoItem icon="clock" title="Broad outlook" body="Time-block scores repeat across a block and do not identify an exact peak hour." /> : null}
+            <InfoItem icon="ice" title="Ice safety" body={ICE_SAFETY_TEXT} />
+            <InfoItem icon="offline" title="Offline use" body="Saved forecasts remain available offline. Trip logs save to this phone before they sync." />
+            <InfoItem icon="document" title="Regulations" body="DawnBite summaries are for convenience. The linked official source always governs." />
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function InfoItem({ icon, title, body }: { icon: IconName; title: string; body: string }) {
+  return (
+    <Row gap={spacing.md} align="flex-start">
+      <View style={styles.infoItemIcon}><Icon name={icon} size={16} color={colors.teal} /></View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <T variant="callout" weight="600">{title}</T>
+        <T variant="caption" color={colors.inkMuted}>{body}</T>
+      </View>
+    </Row>
   );
 }
 
@@ -334,9 +360,9 @@ function Conditions({ reason, confidence, span, units }: { reason: string; confi
   const cloud = cloudLabel(avg(span, (hour) => hour.cloudPct));
   const pressure = pressureTrend(span);
   return (
-    <View style={styles.conditions} accessible accessibilityLabel={`${reason}. ${confidence} confidence. Wind ${formatWind(wind, units)}, ${rainLabel(rain)}, ${cloud}, pressure ${pressure.toLowerCase()}.`}>
+    <View style={styles.conditions} accessible accessibilityLabel={`${reasonLabel(reason)}. ${confidence} confidence. Wind ${formatWind(wind, units)}, ${rainLabel(rain)}, ${cloud}, pressure ${pressure.toLowerCase()}.`}>
       <Row gap={spacing.sm} align="center">
-        <T color={onScene.text} numberOfLines={2} style={styles.reason}>{reason}</T>
+        <T color={onScene.text} numberOfLines={2} style={styles.reason}>{reasonLabel(reason)}</T>
         <ConfidenceBars level={confidence} tone="dark" />
       </Row>
       <View style={styles.tiles}>
@@ -404,7 +430,7 @@ function OtherLake({ entry, now, divided }: { entry: LakeData; now: number; divi
         </Row>
         <T variant="caption" weight="600" color={onScene.accent} numberOfLines={1}>{when}</T>
         {/* One line here: the whole reason is in the accessibility label and on the lake's screen */}
-        <T variant="caption" color={onScene.soft} numberOfLines={1}>{reason}</T>
+        <T variant="caption" color={onScene.soft} numberOfLines={1}>{reasonLabel(reason)}</T>
       </View>
     </Pressable>
   );
@@ -419,7 +445,11 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.75 },
   freshness: { flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1, paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill, ...glass },
   info: { minWidth: 28, minHeight: 28, alignItems: 'center', justifyContent: 'center' },
-  about: { marginTop: spacing.sm, padding: spacing.md, borderRadius: radius.md, ...glass },
+  infoBackdrop: { flex: 1, justifyContent: 'center', padding: spacing.xl, backgroundColor: 'rgba(3,17,26,0.64)' },
+  infoSheet: { width: '100%', maxWidth: 560, maxHeight: '78%', alignSelf: 'center', gap: spacing.md, padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.paper },
+  infoClose: { width: touch.min, height: touch.min, margin: -spacing.sm, alignItems: 'center', justifyContent: 'center' },
+  infoContent: { gap: spacing.lg, paddingBottom: spacing.xs },
+  infoItemIcon: { width: 34, height: 34, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.tealMist },
   ticket: { flexDirection: 'row', marginTop: spacing.sm, borderRadius: radius.lg, ...glass },
   ticketMain: { flex: 1, gap: 2, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
   when: { fontSize: 28, lineHeight: 34 },

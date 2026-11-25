@@ -49,9 +49,31 @@ export function reasonIcon(reason: string): IconName {
 }
 
 /** Reasons that work against the bite get a cautionary tone. */
-export const reasonIsNegative = (reason: string) => /bright|slow|high/i.test(reason);
+export const reasonIsNegative = (reason: string) => /bright|slow|high|reduce|away|against|lower|negative|weaker|less favou?rable/i.test(reason);
 
 export const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+
+/** Short, user-facing labels for model contribution phrases (also normalizes cached wording). */
+export function reasonLabel(reason: string) {
+  const labels: [RegExp, string][] = [
+    [/wind conditions reduce the model outlook/i, 'Wind less favorable'],
+    [/wind conditions improve the model outlook/i, 'Favorable wind'],
+    [/timing is away from sunrise/i, 'Outside sunrise transition'],
+    [/timing aligns with the sunrise transition/i, 'Near sunrise transition'],
+    [/timing is away from sunset/i, 'Outside sunset transition'],
+    [/timing aligns with the sunset transition/i, 'Near sunset transition'],
+    [/light level works against this window/i, 'Light less favorable'],
+    [/light level supports this window/i, 'Favorable light'],
+    [/pressure pattern lowers the outlook/i, 'Pressure less favorable'],
+    [/pressure pattern supports activity/i, 'Favorable pressure'],
+    [/pressure movement works against this hour/i, 'Pressure shift less favorable'],
+    [/pressure movement supports this hour/i, 'Favorable pressure shift'],
+    [/cloud cover softens the light/i, 'Softened light'],
+    [/clearer skies increase the light/i, 'Brighter sky'],
+    [/the model found a mixed set of historical signals/i, 'Mixed signals'],
+  ];
+  return labels.find(([pattern]) => pattern.test(reason))?.[1] ?? reason;
+}
 
 /** Compact clock label for field use: “7 am”, “7:30 am”, “noon”. */
 export function shortClock(value: string | Date) {
